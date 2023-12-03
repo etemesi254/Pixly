@@ -9,9 +9,11 @@ group = "com.example"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     google()
+
 }
 
 dependencies {
@@ -21,16 +23,16 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     implementation("io.ktor:ktor-client-cio:2.3.6")
-    implementation ("com.aallam.openai:openai-client:3.6.0")
+    implementation("com.aallam.openai:openai-client:3.6.0")
 
     // file picking
-   implementation("com.darkrockstudios:mpfilepicker:2.1.0")
+    implementation("com.darkrockstudios:mpfilepicker:2.1.0")
     // panes
     // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
     implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.5.0")
 
-
-
+     implementation("zil:pixly-image:0.4.0")
+    //implementation("zil:pixly-image-native:0.4.0")
 
 }
 

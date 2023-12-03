@@ -1,22 +1,17 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -39,68 +34,10 @@ import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
 import java.io.File
+import java.text.DecimalFormat
 import kotlin.random.Random
 import kotlin.random.nextUInt
 
-
-class OpenAiLayout {
-
-
-    var promptString = "";
-    var promptResponse = "";
-
-    @Composable
-    fun build() {
-        val openAiCtx =
-            remember { OpenAI("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", retry = RetryStrategy(1)) }
-
-
-        var mutablePromptString by remember { mutableStateOf("") }
-
-
-        Column(modifier = Modifier.fillMaxSize(0.95F).padding(20.dp)) {
-
-            Row {
-                BasicTextField(
-                    value = mutablePromptString,
-                    onValueChange = {
-                        mutablePromptString = it;
-                        promptString = it;
-
-                    },
-                    singleLine = true,
-                    modifier = Modifier.border(
-                        1.dp,
-                        Color.Gray,
-                        shape = RoundedCornerShape(20)
-                    ).padding(5.dp),
-
-                    )
-                OutlinedButton(
-                    onClick = {
-                        val chatCompletionRequest = ChatCompletionRequest(
-                            model = ModelId("gpt-3.5-turbo-16k"),
-                            messages = listOf(
-
-                                ChatMessage(
-                                    role = ChatRole.User,
-                                    content = mutablePromptString
-                                )
-                            )
-                        )
-                        runBlocking {
-                            println("Hello");
-                            println(openAiCtx.chatCompletion(chatCompletionRequest).choices[0].message.content)
-                        }
-                    }
-                ) {
-                    Text("Go")
-                }
-
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalStdlibApi::class, ExperimentalSplitPaneApi::class, ExperimentalUnsignedTypes::class)
 @Composable
@@ -114,27 +51,32 @@ fun App() {
 
     var contrastValue by remember { mutableStateOf(100F) }
     var hideableClicked by remember { mutableStateOf(true) }
-    var ran = Random.Default
-
-    val amplititudes = (1..256).map { ran.nextUInt() }
 
 
     var imageIsLoaded by remember { mutableStateOf(false) }
 
     var imFile by remember { mutableStateOf(File("")) }
-    var image by remember { mutableStateOf(ImageBitmap(10, 10)) }
     var imBackgroundColor = if (imageIsLoaded) Color.Transparent else Color(0x0F_00_00_00)
+    var rootDirectory by remember { mutableStateOf("C:\\") }
 
     val topHorizontalSplitterState = rememberSplitPaneState()
     val nestedHorizontalSplitterState = rememberSplitPaneState()
 
+    var zilImage: MutableState<ZilImageAndBitmapInterop?> = remember { mutableStateOf(null) };
+    var isFirstDraw by remember { mutableStateOf(true) }
 
-    MaterialTheme(typography = poppinsTypography) {
+    if (isFirstDraw) {
+        appStates.showLightTheme = !isSystemInDarkTheme();
+        isFirstDraw = false;
+    }
+
+    MaterialTheme(
+        typography = poppinsTypography, colors = if (appStates.showLightTheme)
+            lightColors() else darkColors()
+    ) {
 
         Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
         }) { it ->
-
-
             Column(Modifier.padding(it).fillMaxSize()) {
 
                 Row(
@@ -161,16 +103,19 @@ fun App() {
                                     fileExtensions = SUPPORTED_EXTENSIONS
                                 ) { file ->
                                     showModifiers.showFilePicker = false
-                                    imFile = file?.path?.let { it1 -> File(it1) }!!
-                                    showModifiers.showTopLinearIndicator = true
 
-                                    GlobalScope.launch {
+                                    if (file != null) {
+                                        imFile = File(file.path)
+                                        showModifiers.showTopLinearIndicator = true
 
-                                        image = loadImageBitmap(imFile.inputStream())
-                                        showModifiers.showTopLinearIndicator = false;
-                                        imageIsLoaded = true;
+                                        GlobalScope.launch {
+                                            zilImage.value = ZilImageAndBitmapInterop(file.path);
+
+                                            showModifiers.showTopLinearIndicator = false;
+                                            imageIsLoaded = true;
+                                        }
+                                        // do something with the file
                                     }
-                                    // do something with the file
                                 }
                             }
                             Spacer(modifier = Modifier.padding(horizontal = 10.dp))
@@ -185,8 +130,34 @@ fun App() {
                                 DirectoryPicker(show = showModifiers.showDirectoryPicker) { dir ->
                                     showModifiers.showDirectoryPicker = false
                                     // do something with the directory
+                                    if (dir != null) {
+                                        rootDirectory = dir
+                                    }
                                 }
                             }
+                            //Spacer(modifier = Modifier.fillMaxWidth(0.9F))
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(
+                                    horizontal = 10.dp
+                                ), horizontalArrangement = Arrangement.End
+                            ) {
+
+                                IconButton({
+                                    appStates.showLightTheme = appStates.showLightTheme.xor(true)
+                                }, modifier = Modifier.onFocusEvent { state ->
+                                    {
+                                    }
+                                }) {
+                                    Icon(
+                                        painter = if (!appStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
+                                            "moon-svgrepo-com.svg"
+                                        ), contentDescription = null, modifier = Modifier.size(40.dp)
+                                    )
+                                }
+
+                            }
+
+
                         }
 
                         if (showModifiers.showTopLinearIndicator) {
@@ -208,7 +179,18 @@ fun App() {
 
                     first(250.dp) {
                         Row {
-                            DirectoryViewer("C:\\")
+                            DirectoryViewer(rootDirectory) {
+                                // on file clicked
+                                if (it.extension == "jpeg" || it.extension == "jpg" || it.extension == "png") {
+                                    showModifiers.showTopLinearIndicator = true
+
+                                    GlobalScope.launch {
+                                        zilImage.value = ZilImageAndBitmapInterop(it.path);
+                                        showModifiers.showTopLinearIndicator = false;
+                                        imageIsLoaded = true;
+                                    }
+                                }
+                            }
                             Divider(
 
                                 modifier = Modifier
@@ -244,18 +226,20 @@ fun App() {
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             modifier = Modifier.fillMaxSize()
                                         ) {
-
-
-                                            Image(
+                                            Icon(
                                                 painter = painterResource("add-circle.svg"),
                                                 contentDescription = null,
-                                                modifier = Modifier.size(100.dp)
-                                            )
+                                                modifier = Modifier.size(100.dp),
+
+                                                )
                                             Spacer(modifier = Modifier.height(30.dp))
                                             Text("Drag an image here\nUse the directory picker to start \nOr click me to open an image")
                                         }
                                     } else {
-                                        Image(image, contentDescription = null, modifier = Modifier.fillMaxSize())
+                                        if (zilImage.value != null) {
+                                            Box(modifier = Modifier.fillMaxSize()) { zilImage.value!!.canvas() }
+                                        }
+                                        //Image(image, contentDescription = null, modifier = Modifier.fillMaxSize())
                                     }
 
                                     TopHoveringIcons(showModifiers.showPopups)
@@ -268,24 +252,71 @@ fun App() {
                                         modifier = Modifier.padding(10.dp)
                                     ) {
 
-                                        CollapsibleBox(title = "Light", hideableClicked, {
-                                            hideableClicked = hideableClicked.xor(true)
-                                        }) {
-                                            Column() {
-                                                Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
-                                                    SliderTextComponent("Contrast", contrastValue / 100F, { value ->
-                                                        contrastValue = value
-                                                    }, offset = 0.0F, scale = 100F, decimalPattern = "#00")
+                                        if (zilImage.value != null) {
+                                            val imCopy = zilImage.value!!.inner;
+                                            Box(modifier = Modifier.padding(10.dp)) {
+                                                CollapsibleBox("Information", showModifiers.showInformation, {
+                                                    showModifiers.showInformation =
+                                                        showModifiers.showInformation.xor(true);
+                                                }) {
+                                                    Column(modifier = Modifier.padding(10.dp)) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Text("Width")
+                                                            Text(imCopy.width().toString() + " px");
+                                                        }
+                                                        Divider()
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Text("Height")
+                                                            Text(imCopy.height().toString() + " px");
+                                                        }
+
+                                                        Divider()
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Text("Colorspace")
+                                                            Text(imCopy.colorspace().toString());
+                                                        }
+                                                        Divider()
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Text("Size")
+                                                            Text(formatSize(imFile.length()));
+                                                        }
+                                                    }
                                                 }
+                                            }
+                                        }
+
+                                        Box(modifier = Modifier.padding(10.dp)) {
+                                            CollapsibleBox(title = "Light", hideableClicked, {
+                                                hideableClicked = hideableClicked.xor(true)
+                                            }) {
+                                                Column() {
+                                                    Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
+                                                        SliderTextComponent("Contrast", contrastValue / 100F, { value ->
+                                                            contrastValue = value
+                                                        }, offset = 0.0F, scale = 100F, decimalPattern = "#00")
+                                                    }
 
 
-                                                Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
-                                                    SliderTextComponent(
-                                                        "Brightness", 0.5F,
-                                                        { value ->
-                                                            // contrastValue = value
-                                                        }, offset = 0.5F
-                                                    )
+                                                    Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
+                                                        SliderTextComponent(
+                                                            "Brightness", 0.5F,
+                                                            { value ->
+                                                                // contrastValue = value
+                                                            }, offset = 0.5F
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -339,23 +370,22 @@ fun App() {
 }
 
 
-@OptIn(ExperimentalStdlibApi::class)
-@Composable
-fun AppChatOpenAi() {
-    val oai = OpenAiLayout();
-
-    MaterialTheme {
-
-
-        Scaffold(topBar = {
-
-        }) {
-            Column(modifier = Modifier.padding(it)) {
-                oai.build()
-            }
-        }
-
+fun formatSize(bytes: Long): String {
+    var bytes = bytes.toDouble();
+    val formatter = DecimalFormat("####.##")
+    if (bytes < 1024.0) {
+        return formatter.format(bytes) + " B"
     }
+    bytes /= 1024.0;
+    if (bytes < 1024.0) {
+        return formatter.format(bytes) + " KB"
+    }
+    bytes /= 1024.0;
+    if (bytes < 1024.0) {
+        return formatter.format(bytes) + " MB"
+    }
+    bytes /= 1024.0;
+    return formatter.format(bytes) + " GB"
 }
 
 fun main() = application {

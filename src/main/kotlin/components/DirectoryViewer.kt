@@ -1,5 +1,6 @@
 package components
 
+import ZilImage
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,54 +10,90 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import java.io.File
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asSkiaBitmap
+import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
+
+fun loadAndDecodeImage(file: File): ImageBitmap {
+
+    return loadImageBitmap(file.inputStream())
+}
 
 @Composable
 fun SingleDirectoryView(path: File, onDirectoryClicked: (File) -> Unit) {
 
     val folderBitmap = painterResource("folder-svgrepo.svg")
     val fileBitmap = painterResource("file-svgrepo.svg")
+    var loadedImage by remember { mutableStateOf(ImageBitmap(1, 1)) }
+    var shouldShowImage = false
 
 
+//    if (path.extension == "png" || path.extension=="jpg"|| path.extension=="jpeg") {
+//        shouldShowImage=true
+//        GlobalScope.launch {
+//            loadedImage=loadAndDecodeImage(path)
+//
+//        }
+//    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth().clickable {
             onDirectoryClicked(path)
         }
     ) {
-        Image(
-            painter = if (path.isDirectory) folderBitmap else fileBitmap,
-            contentDescription = "Info",
-            modifier = Modifier.size(45.dp, 45.dp)
-        )
-        Text(
-            path.name,
-            modifier = Modifier.padding(horizontal = 10.dp),
-            fontSize = TextUnit(14F, TextUnitType.Sp)
-        )
+        if (shouldShowImage) {
+            Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                Image(
+                    painter = fileBitmap,
+                    contentDescription = null,
+                    //modifier = Modifier.size(100.dp, 100.dp)
+                )
+                Text(
+                    path.name,
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    fontSize = TextUnit(14F, TextUnitType.Sp)
+                )
+            }
+        } else {
+            Image(
+                painter = if (path.isDirectory) folderBitmap else fileBitmap,
+                contentDescription = "Info",
+                modifier = Modifier.size(45.dp, 45.dp)
+            )
 
+            Text(
+                path.name,
+                modifier = Modifier.padding(horizontal = 10.dp),
+                fontSize = TextUnit(14F, TextUnitType.Sp)
+            )
+        }
     }
-
 }
 
 @Composable
-fun DirectoryViewer(root: String) {
+fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
 
     var rootFile by remember { mutableStateOf(root) }
 
     var showHidden by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf("") }
-    val searchBitmap = painterResource("search-svgrepo.svg")
+    val toggleHiddenFilesPainter = if (showHidden) painterResource("eye-off-svgrepo-com.svg") else painterResource("eye-show-svgrepo-com.svg")
 
-    val file = File(rootFile);
+    val redoPainter = painterResource("reload-svgrepo-com.svg")
+    var file = File(rootFile);
 
     // function to filter files
     var filterFiles = { file: File ->
@@ -74,20 +111,38 @@ fun DirectoryViewer(root: String) {
         var files = file.walk().maxDepth(1).filter(filterFiles).toList();
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-
-                Text("Show hidden files")
-
-                Checkbox(showHidden, onCheckedChange = {
+                IconButton( onClick = {
+                    // force a redraw, rootFile is viewable by compose
+                    // so just set that up to be the changed so that it seems
+                    // we did something
+                    rootFile = file.toString()
+                }, modifier = Modifier.size(40.dp).padding(horizontal=10.dp)){
+                    Icon(painter = redoPainter,contentDescription = null)
+                }
+                IconButton( onClick = {
                     showHidden = showHidden.xor(true)
-                })
+                }, modifier = Modifier.size(45.dp).padding(horizontal = 10.dp)){
+                    Icon(painter = toggleHiddenFilesPainter,contentDescription = null)
+                }
+
+                IconButton( onClick = {
+                    if (file.parentFile != null) {
+                        rootFile = file.parentFile.toString();
+                    }
+                }){
+                    Icon(Icons.Default.KeyboardArrowUp,contentDescription = null, modifier = Modifier.size(25.dp))
+                }
 
             }
+
+
             Divider()
             Row(
                 modifier = Modifier.fillMaxWidth().height(70.dp)
@@ -100,6 +155,8 @@ fun DirectoryViewer(root: String) {
                     onValueChange = {
                         textFieldValue = it;
                     },
+                    textStyle = MaterialTheme.typography.caption.copy(MaterialTheme.colors.onBackground),
+
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().border(
                         1.dp,
@@ -110,18 +167,30 @@ fun DirectoryViewer(root: String) {
                     )
             }
 
+
             Divider()
             LazyColumn(userScrollEnabled = true) {
                 items(files.count()) {
+
                     SingleDirectoryView(files[it]) {
-                        rootFile = it.absolutePath
+                        if (it.isDirectory) {
+                            rootFile = it.absolutePath
+                        }
+                        if (it.isFile){
+                            onFileClicked(it)
+                        }
                     }
+
                 }
             }
         }
 
     } else {
-        Text("File");
+
+        onFileClicked(file)
+        // don't hide that view
+        //rootFile = file.parentFile.toString();
+
     }
 
 

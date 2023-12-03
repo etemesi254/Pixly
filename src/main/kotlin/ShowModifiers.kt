@@ -8,5 +8,7 @@ class ShowModifiers {
     var showDirectoryPicker by mutableStateOf( false)
     var showPopups by mutableStateOf( false)
 
+    var showInformation by mutableStateOf(false)
+
 
 }
