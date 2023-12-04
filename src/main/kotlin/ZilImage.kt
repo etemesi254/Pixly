@@ -30,7 +30,6 @@ class ZilImageAndBitmapInterop(file: String) {
     private fun installPixels() {
         val buffer = inner.toBuffer();
         assert(canvasBitmap.installPixels(buffer.asByteArray()))
-        val canvas = Canvas(canvasBitmap)
     }
 
     fun canvas(): ImageBitmap = canvasBitmap.asComposeImageBitmap()
