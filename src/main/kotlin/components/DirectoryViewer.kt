@@ -86,14 +86,14 @@ fun SingleDirectoryView(path: File, onDirectoryClicked: (File) -> Unit) {
 @Composable
 fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
 
-    var rootFile by remember { mutableStateOf(root) }
+    var rootFile =  mutableStateOf(root)
 
     var showHidden by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf("") }
     val toggleHiddenFilesPainter = if (showHidden) painterResource("eye-off-svgrepo-com.svg") else painterResource("eye-show-svgrepo-com.svg")
 
     val redoPainter = painterResource("reload-svgrepo-com.svg")
-    var file = File(rootFile);
+    var file = File(rootFile.value);
 
     // function to filter files
     var filterFiles = { file: File ->
@@ -122,7 +122,7 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
                     // force a redraw, rootFile is viewable by compose
                     // so just set that up to be the changed so that it seems
                     // we did something
-                    rootFile = file.toString()
+                    rootFile.value = file.toString()
                 }, modifier = Modifier.size(40.dp).padding(horizontal=10.dp)){
                     Icon(painter = redoPainter,contentDescription = null)
                 }
@@ -134,7 +134,7 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
 
                 IconButton( onClick = {
                     if (file.parentFile != null) {
-                        rootFile = file.parentFile.toString();
+                        rootFile.value = file.parentFile.toString();
                     }
                 }){
                     Icon(Icons.Default.KeyboardArrowUp,contentDescription = null, modifier = Modifier.size(25.dp))
@@ -174,7 +174,7 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
 
                     SingleDirectoryView(files[it]) {
                         if (it.isDirectory) {
-                            rootFile = it.absolutePath
+                            rootFile.value = it.absolutePath
                         }
                         if (it.isFile){
                             onFileClicked(it)

@@ -1,8 +1,6 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,33 +8,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageBitmapConfig
-import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.chat.ChatRole
-import com.aallam.openai.api.model.ModelId
-import com.aallam.openai.client.OpenAI
-import com.aallam.openai.client.RetryStrategy
 import com.darkrockstudios.libraries.mpfilepicker.DirectoryPicker
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import components.*
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
 import java.io.File
 import java.text.DecimalFormat
-import kotlin.random.Random
-import kotlin.random.nextUInt
+import kotlin.system.measureTimeMillis
 
 
 @OptIn(ExperimentalStdlibApi::class, ExperimentalSplitPaneApi::class, ExperimentalUnsignedTypes::class)
@@ -57,12 +46,12 @@ fun App() {
 
     var imFile by remember { mutableStateOf(File("")) }
     var imBackgroundColor = if (imageIsLoaded) Color.Transparent else Color(0x0F_00_00_00)
-    var rootDirectory by remember { mutableStateOf("C:\\") }
+    var rootDirectory by remember { mutableStateOf("/") }
 
     val topHorizontalSplitterState = rememberSplitPaneState()
     val nestedHorizontalSplitterState = rememberSplitPaneState()
 
-    var zilImage: MutableState<ZilImageAndBitmapInterop?> = remember { mutableStateOf(null) };
+    var zilImage = remember { ZilImageAndBitmapInterop() };
     var isFirstDraw by remember { mutableStateOf(true) }
 
     if (isFirstDraw) {
@@ -107,9 +96,11 @@ fun App() {
                                     if (file != null) {
                                         imFile = File(file.path)
                                         showModifiers.showTopLinearIndicator = true
+                                        rootDirectory = imFile.parent;
 
                                         GlobalScope.launch {
-                                            zilImage.value = ZilImageAndBitmapInterop(file.path);
+                                            var time = measureTimeMillis { zilImage.loadFile(file.path) }
+                                            statusMessages = "Loaded ${imFile.name} in ${time} ms"
 
                                             showModifiers.showTopLinearIndicator = false;
                                             imageIsLoaded = true;
@@ -183,9 +174,12 @@ fun App() {
                                 // on file clicked
                                 if (it.extension == "jpeg" || it.extension == "jpg" || it.extension == "png") {
                                     showModifiers.showTopLinearIndicator = true
+                                    imFile = it;
 
                                     GlobalScope.launch {
-                                        zilImage.value = ZilImageAndBitmapInterop(it.path);
+                                        val time = measureTimeMillis { zilImage.loadFile(it.absolutePath) }
+                                        statusMessages = "Loaded ${imFile.name} in $time ms"
+
                                         showModifiers.showTopLinearIndicator = false;
                                         imageIsLoaded = true;
                                     }
@@ -236,9 +230,11 @@ fun App() {
                                             Text("Drag an image here\nUse the directory picker to start \nOr click me to open an image")
                                         }
                                     } else {
-                                        if (zilImage.value != null) {
-                                            Box(modifier = Modifier.fillMaxSize()) { zilImage.value!!.canvas() }
+
+                                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                            zilImage.image()
                                         }
+
                                         //Image(image, contentDescription = null, modifier = Modifier.fillMaxSize())
                                     }
 
@@ -252,8 +248,8 @@ fun App() {
                                         modifier = Modifier.padding(10.dp)
                                     ) {
 
-                                        if (zilImage.value != null) {
-                                            val imCopy = zilImage.value!!.inner;
+                                        if (imageIsLoaded) {
+                                            val imCopy = zilImage.inner;
                                             Box(modifier = Modifier.padding(10.dp)) {
                                                 CollapsibleBox("Information", showModifiers.showInformation, {
                                                     showModifiers.showInformation =
@@ -304,6 +300,9 @@ fun App() {
                                                 Column() {
                                                     Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
                                                         SliderTextComponent("Contrast", contrastValue / 100F, { value ->
+                                                            if (imageIsLoaded) {
+                                                                zilImage.contrast(value)
+                                                            }
                                                             contrastValue = value
                                                         }, offset = 0.0F, scale = 100F, decimalPattern = "#00")
                                                     }
@@ -359,9 +358,9 @@ fun App() {
 
                 // Bottom row with statuses
                 Divider()
-                Row(modifier = Modifier.fillMaxWidth().height(40.dp)) {
+                Row(modifier = Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
 
-                    Text(statusMessages)
+                    Text(statusMessages, style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
                 }
 
             }
