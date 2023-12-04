@@ -37,7 +37,6 @@ fun SingleDirectoryView(path: File, onDirectoryClicked: (File) -> Unit) {
 
     val folderBitmap = painterResource("folder-svgrepo.svg")
     val fileBitmap = painterResource("file-svgrepo.svg")
-    var loadedImage by remember { mutableStateOf(ImageBitmap(1, 1)) }
     var shouldShowImage = false
 
 
@@ -96,18 +95,18 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
     var file = File(rootFile.value);
 
     // function to filter files
-    var filterFiles = { file: File ->
-        var result = file.exists()
-        if (!showHidden && file.isHidden) {
+    var filterFiles = { cFile: File ->
+        var result = cFile.exists()
+        if (!showHidden && cFile.isHidden) {
             result = false
         }
         if (textFieldValue.isNotEmpty()) {
-            result = file.path.contains(textFieldValue)
+            result = cFile.path.contains(textFieldValue)
         }
         result
     }
 
-    if (file.exists() && file.isDirectory()) {
+    if (file.exists() && file.isDirectory) {
         var files = file.walk().maxDepth(1).filter(filterFiles).toList();
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {

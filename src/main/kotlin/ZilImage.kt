@@ -17,7 +17,7 @@ class ZilImageAndBitmapInterop() {
 
     constructor(file: String) : this() {
 
-        this.file = file;
+        this.file = file
         inner = ZilImage(file)
         prepareNewFile()
     }
@@ -137,8 +137,5 @@ class ZilImageAndBitmapInterop() {
 
     private fun postProcessNoAlloc() {
         allocBuffer()
-        // force recomposition
-        //text.value = text.value.xor(true);
-
     }
 }

@@ -31,14 +31,26 @@ dependencies {
     // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
     implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.5.0")
 
-     implementation("zil:pixly-image:0.4.0")
-    //implementation("zil:pixly-image-native:0.4.0")
+    implementation("zil:pixly-image:0.4.0")
 
 }
-
 compose.desktop {
     application {
         mainClass = "MainKt"
+
+        val hostOs = System.getProperty("os.name")
+
+        // Set up dynamic libraties and their paths
+        // this sets up linux and windows stuff to be used for the places that
+        // needs them, without this we gonna have to have the dlls/so files in places the os
+        // can find
+        if (hostOs.contains("Linux")) {
+            jvmArgs("-Djava.library.path=" + file("${projectDir}/shared_libs/linux"))
+        } else if (hostOs.startsWith("Windows")){
+            jvmArgs("-Djava.library.path=" + file("${projectDir}/shared_libs/windows"))
+        } else {
+            throw GradleException("No native library path for ${hostOs}, supported systems are windows and linux")
+        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
