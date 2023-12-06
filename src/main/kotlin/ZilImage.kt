@@ -7,7 +7,6 @@ import androidx.compose.ui.zIndex
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
-import org.jetbrains.skia.impl.Log
 
 class ZilImageAndBitmapInterop() {
     var inner: ZilImage = ZilImage();
@@ -19,7 +18,7 @@ class ZilImageAndBitmapInterop() {
     private var info: ImageInfo = ImageInfo.makeUnknown(0, 0);
     private var file: String = "";
     // a boolean to see if we have modified stuff
-    private var isModified  =   mutableStateOf(true)
+    private var isModified  by   mutableStateOf(true)
 
 
     constructor(file: String) : this() {
@@ -123,15 +122,22 @@ class ZilImageAndBitmapInterop() {
                 /*
                 * Let's talk about getting compose to redraw.
                 *
-                * So we need it to redraw image since we
+                * So we need it to redraw the image for real time effects viewing
+                *
+                * but we don't have a way to tell compose, hey, redraw me
+                * So we make it think that the modifier has been modified, forcing a redraw
+                *
+                *
+                * All image filters modify the isModified parameter, which acts as a signal
+                * telling compose to redraw the image
+                *
                 * */
-                Image(bitmap = canvas(), contentDescription = null, modifier = Modifier.zIndex(if (isModified.value) {0F} else {1f}))
+                Image(bitmap = canvas(), contentDescription = null, modifier = Modifier.zIndex(if (isModified) {0F} else {0.0f}))
             }
         }
 
     }
     private fun canvas(): ImageBitmap {
-        Log.info("Canvas redrawing")
         return canvasBitmap.asComposeImageBitmap()
     }
 
@@ -151,7 +157,7 @@ class ZilImageAndBitmapInterop() {
     fun contrast(value: Float) {
         inner.contrast(value)
         postProcessNoAlloc()
-        isModified.value =isModified.value.xor(true)
+        isModified =isModified.xor(true)
     }
     fun gamma(value: Float) {
         inner.gamma(value)
@@ -161,6 +167,6 @@ class ZilImageAndBitmapInterop() {
 
     private fun postProcessNoAlloc() {
         installPixels()
-        isModified.value =isModified.value.xor(true)
+        isModified =isModified.xor(true)
     }
 }
