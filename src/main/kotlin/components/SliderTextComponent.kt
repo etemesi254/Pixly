@@ -40,8 +40,6 @@ import java.text.DecimalFormat
  * @param label: String containing the label to be displayed at <LABEL>
  * @param value: Initial value to give the text field and slider, range is 0..1
  * @param onValueChange: A callback to call when the value has changed, the value returned is `(value-offset)*scale`
- * @param scale: Optional value to scale the value with
- * @param offset: A value between 0 and 1 that is subtracted from the value.
  * @param decimalPattern: The decimal pattern to use for the scale and text field
  *
  * */
@@ -49,16 +47,15 @@ import java.text.DecimalFormat
 fun SliderTextComponent(
     label: String,
     value: Float,
+    valueRange:ClosedFloatingPointRange<Float>,
+    decimalPattern: String = "###0.#########",
     onValueChange: (Float) -> Unit,
-    scale: Float = 1.0F,
-    offset: Float = 0.0F,
-    decimalPattern: String = "###0.#########"
-) {
-    val scaleReciprocal = remember { 1.0F / scale };
+
+    ) {
 
     val df = remember { DecimalFormat(decimalPattern) };
     // contains the parsed and to be displayed current value
-    var currentValue by remember { mutableStateOf((value - offset) * scale) }
+    var currentValue by remember { mutableStateOf(value) }
     // contains whatever value the slider is pointing to
     var sliderValue by remember { mutableStateOf(value) }
     // value shown in the text-field
@@ -78,7 +75,7 @@ fun SliderTextComponent(
 
                     try {
                         val newValue = df.parse(it).toFloat()
-                        sliderValue = (newValue * scaleReciprocal) + offset;
+                        sliderValue = newValue ;
                         currentValue = newValue
                         shownValue = it
 
@@ -101,11 +98,13 @@ fun SliderTextComponent(
             modifier = Modifier.fillMaxWidth(),
             onValueChange = {
                 sliderValue = it;
-                currentValue = (it - offset) * scale
+                currentValue = it
                 shownValue = df.format(currentValue)
                 onValueChange(currentValue)
 
             },
+            valueRange = valueRange,
+            colors = SliderDefaults.colors()
         )
 
     }
