@@ -88,6 +88,7 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
     var rootFile = mutableStateOf(root)
 
     var showHidden by remember { mutableStateOf(false) }
+
     var textFieldValue by remember { mutableStateOf("") }
     val toggleHiddenFilesPainter =
         if (showHidden) painterResource("eye-off-svgrepo-com.svg") else painterResource("eye-show-svgrepo-com.svg")
