@@ -1,9 +1,13 @@
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asComposeImageBitmap
+import androidx.compose.ui.zIndex
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
+import org.jetbrains.skia.impl.Log
 
 class ZilImageAndBitmapInterop() {
     var inner: ZilImage = ZilImage();
@@ -14,6 +18,9 @@ class ZilImageAndBitmapInterop() {
     private var canvasBitmap = Bitmap();
     private var info: ImageInfo = ImageInfo.makeUnknown(0, 0);
     private var file: String = "";
+    // a boolean to see if we have modified stuff
+    private var isModified  =   mutableStateOf(true)
+
 
     constructor(file: String) : this() {
 
@@ -107,14 +114,25 @@ class ZilImageAndBitmapInterop() {
         * To solve this, we can just share locks between the renderer and the loader, so that
         * only one thing runs at a time
         */
-        if (mutex.tryLock()) {
-            // unlock when composition is done
-            SideEffect {
-                mutex.unlock()
+        key(isModified) {
+            if (mutex.tryLock()) {
+                // unlock when composition is done
+                SideEffect {
+                    mutex.unlock()
+                }
+                /*
+                * Let's talk about getting compose to redraw.
+                *
+                * So we need it to redraw image since we
+                * */
+                Image(bitmap = canvas(), contentDescription = null, modifier = Modifier.zIndex(if (isModified.value) {0F} else {1f}))
             }
-            Image(bitmap = canvasBitmap.asComposeImageBitmap(), contentDescription = null)
         }
 
+    }
+    private fun canvas(): ImageBitmap {
+        Log.info("Canvas redrawing")
+        return canvasBitmap.asComposeImageBitmap()
     }
 
 
@@ -133,9 +151,16 @@ class ZilImageAndBitmapInterop() {
     fun contrast(value: Float) {
         inner.contrast(value)
         postProcessNoAlloc()
+        isModified.value =isModified.value.xor(true)
+    }
+    fun gamma(value: Float) {
+        inner.gamma(value)
+        postProcessNoAlloc()
     }
 
+
     private fun postProcessNoAlloc() {
-        allocBuffer()
+        installPixels()
+        isModified.value =isModified.value.xor(true)
     }
 }

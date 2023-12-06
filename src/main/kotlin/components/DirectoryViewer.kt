@@ -1,11 +1,11 @@
 package components
 
 import ZilImage
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import java.io.File
@@ -85,14 +85,15 @@ fun SingleDirectoryView(path: File, onDirectoryClicked: (File) -> Unit) {
 @Composable
 fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
 
-    var rootFile =  mutableStateOf(root)
+    var rootFile = mutableStateOf(root)
 
     var showHidden by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf("") }
-    val toggleHiddenFilesPainter = if (showHidden) painterResource("eye-off-svgrepo-com.svg") else painterResource("eye-show-svgrepo-com.svg")
+    val toggleHiddenFilesPainter =
+        if (showHidden) painterResource("eye-off-svgrepo-com.svg") else painterResource("eye-show-svgrepo-com.svg")
 
     val redoPainter = painterResource("reload-svgrepo-com.svg")
-    var file = File(rootFile.value);
+    var file by remember { mutableStateOf(File(rootFile.value)) };
 
     // function to filter files
     var filterFiles = { cFile: File ->
@@ -117,26 +118,28 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                IconButton( onClick = {
+                IconButton(onClick = {
                     // force a redraw, rootFile is viewable by compose
                     // so just set that up to be the changed so that it seems
                     // we did something
+                    file = file
                     rootFile.value = file.toString()
-                }, modifier = Modifier.size(40.dp).padding(horizontal=10.dp)){
-                    Icon(painter = redoPainter,contentDescription = null)
+                }, modifier = Modifier.size(40.dp).padding(horizontal = 10.dp)) {
+                    Icon(painter = redoPainter, contentDescription = null)
                 }
-                IconButton( onClick = {
+                IconButton(onClick = {
                     showHidden = showHidden.xor(true)
-                }, modifier = Modifier.size(45.dp).padding(horizontal = 10.dp)){
-                    Icon(painter = toggleHiddenFilesPainter,contentDescription = null)
+                }, modifier = Modifier.size(45.dp).padding(horizontal = 10.dp)) {
+                    Icon(painter = toggleHiddenFilesPainter, contentDescription = null)
                 }
 
-                IconButton( onClick = {
+                IconButton(onClick = {
                     if (file.parentFile != null) {
-                        rootFile.value = file.parentFile.toString();
+                        file = file.parentFile
+                        rootFile.value = file.toString();
                     }
-                }){
-                    Icon(Icons.Default.KeyboardArrowUp,contentDescription = null, modifier = Modifier.size(25.dp))
+                }) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(25.dp))
                 }
 
             }
@@ -168,18 +171,32 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
 
 
             Divider()
-            LazyColumn(userScrollEnabled = true) {
-                items(files.count()) {
+            Box() {
+                val scrollState = rememberLazyListState()
+                val adapter = rememberScrollbarAdapter(scrollState)
 
-                    SingleDirectoryView(files[it]) {
-                        if (it.isDirectory) {
-                            rootFile.value = it.absolutePath
+                LazyColumn(userScrollEnabled = true) {
+                    items(files.count()) {
+
+                        SingleDirectoryView(files[it]) {
+                            if (it.isDirectory) {
+                                rootFile.value = it.absolutePath
+                                file = it.absoluteFile
+                            }
+                            if (it.isFile) {
+                                onFileClicked(it)
+                            }
                         }
-                        if (it.isFile){
-                            onFileClicked(it)
-                        }
+
                     }
-
+                }
+                Box(
+                    modifier = Modifier.matchParentSize()
+                ) {
+                    VerticalScrollbar(
+                        adapter = adapter,
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                    )
                 }
             }
         }

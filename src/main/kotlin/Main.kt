@@ -147,16 +147,11 @@ fun App() {
                                 }
 
                             }
-
-
                         }
-
                         if (showModifiers.showTopLinearIndicator) {
                             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         }
                     }
-
-
                 }
 
                 Divider()
@@ -193,6 +188,7 @@ fun App() {
                             )
                         }
                     }
+
                     second(700.dp) {
                         HorizontalSplitPane(
                             modifier = Modifier.fillMaxSize(),
@@ -242,91 +238,107 @@ fun App() {
 
                                 }
                             }
-                            second(300.dp) {
-                                Box() {
-                                    Column(
-                                        modifier = Modifier.padding(10.dp)
-                                    ) {
+                            second(if (imageIsLoaded) 300.dp else 0.dp) {
+                                if (imageIsLoaded) {
+                                    Box() {
+                                        Column(
+                                            modifier = Modifier.padding(10.dp)
+                                        ) {
 
-                                        if (imageIsLoaded) {
-                                            val imCopy = zilImage.inner;
-                                            Box(modifier = Modifier.padding(10.dp)) {
-                                                CollapsibleBox("Information", showModifiers.showInformation, {
-                                                    showModifiers.showInformation =
-                                                        showModifiers.showInformation.xor(true);
-                                                }) {
-                                                    Column(modifier = Modifier.padding(10.dp)) {
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-                                                            Text("Width")
-                                                            Text(imCopy.width().toString() + " px");
-                                                        }
-                                                        Divider()
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-                                                            Text("Height")
-                                                            Text(imCopy.height().toString() + " px");
-                                                        }
-
-                                                        Divider()
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-                                                            Text("Colorspace")
-                                                            Text(imCopy.colorspace().toString());
-                                                        }
-                                                        Divider()
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-                                                            Text("Size")
-                                                            Text(formatSize(imFile.length()));
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        Box(modifier = Modifier.padding(10.dp)) {
-                                            CollapsibleBox(title = "Light", hideableClicked, {
-                                                hideableClicked = hideableClicked.xor(true)
-                                            }) {
-                                                Column() {
-                                                    Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
-                                                        SliderTextComponent("Contrast", contrastValue / 100F, { value ->
-                                                            if (imageIsLoaded) {
-                                                                zilImage.contrast(value)
+                                            if (imageIsLoaded) {
+                                                val imCopy = zilImage.inner;
+                                                Box(modifier = Modifier.padding(10.dp)) {
+                                                    CollapsibleBox("Information", showModifiers.showInformation, {
+                                                        showModifiers.showInformation =
+                                                            showModifiers.showInformation.xor(true);
+                                                    }) {
+                                                        Column(modifier = Modifier.padding(10.dp)) {
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Text("Width")
+                                                                Text(imCopy.width().toString() + " px");
                                                             }
-                                                            contrastValue = value
-                                                        }, offset = 0.0F, scale = 100F, decimalPattern = "#00")
-                                                    }
+                                                            Divider()
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Text("Height")
+                                                                Text(imCopy.height().toString() + " px");
+                                                            }
 
-
-                                                    Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
-                                                        SliderTextComponent(
-                                                            "Brightness", 0.5F,
-                                                            { value ->
-                                                                // contrastValue = value
-                                                            }, offset = 0.5F
-                                                        )
+                                                            Divider()
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Text("Colorspace")
+                                                                Text(imCopy.colorspace().toString());
+                                                            }
+                                                            Divider()
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Text("Size")
+                                                                Text(formatSize(imFile.length()));
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
 
-                                        Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
-                                            SliderTextComponent("Exposure", 0.5F, { value ->
-                                                //contrastValue = value
-                                            }, offset = 0.5F, scale = 10F, decimalPattern = "#0.00")
-                                        }
-                                        //HistogramChart(buffer, Color(0x1F_88_88_88_88))
+                                            Box(modifier = Modifier.padding(10.dp)) {
+                                                CollapsibleBox(title = "Light", hideableClicked, {
+                                                    hideableClicked = hideableClicked.xor(true)
+                                                }) {
+                                                    Column() {
+                                                        Box(
+                                                            modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                                                        ) {
+                                                            SliderTextComponent(
+                                                                "Contrast",
+                                                                contrastValue / 100F,
+                                                                { value ->
+                                                                    if (imageIsLoaded) {
+                                                                        zilImage.contrast(value)
+                                                                    }
+                                                                    contrastValue = value
+                                                                },
+                                                                offset = 0.0F,
+                                                                scale = 100F,
+                                                                decimalPattern = "#00"
+                                                            )
+                                                        }
 
+
+                                                        Box(
+                                                            modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                                                        ) {
+                                                            SliderTextComponent(
+                                                                "Gamma", 0.5F,
+                                                                { value ->
+
+                                                                    if (imageIsLoaded) {
+                                                                        zilImage.gamma(value)
+                                                                    }
+                                                                }, offset = 0.5F
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
+                                                SliderTextComponent("Exposure", 0.5F, { value ->
+                                                    //contrastValue = value
+                                                }, offset = 0.5F, scale = 10F, decimalPattern = "#0.00")
+                                            }
+                                            //HistogramChart(buffer, Color(0x1F_88_88_88_88))
+
+                                        }
                                     }
                                 }
                             }
