@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
@@ -18,6 +20,8 @@ import androidx.compose.ui.window.application
 import com.darkrockstudios.libraries.mpfilepicker.DirectoryPicker
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import components.*
+import events.ExternalImageViewerEvent
+import events.ExternalNavigationEventBus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
@@ -172,7 +176,8 @@ fun App() {
                         Row {
                             DirectoryViewer(rootDirectory) {
                                 // on file clicked
-                                if (it.extension == "jpeg" || it.extension == "jpg" || it.extension == "png") {
+                                val ext = it.extension.lowercase()
+                                if (ext == "jpeg" || ext == "jpg" || ext == "png") {
                                     showModifiers.showTopLinearIndicator = true
                                     imFile = it;
 
@@ -388,7 +393,21 @@ fun formatSize(bytes: Long): String {
 }
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication, title = APP_TITLE, undecorated = false) {
+    val externalNavigationEventBus = remember { ExternalNavigationEventBus() }
+
+    Window(onCloseRequest = ::exitApplication, title = APP_TITLE, undecorated = false, onKeyEvent = {
+        when (it.key) {
+            Key.DirectionLeft -> externalNavigationEventBus.produceEvent(
+                ExternalImageViewerEvent.Previous
+            )
+
+            Key.DirectionRight -> externalNavigationEventBus.produceEvent(
+                ExternalImageViewerEvent.Next
+            )
+
+        }
+        false
+    }) {
         App()
     }
 }

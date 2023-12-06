@@ -8,6 +8,7 @@ import org.jetbrains.compose.splitpane.rememberSplitPaneState
 class AppStates {
 
     var showLightTheme by  mutableStateOf( false)
+    var paths = mutableStateOf("")
 
 
 

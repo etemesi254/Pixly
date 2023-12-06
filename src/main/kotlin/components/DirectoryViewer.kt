@@ -1,9 +1,7 @@
 package components
 
 import ZilImage
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,6 +86,7 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
     var rootFile =  mutableStateOf(root)
 
     var showHidden by remember { mutableStateOf(false) }
+
     var textFieldValue by remember { mutableStateOf("") }
     val toggleHiddenFilesPainter = if (showHidden) painterResource("eye-off-svgrepo-com.svg") else painterResource("eye-show-svgrepo-com.svg")
 
