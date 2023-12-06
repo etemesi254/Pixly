@@ -109,7 +109,7 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
     }
 
     if (file.exists() && file.isDirectory) {
-        var files = file.walk().maxDepth(1).filter(filterFiles).toList();
+        val files = file.walk().maxDepth(1).filter(filterFiles).toList();
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
 
@@ -144,7 +144,6 @@ fun DirectoryViewer(root: String, onFileClicked: (file: File) -> Unit) {
                 }
 
             }
-
 
             Divider()
             Row(
