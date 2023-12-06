@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 enum class ExternalImageViewerEvent{
     Next,
     Previous,
+    ReloadImage
 }
 
 class ExternalNavigationEventBus {
