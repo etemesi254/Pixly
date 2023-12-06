@@ -5,7 +5,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -28,43 +27,52 @@ import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
 import java.io.File
-import java.text.DecimalFormat
 import kotlin.system.measureTimeMillis
 
+
+suspend fun loadImage(appCtx: AppContext, imFile: File) {
+    appCtx.showStates.showTopLinearIndicator = true
+
+    val time = measureTimeMillis { appCtx.image.loadFile(imFile.path) }
+    appCtx.bottomStatus = "Loaded ${imFile.name} in ${time} ms"
+
+    appCtx.showStates.showTopLinearIndicator = false;
+    appCtx.imageIsLoaded = true;
+}
 
 @OptIn(ExperimentalStdlibApi::class, ExperimentalSplitPaneApi::class, ExperimentalUnsignedTypes::class)
 @Composable
 @Preview
-fun App() {
+fun App(appCtx: AppContext) {
 
-    var showModifiers by remember { mutableStateOf(ShowModifiers()) }
-    var appStates by remember { mutableStateOf(AppStates()) }
-
-    var statusMessages by remember { mutableStateOf("Hello, World!") }
-
-    var contrastValue by remember { mutableStateOf(100F) }
-    var hideableClicked by remember { mutableStateOf(true) }
-
-
-    var imageIsLoaded by remember { mutableStateOf(false) }
 
     var imFile by remember { mutableStateOf(File("")) }
-    var imBackgroundColor = if (imageIsLoaded) Color.Transparent else Color(0x0F_00_00_00)
+    var imBackgroundColor = if (appCtx.imageIsLoaded) Color.Transparent else Color(0x0F_00_00_00)
     var rootDirectory by remember { mutableStateOf("/") }
 
     val topHorizontalSplitterState = rememberSplitPaneState()
     val nestedHorizontalSplitterState = rememberSplitPaneState()
 
-    var zilImage = remember { ZilImageAndBitmapInterop() };
-    var isFirstDraw by remember { mutableStateOf(true) }
 
-    if (isFirstDraw) {
-        appStates.showLightTheme = !isSystemInDarkTheme();
-        isFirstDraw = false;
+    if (appCtx.isFirstDraw) {
+        appCtx.showStates.showLightTheme = !isSystemInDarkTheme();
+        appCtx.isFirstDraw = false;
     }
 
+    LaunchedEffect(Unit) {
+
+        appCtx.externalNavigationEventBus.events.collect() {
+            if (it == ExternalImageViewerEvent.ReloadImage && appCtx.imageIsLoaded && imFile.exists() && imFile.isFile) {
+                appCtx.showStates.showTopLinearIndicator = true
+
+                this.launch {
+                    loadImage(appCtx, imFile)
+                }
+            }
+        }
+    }
     MaterialTheme(
-        typography = poppinsTypography, colors = if (appStates.showLightTheme)
+        typography = poppinsTypography, colors = if (appCtx.showStates.showLightTheme)
             lightColors() else darkColors()
     ) {
 
@@ -85,30 +93,29 @@ fun App() {
                         ) {
                             // open file
                             Box() {
+                                val coroutineScope = rememberCoroutineScope()
+
                                 Button(onClick = {
-                                    showModifiers.showFilePicker = true;
+                                    appCtx.showStates.showFilePicker = true;
                                 }) {
                                     Text("Open File")
                                 }
 
                                 FilePicker(
-                                    show = showModifiers.showFilePicker,
+                                    show = appCtx.showStates.showFilePicker,
                                     fileExtensions = SUPPORTED_EXTENSIONS
                                 ) { file ->
-                                    showModifiers.showFilePicker = false
+                                    appCtx.showStates.showFilePicker = false
 
                                     if (file != null) {
                                         imFile = File(file.path)
-                                        showModifiers.showTopLinearIndicator = true
+                                        appCtx.showStates.showTopLinearIndicator = true
                                         rootDirectory = imFile.parent;
 
-                                        GlobalScope.launch {
-                                            var time = measureTimeMillis { zilImage.loadFile(file.path) }
-                                            statusMessages = "Loaded ${imFile.name} in ${time} ms"
-
-                                            showModifiers.showTopLinearIndicator = false;
-                                            imageIsLoaded = true;
+                                        coroutineScope.launch {
+                                            loadImage(appCtx, imFile)
                                         }
+
                                         // do something with the file
                                     }
                                 }
@@ -117,13 +124,13 @@ fun App() {
                             // open directory
                             Box() {
                                 Button(onClick = {
-                                    showModifiers.showDirectoryPicker = true;
+                                    appCtx.showStates.showDirectoryPicker = true;
                                 }) {
                                     Text("Open Directory")
                                 }
 
-                                DirectoryPicker(show = showModifiers.showDirectoryPicker) { dir ->
-                                    showModifiers.showDirectoryPicker = false
+                                DirectoryPicker(show = appCtx.showStates.showDirectoryPicker) { dir ->
+                                    appCtx.showStates.showDirectoryPicker = false
                                     // do something with the directory
                                     if (dir != null) {
                                         rootDirectory = dir
@@ -138,13 +145,13 @@ fun App() {
                             ) {
 
                                 IconButton({
-                                    appStates.showLightTheme = appStates.showLightTheme.xor(true)
+                                    appCtx.showStates.showLightTheme = appCtx.showStates.showLightTheme.xor(true)
                                 }, modifier = Modifier.onFocusEvent { state ->
                                     {
                                     }
                                 }) {
                                     Icon(
-                                        painter = if (!appStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
+                                        painter = if (!appCtx.showStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
                                             "moon-svgrepo-com.svg"
                                         ), contentDescription = null, modifier = Modifier.size(40.dp)
                                     )
@@ -152,7 +159,7 @@ fun App() {
 
                             }
                         }
-                        if (showModifiers.showTopLinearIndicator) {
+                        if (appCtx.showStates.showTopLinearIndicator) {
                             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         }
                     }
@@ -169,19 +176,17 @@ fun App() {
 
                     first(250.dp) {
                         Row {
+                            val scope = rememberCoroutineScope();
+
                             DirectoryViewer(rootDirectory) {
                                 // on file clicked
                                 val ext = it.extension.lowercase()
                                 if (ext == "jpeg" || ext == "jpg" || ext == "png") {
-                                    showModifiers.showTopLinearIndicator = true
+                                    appCtx.showStates.showTopLinearIndicator = true
                                     imFile = it;
 
-                                    GlobalScope.launch {
-                                        val time = measureTimeMillis { zilImage.loadFile(it.absolutePath) }
-                                        statusMessages = "Loaded ${imFile.name} in $time ms"
-
-                                        showModifiers.showTopLinearIndicator = false;
-                                        imageIsLoaded = true;
+                                    scope.launch {
+                                        loadImage(appCtx, imFile)
                                     }
                                 }
                             }
@@ -203,9 +208,9 @@ fun App() {
                                 Box(
                                     Modifier.background(imBackgroundColor).fillMaxSize().padding(horizontal = 10.dp)
                                         .clickable {
-                                            showModifiers.showPopups = showModifiers.showPopups.xor(true);
-                                            if (!imageIsLoaded) {
-                                                showModifiers.showFilePicker = true;
+                                            appCtx.showStates.showPopups = appCtx.showStates.showPopups.xor(true);
+                                            if (!appCtx.imageIsLoaded) {
+                                                appCtx.showStates.showFilePicker = true;
                                             }
                                         }) {
                                     // We depend on boxes having kind of a stacked layout
@@ -214,7 +219,7 @@ fun App() {
                                     // depending on order, the row is overlayed on top of the column,
                                     // but the column only contains text, so we don't need anything from it
                                     // which kinda works out
-                                    if (!imageIsLoaded) {
+                                    if (!appCtx.imageIsLoaded) {
 
                                         Column(
                                             verticalArrangement = Arrangement.Center,
@@ -233,114 +238,27 @@ fun App() {
                                     } else {
 
                                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                            zilImage.image()
+                                            appCtx.image.image()
                                         }
 
                                         //Image(image, contentDescription = null, modifier = Modifier.fillMaxSize())
                                     }
 
-                                    TopHoveringIcons(showModifiers.showPopups)
+                                    TopHoveringIcons(appCtx.showStates.showPopups)
 
                                 }
                             }
-                            second(if (imageIsLoaded) 300.dp else 0.dp) {
-                                if (imageIsLoaded) {
+                            second(if (appCtx.imageIsLoaded) 300.dp else 0.dp) {
+                                if (appCtx.imageIsLoaded) {
                                     Box() {
                                         Column(
                                             modifier = Modifier.padding(10.dp)
                                         ) {
 
-                                            if (imageIsLoaded) {
-                                                val imCopy = zilImage.inner;
-                                                Box(modifier = Modifier.padding(10.dp)) {
-                                                    CollapsibleBox("Information", showModifiers.showInformation, {
-                                                        showModifiers.showInformation =
-                                                            showModifiers.showInformation.xor(true);
-                                                    }) {
-                                                        Column(modifier = Modifier.padding(10.dp)) {
-                                                            Row(
-                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                                horizontalArrangement = Arrangement.SpaceBetween
-                                                            ) {
-                                                                Text("Width")
-                                                                Text(imCopy.width().toString() + " px");
-                                                            }
-                                                            Divider()
-                                                            Row(
-                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                                horizontalArrangement = Arrangement.SpaceBetween
-                                                            ) {
-                                                                Text("Height")
-                                                                Text(imCopy.height().toString() + " px");
-                                                            }
-
-                                                            Divider()
-                                                            Row(
-                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                                horizontalArrangement = Arrangement.SpaceBetween
-                                                            ) {
-                                                                Text("Colorspace")
-                                                                Text(imCopy.colorspace().toString());
-                                                            }
-                                                            Divider()
-                                                            Row(
-                                                                modifier = Modifier.fillMaxWidth().padding(10.dp),
-                                                                horizontalArrangement = Arrangement.SpaceBetween
-                                                            ) {
-                                                                Text("Size")
-                                                                Text(formatSize(imFile.length()));
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            Box(modifier = Modifier.padding(10.dp)) {
-                                                CollapsibleBox(title = "Light", hideableClicked, {
-                                                    hideableClicked = hideableClicked.xor(true)
-                                                }) {
-                                                    Column() {
-                                                        Box(
-                                                            modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
-                                                        ) {
-                                                            SliderTextComponent(
-                                                                "Contrast",
-                                                                contrastValue / 100F,
-                                                                { value ->
-                                                                    if (imageIsLoaded) {
-                                                                        zilImage.contrast(value)
-                                                                    }
-                                                                    contrastValue = value
-                                                                },
-                                                                offset = 0.0F,
-                                                                scale = 100F,
-                                                                decimalPattern = "#00"
-                                                            )
-                                                        }
+                                            ImageInformationComponent(appCtx, imFile)
+                                            LightFiltersComponent(appCtx)
 
 
-                                                        Box(
-                                                            modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
-                                                        ) {
-                                                            SliderTextComponent(
-                                                                "Gamma", 0.5F,
-                                                                { value ->
-
-                                                                    if (imageIsLoaded) {
-                                                                        zilImage.gamma(value)
-                                                                    }
-                                                                }, offset = 0.5F
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            Box(modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)) {
-                                                SliderTextComponent("Exposure", 0.5F, { value ->
-                                                    //contrastValue = value
-                                                }, offset = 0.5F, scale = 10F, decimalPattern = "#0.00")
-                                            }
                                             //HistogramChart(buffer, Color(0x1F_88_88_88_88))
 
                                         }
@@ -377,7 +295,7 @@ fun App() {
                 Divider()
                 Row(modifier = Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
 
-                    Text(statusMessages, style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+                    Text(appCtx.bottomStatus, style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
                 }
 
             }
@@ -386,40 +304,24 @@ fun App() {
 }
 
 
-fun formatSize(bytes: Long): String {
-    var bytes = bytes.toDouble();
-    val formatter = DecimalFormat("####.##")
-    if (bytes < 1024.0) {
-        return formatter.format(bytes) + " B"
-    }
-    bytes /= 1024.0;
-    if (bytes < 1024.0) {
-        return formatter.format(bytes) + " KB"
-    }
-    bytes /= 1024.0;
-    if (bytes < 1024.0) {
-        return formatter.format(bytes) + " MB"
-    }
-    bytes /= 1024.0;
-    return formatter.format(bytes) + " GB"
-}
-
 fun main() = application {
-    val externalNavigationEventBus = remember { ExternalNavigationEventBus() }
+    val appContext by remember { mutableStateOf(AppContext()) }
 
     Window(onCloseRequest = ::exitApplication, title = APP_TITLE, undecorated = false, onKeyEvent = {
         when (it.key) {
-            Key.DirectionLeft -> externalNavigationEventBus.produceEvent(
+            Key.DirectionLeft -> appContext.externalNavigationEventBus.produceEvent(
                 ExternalImageViewerEvent.Previous
             )
 
-            Key.DirectionRight -> externalNavigationEventBus.produceEvent(
+            Key.DirectionRight -> appContext.externalNavigationEventBus.produceEvent(
                 ExternalImageViewerEvent.Next
             )
+
+            Key.R -> appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.ReloadImage)
 
         }
         false
     }) {
-        App()
+        App(appContext)
     }
 }
