@@ -343,8 +343,20 @@ fun App(appCtx: AppContext) {
                                         }
                                     } else {
 
-                                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                            appCtx.image.image()
+                                        Surface(
+                                            color = if (appCtx.showStates.showLightTheme)
+                                                Color(
+                                                    245,
+                                                    245,
+                                                    245
+                                                ) else Color(25, 25, 25)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                appCtx.image.image()
+                                            }
                                         }
 
                                         //Image(image, contentDescription = null, modifier = Modifier.fillMaxSize())
