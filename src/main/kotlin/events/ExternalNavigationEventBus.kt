@@ -11,6 +11,7 @@ import loadImage
 enum class ExternalImageViewerEvent {
     Next,
     Previous,
+    OpenImage,
     ReloadImage
 }
 
@@ -29,6 +30,10 @@ class ExternalNavigationEventBus {
 
 suspend fun handleKeyEvents(appCtx: AppContext) {
     appCtx.externalNavigationEventBus.events.collect() {
+
+        if (it == ExternalImageViewerEvent.OpenImage){
+            appCtx.showStates.showFilePicker = true;
+        }
         if (it == ExternalImageViewerEvent.ReloadImage && appCtx.imageIsLoaded && appCtx.imFile.exists() && appCtx.imFile.isFile) {
 
             appCtx.showStates.showTopLinearIndicator = true;

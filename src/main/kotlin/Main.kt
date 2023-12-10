@@ -13,6 +13,7 @@ import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -445,6 +446,10 @@ fun main() = application {
         *
         * */
         if (diff > 250) {
+            if (it.isCtrlPressed && it.key==Key.O){
+                // open
+                appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.OpenImage)
+            }
             when (it.key) {
                 Key.DirectionLeft -> appContext.externalNavigationEventBus.produceEvent(
                     ExternalImageViewerEvent.Previous
@@ -455,6 +460,7 @@ fun main() = application {
                 )
 
                 Key.R -> appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.ReloadImage)
+
 
             }
         }
