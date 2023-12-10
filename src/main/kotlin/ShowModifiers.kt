@@ -10,6 +10,8 @@ class ShowModifiers {
     var showInformation by mutableStateOf(false)
     var showLightTheme by mutableStateOf(false)
     var showLightFilters by mutableStateOf(false)
+    var showDirectoryViewer by mutableStateOf(true)
+    var showImageEditors by mutableStateOf(true);
 
 
 }

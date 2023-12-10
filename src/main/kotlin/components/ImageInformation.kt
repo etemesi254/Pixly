@@ -12,15 +12,16 @@ import java.io.File
 import java.text.DecimalFormat
 
 @Composable
-fun ImageInformationComponent(appCtx: AppContext, file:File){
+fun ImageInformationComponent(appCtx: AppContext){
+    val file = appCtx.imFile
     val innerImage = appCtx.image.inner;
 
-    Box(modifier = Modifier.padding(10.dp)) {
+    Box(modifier = Modifier.padding(vertical = 10.dp)) {
         CollapsibleBox("Information", appCtx.showStates.showInformation, {
             appCtx.showStates.showInformation =
                 appCtx.showStates.showInformation.xor(true);
         }) {
-            Column(modifier = Modifier.padding(10.dp)) {
+            Column(modifier = Modifier.padding(vertical = 10.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween

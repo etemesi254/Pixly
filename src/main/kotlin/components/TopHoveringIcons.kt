@@ -29,7 +29,7 @@ fun TopHoveringIcons(visible:Boolean){
         var offsetX by remember { mutableStateOf(0f) }
         var offsetY by remember { mutableStateOf(0f) }
 
-        Box(modifier = Modifier
+        Box(modifier = Modifier.fillMaxWidth()
             .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
@@ -40,7 +40,7 @@ fun TopHoveringIcons(visible:Boolean){
             }
         ) {
             Row(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
                 AnimatedVisibility(
