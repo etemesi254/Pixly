@@ -94,7 +94,8 @@ fun App(appCtx: AppContext) {
             Column(Modifier.padding(it).fillMaxSize()) {
 
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp, horizontal = 0.dp),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
+                        .padding(vertical = 5.dp, horizontal = 0.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -108,21 +109,31 @@ fun App(appCtx: AppContext) {
                             IconButton(onClick = {
 
                                 appCtx.showStates.showDirectoryViewer = appCtx.showStates.showDirectoryViewer.xor(true);
-                            }) {
+                            }, modifier = Modifier.padding(horizontal = 10.dp)) {
                                 Icon(
                                     painter = painterResource("open-panel-filled-left-svgrepo-com.png"),
                                     contentDescription = null,
-                                    modifier = Modifier.size(50.dp).padding(end =10.dp),
+                                    modifier = Modifier.size(40.dp),
                                 )
                             }
+                            Divider(
+                                //color = Color.Red,
+                                modifier = Modifier
+                                    .fillMaxHeight()  //fill the max height
+                                    .width(1.5.dp)
+                            )
                             // open file
-                            Box() {
+                            Box(modifier = Modifier.padding(horizontal = 5.dp)) {
                                 val coroutineScope = rememberCoroutineScope()
 
-                                Button(onClick = {
+                                IconButton(onClick = {
                                     appCtx.showStates.showFilePicker = true;
                                 }) {
-                                    Text("Open File")
+                                    Icon(
+                                        painter = painterResource("open-file-svgrepo-com.svg"),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(35.dp)
+                                    )
                                 }
 
                                 FilePicker(
@@ -145,14 +156,17 @@ fun App(appCtx: AppContext) {
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.padding(horizontal = 10.dp))
                             // open directory
-                            Box() {
-                                Button(onClick = {
+                            Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+                                IconButton(onClick = {
                                     appCtx.showStates.showDirectoryPicker = true;
 
                                 }) {
-                                    Text("Open Directory")
+                                    Icon(
+                                        painter = painterResource("open-folder-svgrepo-com.svg"),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(30.dp)
+                                    )
                                 }
 
                                 DirectoryPicker(show = appCtx.showStates.showDirectoryPicker) { dir ->
@@ -171,6 +185,43 @@ fun App(appCtx: AppContext) {
                             ) {
 
 
+                                // File picker doesn't support saving file dialogs
+                                //
+                                // See:  https://github.com/Wavesonics/compose-multiplatform-file-picker/issues/8
+
+
+                                Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+                                    val coroutineScope = rememberCoroutineScope()
+
+                                    IconButton(onClick = {
+                                    }) {
+                                        Icon(
+                                            painter = painterResource("save-svgrepo.svg"),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(26.dp),
+                                        )
+                                    }
+
+                                }
+                                // open directory
+                                Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+                                    IconButton(onClick = {
+
+                                    }) {
+                                        Icon(
+                                            painter = painterResource("save-as-svgrepo-com.svg"),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(32.dp),
+                                        )
+                                    }
+                                }
+
+                                Divider(
+                                    //color = Color.Red,
+                                    modifier = Modifier
+                                        .fillMaxHeight()  //fill the max height
+                                        .width(1.5.dp)
+                                )
                                 IconButton({
                                     if (appCtx.imageIsLoaded) {
                                         appCtx.showStates.showImageEditors =

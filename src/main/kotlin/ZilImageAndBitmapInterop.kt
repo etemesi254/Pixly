@@ -17,8 +17,9 @@ class ZilImageAndBitmapInterop() {
     private var canvasBitmap = Bitmap();
     private var info: ImageInfo = ImageInfo.makeUnknown(0, 0);
     private var file: String = "";
+
     // a boolean to see if we have modified stuff
-    private var isModified  by   mutableStateOf(true)
+    private var isModified by mutableStateOf(true)
 
 
     constructor(file: String) : this() {
@@ -81,13 +82,13 @@ class ZilImageAndBitmapInterop() {
     private fun allocBuffer() {
         // check if buffer would fit the new type
         // i.e do not pre-allocate
-        val infoSize = info.height*info.width
-        val imageSize = inner.height().toInt()*inner.width().toInt();
+        val infoSize = info.height * info.width
+        val imageSize = inner.height().toInt() * inner.width().toInt();
         info = ImageInfo.makeN32(inner.width().toInt(), inner.height().toInt(), ColorAlphaType.UNPREMUL);
 
         canvasBitmap.setImageInfo(info)
 
-        if (infoSize!= imageSize) {
+        if (infoSize != imageSize) {
             // TODO change color type to be pre-multiplied once its exposed from native
             assert(canvasBitmap.allocPixels(info))
         }
@@ -137,11 +138,20 @@ class ZilImageAndBitmapInterop() {
                 * telling compose to redraw the image
                 *
                 * */
-                Image(bitmap = canvas(), contentDescription = null, modifier = Modifier.zIndex(if (isModified) {0F} else {0.0f}))
+                Image(
+                    bitmap = canvas(), contentDescription = null, modifier = Modifier.zIndex(
+                        if (isModified) {
+                            0F
+                        } else {
+                            0.0f
+                        }
+                    )
+                )
             }
         }
 
     }
+
     private fun canvas(): ImageBitmap {
         return canvasBitmap.asComposeImageBitmap()
     }
@@ -162,57 +172,68 @@ class ZilImageAndBitmapInterop() {
     fun contrast(value: Float) {
         inner.contrast(value)
         postProcessNoAlloc()
-        isModified =isModified.xor(true)
+        isModified = isModified.xor(true)
     }
+
     fun gamma(value: Float) {
         inner.gamma(value)
         postProcessNoAlloc()
     }
-    fun exposure(value: Float,blackPoint: Float = 0.0F){
-        inner.exposure(value,blackPoint)
+
+    fun exposure(value: Float, blackPoint: Float = 0.0F) {
+        inner.exposure(value, blackPoint)
         postProcessNoAlloc()
     }
-    fun brighten(value:Float){
+
+    fun brighten(value: Float) {
         inner.brightness(value)
         postProcessNoAlloc()
     }
 
-    fun stretchContrast(lower:Float,higher:Float){
-        inner.stretchContrast(lower,higher)
+    fun stretchContrast(lower: Float, higher: Float) {
+        inner.stretchContrast(lower, higher)
         postProcessNoAlloc()
     }
-    fun flip(){
+
+    fun flip() {
         inner.flip()
         postProcessAlloc()
     }
 
-    fun verticalFlip(){
+    fun verticalFlip() {
         inner.verticalFlip()
         postProcessAlloc()
     }
 
-    fun flop(){
+    fun flop() {
         inner.flop()
         postProcessAlloc()
     }
-    fun transpose(){
+
+    fun transpose() {
         inner.transpose()
         postProcessAlloc()
     }
 
-    private fun postProcessAlloc(){
+    fun save(file: String) {
+        inner.save(file)
+    }
+
+    fun save(file: String, format: ZilImageFormat) {
+        inner.save(file, format)
+    }
+
+    private fun postProcessAlloc() {
         allocBuffer()
         installPixels()
-        isModified =isModified.xor(true)
+        isModified = isModified.xor(true)
 
     }
 
 
-
-
     private fun postProcessNoAlloc() {
         installPixels()
-        isModified =isModified.xor(true)
+        isModified = isModified.xor(true)
     }
 
 }
