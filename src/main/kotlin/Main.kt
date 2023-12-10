@@ -110,9 +110,9 @@ fun App(appCtx: AppContext) {
                                 appCtx.showStates.showDirectoryViewer = appCtx.showStates.showDirectoryViewer.xor(true);
                             }) {
                                 Icon(
-                                    painter = painterResource("open-panel-left-svgrepo-com.svg"),
+                                    painter = painterResource("open-panel-filled-left-svgrepo-com.png"),
                                     contentDescription = null,
-                                    modifier = Modifier.size(30.dp),
+                                    modifier = Modifier.size(50.dp).padding(end =10.dp),
                                 )
                             }
                             // open file
@@ -150,6 +150,7 @@ fun App(appCtx: AppContext) {
                             Box() {
                                 Button(onClick = {
                                     appCtx.showStates.showDirectoryPicker = true;
+
                                 }) {
                                     Text("Open Directory")
                                 }
@@ -189,7 +190,7 @@ fun App(appCtx: AppContext) {
                                     Icon(
                                         painter = if (!appCtx.showStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
                                             "moon-svgrepo-com.svg"
-                                        ), contentDescription = null, modifier = Modifier.size(40.dp)
+                                        ), contentDescription = null, modifier = Modifier.size(35.dp)
                                     )
                                 }
 
@@ -298,7 +299,7 @@ fun App(appCtx: AppContext) {
                                         //Image(image, contentDescription = null, modifier = Modifier.fillMaxSize())
                                     }
 
-                                    TopHoveringIcons(appCtx.showStates.showPopups)
+                                    TopHoveringIcons(appCtx)
 
                                 }
                             }
@@ -315,6 +316,7 @@ fun App(appCtx: AppContext) {
 
                                             ImageInformationComponent(appCtx)
                                             LightFiltersComponent(appCtx)
+                                            OrientationFiltersComponent(appCtx)
 
 
                                             //HistogramChart(buffer, Color(0x1F_88_88_88_88))

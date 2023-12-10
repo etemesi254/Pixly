@@ -81,9 +81,14 @@ class ZilImageAndBitmapInterop() {
     private fun allocBuffer() {
         // check if buffer would fit the new type
         // i.e do not pre-allocate
-        if (info.height != inner.height().toInt() || info.width != inner.width().toInt()) {
+        val infoSize = info.height*info.width
+        val imageSize = inner.height().toInt()*inner.width().toInt();
+        info = ImageInfo.makeN32(inner.width().toInt(), inner.height().toInt(), ColorAlphaType.UNPREMUL);
+
+        canvasBitmap.setImageInfo(info)
+
+        if (infoSize!= imageSize) {
             // TODO change color type to be pre-multiplied once its exposed from native
-            info = ImageInfo.makeN32(inner.width().toInt(), inner.height().toInt(), ColorAlphaType.UNPREMUL);
             assert(canvasBitmap.allocPixels(info))
         }
         // ensure we can store it
@@ -169,8 +174,40 @@ class ZilImageAndBitmapInterop() {
     }
     fun brighten(value:Float){
         inner.brightness(value)
+        postProcessNoAlloc()
     }
-    
+
+    fun stretchContrast(lower:Float,higher:Float){
+        inner.stretchContrast(lower,higher)
+        postProcessNoAlloc()
+    }
+    fun flip(){
+        inner.flip()
+        postProcessAlloc()
+    }
+
+    fun verticalFlip(){
+        inner.verticalFlip()
+        postProcessAlloc()
+    }
+
+    fun flop(){
+        inner.flop()
+        postProcessAlloc()
+    }
+    fun transpose(){
+        inner.transpose()
+        postProcessAlloc()
+    }
+
+    private fun postProcessAlloc(){
+        allocBuffer()
+        installPixels()
+        isModified =isModified.xor(true)
+
+    }
+
+
 
 
     private fun postProcessNoAlloc() {

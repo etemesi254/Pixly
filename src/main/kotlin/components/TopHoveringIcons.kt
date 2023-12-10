@@ -1,5 +1,6 @@
 package components
 
+import AppContext
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,10 +22,11 @@ import androidx.compose.ui.window.Popup
 import kotlin.math.roundToInt
 
 @Composable
-fun TopHoveringIcons(visible:Boolean){
+fun TopHoveringIcons(appContext: AppContext){
 
     val density = LocalDensity.current
 
+    val visible = appContext.showStates.showPopups
     Box() {
         var offsetX by remember { mutableStateOf(0f) }
         var offsetY by remember { mutableStateOf(0f) }
@@ -108,7 +110,9 @@ fun TopHoveringIcons(visible:Boolean){
                                         )
                                     }
 
-                                    IconButton(onClick = {}) {
+                                    IconButton(onClick = {
+                                        appContext.showStates.showInformation= true
+                                    }) {
                                         Image(
                                             painter = painterResource("info-svgrepo.svg"),
                                             contentDescription = null,
