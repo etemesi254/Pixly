@@ -31,6 +31,8 @@ dependencies {
     implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.5.0")
     // color picking
 
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+
     implementation("zil:pixly-image:0.4.0")
 
 }
