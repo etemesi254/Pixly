@@ -10,8 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.withSave
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
@@ -50,6 +54,7 @@ suspend fun loadImage(appCtx: AppContext) {
     appCtx.bottomStatus = "Loaded ${appCtx.imFile.name} in ${time} ms"
     appCtx.showStates.showTopLinearIndicator = false;
     appCtx.imageIsLoaded = true;
+    appCtx.broadcastImageChange()
 }
 
 @OptIn(ExperimentalStdlibApi::class, ExperimentalSplitPaneApi::class, ExperimentalUnsignedTypes::class)
@@ -192,9 +197,11 @@ fun App(appCtx: AppContext) {
 
 
                                 Box(modifier = Modifier.padding(horizontal = 5.dp)) {
-                                    val coroutineScope = rememberCoroutineScope()
 
-                                    IconButton(onClick = {
+                                    IconButton(onClick ={
+                                    if (appCtx.imageIsLoaded) {
+                                        appCtx.showStates.showSaveDialog = true
+                                    }
                                     }) {
                                         Icon(
                                             painter = painterResource("save-svgrepo.svg"),
@@ -204,19 +211,10 @@ fun App(appCtx: AppContext) {
                                     }
 
                                 }
-                                // open directory
-                                Box(modifier = Modifier.padding(horizontal = 5.dp)) {
-                                    IconButton(onClick = {
 
-                                    }) {
-                                        Icon(
-                                            painter = painterResource("save-as-svgrepo-com.svg"),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(32.dp),
-                                        )
-                                    }
+                                if (appCtx.showStates.showSaveDialog && appCtx.imageIsLoaded){
+                                    SaveAsDialog(appCtx)
                                 }
-
                                 Divider(
                                     //color = Color.Red,
                                     modifier = Modifier
@@ -368,26 +366,7 @@ fun App(appCtx: AppContext) {
                                 }
                             }
                             second(if (appCtx.imageIsLoaded && appCtx.showStates.showImageEditors) 300.dp else 0.dp) {
-                                val density = LocalDensity.current;
-
-                                AnimatedVisibility(visible = appCtx.imageIsLoaded && appCtx.showStates.showImageEditors,
-                                    enter = slideInHorizontally { with(density) { +40.dp.roundToPx() } },
-                                    exit = slideOutHorizontally { with(density) { +400.dp.roundToPx() } }) {
-                                    Box() {
-                                        Column(
-                                            modifier = Modifier.padding(10.dp)
-                                        ) {
-
-                                            ImageInformationComponent(appCtx)
-                                            LightFiltersComponent(appCtx)
-                                            OrientationFiltersComponent(appCtx)
-
-
-                                            //HistogramChart(buffer, Color(0x1F_88_88_88_88))
-
-                                        }
-                                    }
-                                }
+                                FiltersPane(appCtx)
                             }
                         }
                     }
