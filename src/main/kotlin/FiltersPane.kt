@@ -25,6 +25,7 @@ enum class FiltersPaneOrdering {
     LightFilters,
     OrientationFilters,
     HistogramFilters,
+    Levels,
 }
 
 @Composable
@@ -37,6 +38,7 @@ fun histogramPane(appCtx: AppContext) {
         }
     }
 }
+
 
 @Composable
 fun FiltersPane(appCtx: AppContext) {
@@ -118,10 +120,15 @@ fun FiltersPane(appCtx: AppContext) {
                                 histogramPane(appCtx)
                             }
                         }
+
+                        FiltersPaneOrdering.Levels -> {
+                            ReorderableItem(state, key = item, index = it) {
+                                LevelsFiltersComponent(appCtx)
+                            }
+                        }
                     }
                 }
             }
-
 
             VerticalScrollbar(
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
