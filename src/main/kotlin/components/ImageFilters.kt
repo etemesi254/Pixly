@@ -32,6 +32,20 @@ fun LightFiltersComponent(appContext: AppContext) {
             appContext.showStates.showLightFilters = appContext.showStates.showLightFilters.xor(true)
         }) {
             Column() {
+
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Brighten",
+                        0F,
+                        valueRange = 0F..255F,
+                        decimalPattern = "##0"
+                    ) {
+                        image.brighten(it)
+                        appContext.broadcastImageChange()
+                    }
+                }
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
@@ -42,9 +56,9 @@ fun LightFiltersComponent(appContext: AppContext) {
                         decimalPattern = "#0"
                     ) {
                         image.contrast(it)
+                        appContext.broadcastImageChange()
                     }
                 }
-
 
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
@@ -55,6 +69,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                         decimalPattern = "0.00"
                     ) {
                         image.gamma(it + 2.3F)
+                        appContext.broadcastImageChange()
                     }
                 }
                 Box(
@@ -62,10 +77,11 @@ fun LightFiltersComponent(appContext: AppContext) {
                 ) {
                     SliderTextComponent(
                         "Exposure", 0F,
-                        valueRange = -5F..5F,
+                        valueRange = -1F..1F,
                         decimalPattern = "0.00"
                     ) {
                         image.exposure(it + 1F)
+                        appContext.broadcastImageChange()
                     }
                 }
             }
