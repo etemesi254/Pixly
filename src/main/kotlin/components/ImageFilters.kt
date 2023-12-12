@@ -15,8 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -133,11 +131,39 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                             Icon(
                                 painter = painterResource("transpose-svgrepo-com.png"),
                                 contentDescription = null,
-                               modifier = Modifier.size(30.dp)
+                                modifier = Modifier.size(30.dp)
 
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun LevelsFiltersComponent(appContext: AppContext) {
+    Box(modifier = Modifier.padding(vertical = 10.dp)) {
+        CollapsibleBox("Levels", appContext.showStates.showLevels, {
+            appContext.showStates.showLevels = appContext.showStates.showLevels.not()
+        }) {
+            Column {
+                Box(modifier = Modifier.height(100.dp))
+                {
+                    HistogramChart(ctx = appContext)
+                }
+                RangeSliderTextComponent(
+                    "Levels Adjustment",
+                    value = 0F..256F,
+                    valueRange = 0F..256F,
+                    decimalPattern = "##0"
+                ) {
+
+                    println(it);
+                    appContext.image.stretchContrast(it.start,it.endInclusive)
+                    appContext.broadcastImageChange()
                 }
             }
         }
