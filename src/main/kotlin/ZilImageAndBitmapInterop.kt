@@ -1,9 +1,7 @@
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asComposeImageBitmap
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.graphics.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
@@ -20,6 +18,7 @@ class ZilImageAndBitmapInterop() {
 
     // a boolean to see if we have modified stuff
     private var isModified by mutableStateOf(true)
+    //private var canvas:androidx.compose.ui.graphics.Canvas? = null;
 
 
     constructor(file: String) : this() {
@@ -94,11 +93,13 @@ class ZilImageAndBitmapInterop() {
         }
         // ensure we can store it
         assert(canvasBitmap.computeByteSize() == info.computeByteSize(info.minRowBytes))
+        //canvas = androidx.compose.ui.graphics.Canvas(canvas());
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
     private fun installPixels() {
         val buffer = inner.toBuffer();
+
         assert(canvasBitmap.installPixels(buffer.asByteArray()))
     }
 
@@ -138,14 +139,10 @@ class ZilImageAndBitmapInterop() {
                 * telling compose to redraw the image
                 *
                 * */
+
+
                 Image(
-                    bitmap = canvas(), contentDescription = null, modifier = Modifier.zIndex(
-                        if (isModified) {
-                            0F
-                        } else {
-                            0.0f
-                        }
-                    )
+                    bitmap = canvas(), contentDescription = null, modifier = Modifier.modifyOnChange(isModified)
                 )
             }
         }
@@ -171,28 +168,28 @@ class ZilImageAndBitmapInterop() {
 
     fun contrast(value: Float) {
         inner.contrast(value)
-        postProcessNoAlloc()
+        postProcessPixelsManipulated()
         isModified = isModified.xor(true)
     }
 
     fun gamma(value: Float) {
         inner.gamma(value)
-        postProcessNoAlloc()
+        postProcessPixelsManipulated()
     }
 
     fun exposure(value: Float, blackPoint: Float = 0.0F) {
         inner.exposure(value, blackPoint)
-        postProcessNoAlloc()
+        postProcessPixelsManipulated()
     }
 
     fun brighten(value: Float) {
         inner.brightness(value)
-        postProcessNoAlloc()
+        postProcessPixelsManipulated()
     }
 
     fun stretchContrast(lower: Float, higher: Float) {
         inner.stretchContrast(lower, higher)
-        postProcessNoAlloc()
+        postProcessPixelsManipulated()
     }
 
     fun flip() {
@@ -231,9 +228,21 @@ class ZilImageAndBitmapInterop() {
     }
 
 
-    private fun postProcessNoAlloc() {
+    private fun postProcessPixelsManipulated() {
         installPixels()
         isModified = isModified.xor(true)
     }
+    @OptIn(ExperimentalUnsignedTypes::class)
+    public fun buffer():UByteArray
+    {
+        return inner.toBuffer()
+    }
 
+}
+
+/** A stub modifier that can be used to tell compose to
+ * rebuild a widget
+ * */
+fun Modifier.Companion.modifyOnChange(modified: Boolean): Modifier {
+ return this
 }
