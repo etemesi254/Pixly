@@ -1,13 +1,14 @@
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import events.ExternalNavigationEventBus
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 
+class FilterValues{
+    val contrast by mutableStateOf( 0F);
+    val gamma by mutableStateOf(0F)
+    val exposure by mutableStateOf(0F)
+
+}
 @OptIn(ExperimentalSplitPaneApi::class)
 class AppContext {
 
@@ -27,5 +28,26 @@ class AppContext {
     var imFile by  mutableStateOf(File(""))
     var rootDirectory by  mutableStateOf("/")
 
+    var recomposeWidgets by mutableStateOf(RecomposeWidgets())
+
+
+    var filters:MutableMap<File,FilterValues> by mutableStateMapOf()
+
+
+    fun createFilterMap(){
+        filters[imFile]= FilterValues()
+    }
+
+    fun returnFilterValues(): FilterValues {
+        return filters[imFile]!!
+    }
+    fun broadcastImageChange(){
+        // tell whoever is listening to this to rebuild
+        recomposeWidgets.rerunHistogram = recomposeWidgets.rerunHistogram.xor(true)
+    }
+}
+
+class RecomposeWidgets {
+    var rerunHistogram by mutableStateOf(false)
 
 }
