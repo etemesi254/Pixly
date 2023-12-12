@@ -18,3 +18,5 @@ An image editor built on kotlin and Rust
 - Adjustable panels
   - Move the whole UI around until you are satisfied, capture your taste
 - Drag and drop filter panels to reorder them to better suit your workflow
+- Zoom in and out capabilities
+  - Zoom in on the image, pan around a zoomed image and see pixel effects in real time

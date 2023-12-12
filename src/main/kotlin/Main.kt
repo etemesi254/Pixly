@@ -1,5 +1,4 @@
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.desktop.ui.tooling.preview.Preview
@@ -9,22 +8,15 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusEvent
-import androidx.compose.ui.geometry.Offset
+
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.withSave
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -34,15 +26,13 @@ import com.darkrockstudios.libraries.mpfilepicker.DirectoryPicker
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import components.*
 import events.ExternalImageViewerEvent
-import events.ExternalNavigationEventBus
 import events.handleKeyEvents
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
-import org.jetbrains.skiko.currentNanoTime
 import java.io.File
+import java.text.DecimalFormat
 import kotlin.system.measureTimeMillis
 
 
@@ -198,10 +188,10 @@ fun App(appCtx: AppContext) {
 
                                 Box(modifier = Modifier.padding(horizontal = 5.dp)) {
 
-                                    IconButton(onClick ={
-                                    if (appCtx.imageIsLoaded) {
-                                        appCtx.showStates.showSaveDialog = true
-                                    }
+                                    IconButton(onClick = {
+                                        if (appCtx.imageIsLoaded) {
+                                            appCtx.showStates.showSaveDialog = true
+                                        }
                                     }) {
                                         Icon(
                                             painter = painterResource("save-svgrepo.svg"),
@@ -212,7 +202,7 @@ fun App(appCtx: AppContext) {
 
                                 }
 
-                                if (appCtx.showStates.showSaveDialog && appCtx.imageIsLoaded){
+                                if (appCtx.showStates.showSaveDialog && appCtx.imageIsLoaded) {
                                     SaveAsDialog(appCtx)
                                 }
                                 Divider(
@@ -311,8 +301,9 @@ fun App(appCtx: AppContext) {
                         ) {
                             first(0.dp) {
                                 Box(
+
                                     Modifier.background(imBackgroundColor).fillMaxSize().padding(horizontal = 10.dp)
-                                        .clickable {
+                                        .clickable(enabled = !appCtx.imageIsLoaded) {
                                             appCtx.showStates.showPopups = appCtx.showStates.showPopups.xor(true);
                                             if (!appCtx.imageIsLoaded) {
                                                 appCtx.showStates.showFilePicker = true;
@@ -354,7 +345,8 @@ fun App(appCtx: AppContext) {
                                                 modifier = Modifier.fillMaxSize(),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                appCtx.image.image()
+                                                // this computer is weird
+                                                appCtx.image.image(appCtx)
                                             }
                                         }
 
@@ -397,8 +389,27 @@ fun App(appCtx: AppContext) {
                 // Bottom row with statuses
                 Divider()
                 Row(modifier = Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val formatter = remember { DecimalFormat("0") };
 
-                    Text(appCtx.bottomStatus, style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+                    Box(
+                        contentAlignment = Alignment.CenterEnd, modifier = Modifier.width(70.dp).padding(horizontal = 5.dp),
+                    ) {
+                        Text(
+                            "${formatter.format(appCtx.zoomState.zoom * 100F)} %",
+                            style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
+                        )
+                    }
+
+                    Divider(
+                        //color = Color.Red,
+                        modifier = Modifier
+                            .fillMaxHeight()  //fill the max height
+                            .width(1.dp)
+                    )
+
+                    Text(appCtx.bottomStatus, modifier = Modifier.padding(horizontal = 5.dp), style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
                 }
 
             }
@@ -425,7 +436,7 @@ fun main() = application {
         *
         * */
         if (diff > 250) {
-            if (it.isCtrlPressed && it.key==Key.O){
+            if (it.isCtrlPressed && it.key == Key.O) {
                 // open
                 appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.OpenImage)
             }

@@ -1,7 +1,11 @@
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
+import components.ScalableImage
+import components.ScalableState
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
@@ -104,7 +108,7 @@ class ZilImageAndBitmapInterop() {
     }
 
     @Composable
-    fun image() {
+    fun image(appContext: AppContext) {
         /* Let's talk about computers and invalidations
         *
         * Say you have an image that takes 10 seconds to decode, so you alloc and decode
@@ -141,15 +145,16 @@ class ZilImageAndBitmapInterop() {
                 * */
 
 
-                Image(
-                    bitmap = canvas(), contentDescription = null, modifier = Modifier.modifyOnChange(isModified)
+                ScalableImage(
+                    appContext,
+                    modifier = Modifier.fillMaxSize().modifyOnChange(isModified)
                 )
             }
         }
 
     }
 
-    private fun canvas(): ImageBitmap {
+    fun canvas(): ImageBitmap {
         return canvasBitmap.asComposeImageBitmap()
     }
 
@@ -232,17 +237,18 @@ class ZilImageAndBitmapInterop() {
         installPixels()
         isModified = isModified.xor(true)
     }
+
     @OptIn(ExperimentalUnsignedTypes::class)
-    public fun buffer():UByteArray
-    {
+    public fun buffer(): UByteArray {
         return inner.toBuffer()
     }
 
 }
 
+
 /** A stub modifier that can be used to tell compose to
  * rebuild a widget
  * */
-fun Modifier.Companion.modifyOnChange(modified: Boolean): Modifier {
- return this
+fun Modifier.modifyOnChange(modified: Boolean): Modifier {
+    return this
 }

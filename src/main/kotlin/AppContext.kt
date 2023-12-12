@@ -1,4 +1,5 @@
 import androidx.compose.runtime.*
+import components.ScalableState
 import events.ExternalNavigationEventBus
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import java.io.File
@@ -30,9 +31,9 @@ class AppContext {
 
     var recomposeWidgets by mutableStateOf(RecomposeWidgets())
 
-
     var filters:MutableMap<File,FilterValues> by mutableStateMapOf()
 
+    var zoomState by mutableStateOf(ScalableState())
 
     fun createFilterMap(){
         filters[imFile]= FilterValues()

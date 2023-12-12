@@ -15,6 +15,7 @@ class ShowModifiers {
     var showOrientationFilters by mutableStateOf(false)
     var showSaveDialog by mutableStateOf(false)
     var showHistogram by mutableStateOf(false)
+    var showLevels by mutableStateOf(false)
 
 
 }
