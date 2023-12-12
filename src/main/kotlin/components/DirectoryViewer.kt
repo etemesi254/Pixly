@@ -122,7 +122,7 @@ fun DirectoryViewer(appCtx: AppContext, onFileClicked: (file: File) -> Unit) {
         } else if (cFile == file) {
             result = false
         } else if (textFieldValue.isNotEmpty()) {
-            result = cFile.path.contains(textFieldValue)
+            result = cFile.path.lowercase().contains(textFieldValue.lowercase())
         }
         result
     }
