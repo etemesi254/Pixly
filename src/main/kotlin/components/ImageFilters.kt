@@ -152,7 +152,7 @@ fun LevelsFiltersComponent(appContext: AppContext) {
             Column {
                 Box(modifier = Modifier.height(100.dp))
                 {
-                    HistogramChart(ctx = appContext)
+                    //HistogramChart(ctx = appContext)
                 }
                 RangeSliderTextComponent(
                     "Levels Adjustment",
