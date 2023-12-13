@@ -42,7 +42,7 @@ fun SaveAsDialog(ctx: AppContext) {
         Surface(modifier = Modifier.clip(RectangleShape).padding(30.dp), color = MaterialTheme.colors.background) {
             Column(modifier = Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(modifier = Modifier.padding(vertical = 10.dp)) {
-                    Text("Save as", style = MaterialTheme.typography.h6)
+                    Text("Save Image", style = MaterialTheme.typography.h6)
                 }
 
                 Box {

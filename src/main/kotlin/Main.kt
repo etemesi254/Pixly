@@ -79,7 +79,8 @@ fun App(appCtx: AppContext) {
     LaunchedEffect(Unit) {
         handleKeyEvents(appCtx)
     }
-
+    // TODO: See if we can get smoother for themes transitions
+    //  https://stackoverflow.com/questions/70942573/android-jetpack-composecomposable-change-theme-color-smoothly
     MaterialTheme(
         typography = poppinsTypography, colors = if (appCtx.showStates.showLightTheme)
             lightColors() else darkColors()
@@ -96,157 +97,146 @@ fun App(appCtx: AppContext) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // top area with buttons
-                    Column {
-                        Row(
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Spacer(modifier = Modifier.padding(horizontal = 10.dp))
-                            IconButton(onClick = {
 
-                                appCtx.showStates.showDirectoryViewer = appCtx.showStates.showDirectoryViewer.xor(true);
-                            }, modifier = Modifier.padding(horizontal = 10.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Spacer(modifier = Modifier.padding(horizontal = 10.dp))
+                        IconButton(onClick = {
+
+                            appCtx.showStates.showDirectoryViewer = appCtx.showStates.showDirectoryViewer.xor(true);
+                        }, modifier = Modifier.padding(horizontal = 10.dp)) {
+                            Icon(
+                                painter = painterResource("open-panel-filled-left-svgrepo-com.png"),
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                            )
+                        }
+                        Divider(
+                            //color = Color.Red,
+                            modifier = Modifier
+                                .fillMaxHeight()  //fill the max height
+                                .width(1.5.dp)
+                        )
+                        // open file
+                        Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+                            val coroutineScope = rememberCoroutineScope()
+
+                            IconButton(onClick = {
+                                appCtx.showStates.showFilePicker = true;
+                            }) {
                                 Icon(
-                                    painter = painterResource("open-panel-filled-left-svgrepo-com.png"),
+                                    painter = painterResource("open-file-svgrepo-com.svg"),
                                     contentDescription = null,
-                                    modifier = Modifier.size(40.dp),
+                                    modifier = Modifier.size(35.dp)
                                 )
+                            }
+
+                            FilePicker(
+                                show = appCtx.showStates.showFilePicker,
+                                fileExtensions = SUPPORTED_EXTENSIONS
+                            ) { file ->
+                                appCtx.showStates.showFilePicker = false
+
+                                if (file != null) {
+                                    appCtx.imFile = File(file.path)
+                                    appCtx.rootDirectory = appCtx.imFile.parent;
+
+                                    appCtx.showStates.showTopLinearIndicator = true;
+
+                                    coroutineScope.launch {
+                                        loadImage(appCtx)
+                                    }
+
+                                    // do something with the file
+                                }
+                            }
+                        }
+                        // open directory
+                        Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+                            IconButton(onClick = {
+                                appCtx.showStates.showDirectoryPicker = true;
+
+                            }) {
+                                Icon(
+                                    painter = painterResource("open-folder-svgrepo-com.svg"),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
+
+                            DirectoryPicker(show = appCtx.showStates.showDirectoryPicker) { dir ->
+                                appCtx.showStates.showDirectoryPicker = false
+                                // do something with the directory
+                                if (dir != null) {
+                                    appCtx.rootDirectory = dir
+                                }
+                            }
+                        }
+                        //Spacer(modifier = Modifier.fillMaxWidth(0.9F))
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(
+                                horizontal = 0.dp
+                            ), horizontalArrangement = Arrangement.End
+                        ) {
+
+
+                            // File picker doesn't support saving file dialogs
+                            //
+                            // See:  https://github.com/Wavesonics/compose-multiplatform-file-picker/issues/8
+
+
+                            Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+
+                                IconButton(onClick = {
+                                    if (appCtx.imageIsLoaded) {
+                                        appCtx.showStates.showSaveDialog = true
+                                    }
+                                }, enabled = appCtx.imageIsLoaded) {
+                                    Icon(
+                                        painter = painterResource("save-svgrepo.svg"),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
+
+                            }
+
+                            if (appCtx.showStates.showSaveDialog && appCtx.imageIsLoaded) {
+                                SaveAsDialog(appCtx)
                             }
                             Divider(
                                 //color = Color.Red,
                                 modifier = Modifier
                                     .fillMaxHeight()  //fill the max height
-                                    .width(1.5.dp)
+                                    .width(1.dp)
                             )
-                            // open file
-                            Box(modifier = Modifier.padding(horizontal = 5.dp)) {
-                                val coroutineScope = rememberCoroutineScope()
-
-                                IconButton(onClick = {
-                                    appCtx.showStates.showFilePicker = true;
-                                }) {
-                                    Icon(
-                                        painter = painterResource("open-file-svgrepo-com.svg"),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(35.dp)
-                                    )
-                                }
-
-                                FilePicker(
-                                    show = appCtx.showStates.showFilePicker,
-                                    fileExtensions = SUPPORTED_EXTENSIONS
-                                ) { file ->
-                                    appCtx.showStates.showFilePicker = false
-
-                                    if (file != null) {
-                                        appCtx.imFile = File(file.path)
-                                        appCtx.rootDirectory = appCtx.imFile.parent;
-
-                                        appCtx.showStates.showTopLinearIndicator = true;
-
-                                        coroutineScope.launch {
-                                            loadImage(appCtx)
-                                        }
-
-                                        // do something with the file
-                                    }
-                                }
-                            }
-                            // open directory
-                            Box(modifier = Modifier.padding(horizontal = 5.dp)) {
-                                IconButton(onClick = {
-                                    appCtx.showStates.showDirectoryPicker = true;
-
-                                }) {
-                                    Icon(
-                                        painter = painterResource("open-folder-svgrepo-com.svg"),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(30.dp)
-                                    )
-                                }
-
-                                DirectoryPicker(show = appCtx.showStates.showDirectoryPicker) { dir ->
-                                    appCtx.showStates.showDirectoryPicker = false
-                                    // do something with the directory
-                                    if (dir != null) {
-                                        appCtx.rootDirectory = dir
-                                    }
-                                }
-                            }
-                            //Spacer(modifier = Modifier.fillMaxWidth(0.9F))
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(
-                                    horizontal = 10.dp
-                                ), horizontalArrangement = Arrangement.End
-                            ) {
 
 
-                                // File picker doesn't support saving file dialogs
-                                //
-                                // See:  https://github.com/Wavesonics/compose-multiplatform-file-picker/issues/8
-
-
-                                Box(modifier = Modifier.padding(horizontal = 5.dp)) {
-
-                                    IconButton(onClick = {
-                                        if (appCtx.imageIsLoaded) {
-                                            appCtx.showStates.showSaveDialog = true
-                                        }
-                                    }) {
-                                        Icon(
-                                            painter = painterResource("save-svgrepo.svg"),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(26.dp),
-                                        )
-                                    }
-
-                                }
-
-                                if (appCtx.showStates.showSaveDialog && appCtx.imageIsLoaded) {
-                                    SaveAsDialog(appCtx)
-                                }
-                                Divider(
-                                    //color = Color.Red,
-                                    modifier = Modifier
-                                        .fillMaxHeight()  //fill the max height
-                                        .width(1.5.dp)
+                            IconButton({
+                                appCtx.showStates.showLightTheme = appCtx.showStates.showLightTheme.xor(true)
+                            }) {
+                                Icon(
+                                    painter = if (!appCtx.showStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
+                                        "moon-svgrepo-com.svg"
+                                    ), contentDescription = null, modifier = Modifier.size(35.dp)
                                 )
-                                IconButton({
-                                    if (appCtx.imageIsLoaded) {
-                                        appCtx.showStates.showImageEditors =
-                                            appCtx.showStates.showImageEditors.xor(true)
-                                    }
-                                }) {
-                                    Icon(
-                                        painter = painterResource("image-edit-svgrepo-com.svg"),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(30.dp)
-                                    )
-                                }
-
-                                IconButton({
-                                    appCtx.showStates.showLightTheme = appCtx.showStates.showLightTheme.xor(true)
-                                }) {
-                                    Icon(
-                                        painter = if (!appCtx.showStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
-                                            "moon-svgrepo-com.svg"
-                                        ), contentDescription = null, modifier = Modifier.size(35.dp)
-                                    )
-                                }
-
                             }
-                        }
-                        if (appCtx.showStates.showTopLinearIndicator) {
-                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
                         }
                     }
+//                    if (appCtx.showStates.showTopLinearIndicator) {
+//                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+//                    }
+
                 }
 
                 Divider()
 
                 // Movable panes
                 HorizontalSplitPane(
-                    modifier = Modifier.fillMaxWidth(1F).fillMaxHeight(0.96F),
+                    modifier = Modifier.fillMaxWidth().fillMaxHeight(0.96F),
                     splitPaneState = topHorizontalSplitterState
                 ) {
 
@@ -357,7 +347,7 @@ fun App(appCtx: AppContext) {
 
                                 }
                             }
-                            second(if (appCtx.imageIsLoaded && appCtx.showStates.showImageEditors) 300.dp else 0.dp) {
+                            second(if (appCtx.imageIsLoaded && appCtx.openPane != RightPaneOpened.None) 400.dp else 54.dp) {
                                 FiltersPane(appCtx)
                             }
                         }
@@ -392,7 +382,8 @@ fun App(appCtx: AppContext) {
                     val formatter = remember { DecimalFormat("0") };
 
                     Box(
-                        contentAlignment = Alignment.CenterEnd, modifier = Modifier.width(70.dp).padding(horizontal = 5.dp),
+                        contentAlignment = Alignment.CenterEnd,
+                        modifier = Modifier.width(70.dp).padding(horizontal = 5.dp),
                     ) {
                         Text(
                             "${formatter.format(appCtx.zoomState.zoom * 100F)} %",
@@ -409,7 +400,11 @@ fun App(appCtx: AppContext) {
                             .width(1.dp)
                     )
 
-                    Text(appCtx.bottomStatus, modifier = Modifier.padding(horizontal = 5.dp), style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+                    Text(
+                        appCtx.bottomStatus,
+                        modifier = Modifier.padding(horizontal = 5.dp),
+                        style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                    )
                 }
 
             }

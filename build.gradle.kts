@@ -58,6 +58,18 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Pixly"
             packageVersion = "1.0.0"
+            nativeDistributions {
+//                macOS {
+//                    // macOS specific options
+//                }
+                windows {
+                    // Windows specific options
+                }
+                linux {
+                    // Linux specific options
+                    appResourcesRootDir.set(project.layout.projectDirectory.dir("shared_libs/linux"))
+                }
+            }
         }
     }
 }

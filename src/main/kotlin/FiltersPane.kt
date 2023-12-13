@@ -3,16 +3,21 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import components.*
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -20,28 +25,67 @@ import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
 import org.burnoutcrew.reorderable.reorderable
 
-enum class FiltersPaneOrdering {
-    ImageInfo,
-    LightFilters,
-    OrientationFilters,
-    HistogramFilters,
-    Levels,
-}
 
 @Composable
 fun histogramPane(appCtx: AppContext) {
     CollapsibleBox("Histogram", appCtx.showStates.showHistogram, onTopRowClicked = {
         appCtx.showStates.showHistogram = appCtx.showStates.showHistogram.not()
     }) {
-        Box(modifier = Modifier.heightIn(0.dp, 250.dp)) {
+        Box() {
             HistogramChart(appCtx)
         }
     }
 }
 
-
 @Composable
 fun FiltersPane(appCtx: AppContext) {
+
+    Box(
+        contentAlignment = Alignment.CenterEnd,
+        modifier = Modifier.fillMaxSize().defaultMinSize(80.dp)
+    ) {
+        if (appCtx.openPane != RightPaneOpened.None) {
+            Surface(
+                color = MaterialTheme.colors.background,
+                modifier = Modifier.fillMaxWidth().padding(end = 40.dp)
+            ) {
+                when (appCtx.openPane) {
+                    RightPaneOpened.None -> Box {}
+                    RightPaneOpened.FiltersPanel -> ImageFiltersPane(appCtx)
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxHeight().requiredWidth(50.dp)
+            //.border(2.dp, MaterialTheme.colors.onBackground, shape = RectangleShape)
+        ) {
+
+            Divider(color = Color(0xFF_29_29_29),modifier = Modifier.fillMaxHeight().width(1.dp))
+
+            Column {
+                IconButton({
+                    if (appCtx.imageIsLoaded) {
+                        if (appCtx.openPane == RightPaneOpened.FiltersPanel) {
+                            appCtx.openPane = RightPaneOpened.None
+                        } else {
+                            appCtx.openPane = RightPaneOpened.FiltersPanel
+                        }
+                    }
+                }, enabled = appCtx.imageIsLoaded) {
+                    Icon(
+                        painter = painterResource("image-edit-svgrepo-com.svg"),
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+fun ImageFiltersPane(appCtx: AppContext) {
     val density = LocalDensity.current;
 
     // We want to have items to reorder in the panels/pane. but then we can't have compose return
@@ -71,12 +115,16 @@ fun FiltersPane(appCtx: AppContext) {
     })
 
     AnimatedVisibility(
-        visible = appCtx.imageIsLoaded && appCtx.showStates.showImageEditors,
+        visible = appCtx.openPane == RightPaneOpened.FiltersPanel,
         enter = slideInHorizontally { with(density) { +40.dp.roundToPx() } },
         exit = slideOutHorizontally { with(density) { +400.dp.roundToPx() } },
         modifier = Modifier.fillMaxHeight()
     ) {
-        Box(modifier = Modifier.modifyOnChange(orderChanged).fillMaxHeight().padding(horizontal = 5.dp)) {
+
+        Surface(
+            modifier = Modifier.modifyOnChange(orderChanged)
+                .fillMaxHeight().padding(horizontal = 5.dp)
+        ) {
             // provides a scrollbar
 
             LazyColumn(
@@ -130,12 +178,12 @@ fun FiltersPane(appCtx: AppContext) {
                 }
             }
 
-            VerticalScrollbar(
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                adapter = rememberScrollbarAdapter(
-                    scrollState = scrollState
-                )
-            )
+//            VerticalScrollbar(
+//                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+//                adapter = rememberScrollbarAdapter(
+//                    scrollState = scrollState
+//                )
+//            )
         }
     }
 }
