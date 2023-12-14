@@ -3,7 +3,6 @@
  * editor panel
  * */
 enum class FiltersPaneOrdering {
-    ImageInfo,
     LightFilters,
     OrientationFilters,
     HistogramFilters,
@@ -16,5 +15,6 @@ enum class FiltersPaneOrdering {
  * */
 enum class RightPaneOpened {
     None,
+    InformationPanel,
     FiltersPanel
 }
