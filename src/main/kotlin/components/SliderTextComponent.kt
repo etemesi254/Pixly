@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.unit.dp
 import java.text.DecimalFormat
 
@@ -38,6 +40,7 @@ import java.text.DecimalFormat
  * @param value: Initial value to give the text field and slider, range is 0..1
  * @param onValueChange: A callback to call when the value has changed, the value returned is `(value-offset)*scale`
  * @param decimalPattern: The decimal pattern to use for the scale and text field
+ * @param scrollValueChangeBy: The delta amount a scroll event should change the filter by
  *
  * */
 @Composable
@@ -46,17 +49,15 @@ fun SliderTextComponent(
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
     decimalPattern: String = "###0.#########",
+    scrollValueChangeBy: Float = 1.0F,
     onValueChange: (Float) -> Unit,
-
-    ) {
+) {
 
     val df = remember { DecimalFormat(decimalPattern) };
-    // contains the parsed and to be displayed current value
-    var currentValue by remember { mutableStateOf(value) }
     // contains whatever value the slider is pointing to
     var sliderValue by remember { mutableStateOf(value) }
     // value shown in the text-field
-    var shownValue by remember { mutableStateOf(df.format(currentValue)) }
+    var shownValue by remember { mutableStateOf(df.format(sliderValue)) }
 
 
     Column {
@@ -71,37 +72,46 @@ fun SliderTextComponent(
                 onValueChange = {
 
                     try {
+                        // we depend on this crashing
+                        // to catch invalid inputs in the slider
+                        // so DON'T remove
+                        val c = it.toFloat()
                         val newValue = df.parse(it).toFloat()
                         sliderValue = newValue;
-                        currentValue = newValue
                         shownValue = it
 
-                        onValueChange(currentValue)
+                        onValueChange(sliderValue)
                     } catch (_: Exception) {
                     }
                 },
                 textStyle = MaterialTheme.typography.caption.copy(MaterialTheme.colors.onBackground),
                 singleLine = true,
                 modifier = Modifier.border(
-                    1.dp,
-                    Color.Gray,
-                    shape = RoundedCornerShape(20)
-                ).padding(5.dp),
-
+                    1.dp, Color.Gray, shape = RoundedCornerShape(20)
                 )
+                    .padding(5.dp)
+                    .onPointerEvent(PointerEventType.Scroll, pass = PointerEventPass.Main) {
+                        val delta = it.changes[0].scrollDelta
+                        if (delta.y < 0.0) {
+
+                            sliderValue += scrollValueChangeBy
+                        } else {
+                            sliderValue -= scrollValueChangeBy
+                        }
+                        // clamp to range allowed
+                        sliderValue = sliderValue.coerceIn(valueRange)
+
+                        shownValue = df.format(sliderValue)
+                        onValueChange(sliderValue)
+                    })
         }
         Slider(
-            value = sliderValue,
-            modifier = Modifier.fillMaxWidth(),
-            onValueChange = {
+            value = sliderValue, modifier = Modifier.fillMaxWidth(), onValueChange = {
                 sliderValue = it;
-                currentValue = it
-                shownValue = df.format(currentValue)
-                onValueChange(currentValue)
+                shownValue = df.format(sliderValue)
+                onValueChange(sliderValue)
 
-            },
-            valueRange = valueRange,
-            colors = SliderDefaults.colors()
+            }, valueRange = valueRange, colors = SliderDefaults.colors()
         )
 
     }
@@ -134,9 +144,7 @@ fun RangeSliderTextComponent(
     Column {
 
         RangeSlider(
-            value = sliderValue,
-            modifier = Modifier.fillMaxWidth(),
-            onValueChange = {
+            value = sliderValue, modifier = Modifier.fillMaxWidth(), onValueChange = {
                 sliderValue = it;
                 // currentValue = itonValueChange
                 // shownValue = df.format(currentValue)
@@ -144,9 +152,7 @@ fun RangeSliderTextComponent(
                 shownEndValue = df.format(it.endInclusive)
                 onValueChange(it)
 
-            },
-            valueRange = valueRange,
-            colors = SliderDefaults.colors()
+            }, valueRange = valueRange, colors = SliderDefaults.colors()
         )
 
         Row(
@@ -167,10 +173,9 @@ fun RangeSliderTextComponent(
                 textStyle = MaterialTheme.typography.caption.copy(MaterialTheme.colors.onBackground),
                 singleLine = true,
                 modifier = Modifier.border(
-                    1.dp,
-                    Color.Gray,
-                    shape = RoundedCornerShape(20)
-                ).padding(5.dp).width(35.dp),
+                    1.dp, Color.Gray, shape = RoundedCornerShape(20)
+                ).padding(5.dp).width(35.dp)
+
             )
             BasicTextField(
                 value = shownEndValue,
@@ -184,9 +189,7 @@ fun RangeSliderTextComponent(
                 textStyle = MaterialTheme.typography.caption.copy(MaterialTheme.colors.onBackground),
                 singleLine = true,
                 modifier = Modifier.border(
-                    1.dp,
-                    Color.Gray,
-                    shape = RoundedCornerShape(20)
+                    1.dp, Color.Gray, shape = RoundedCornerShape(20)
                 ).padding(5.dp).width(35.dp),
             )
         }
