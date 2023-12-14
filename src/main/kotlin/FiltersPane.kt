@@ -18,6 +18,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import components.*
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -37,6 +41,7 @@ fun histogramPane(appCtx: AppContext) {
     }
 }
 
+
 @Composable
 fun FiltersPane(appCtx: AppContext) {
 
@@ -51,6 +56,7 @@ fun FiltersPane(appCtx: AppContext) {
             ) {
                 when (appCtx.openPane) {
                     RightPaneOpened.None -> Box {}
+                    RightPaneOpened.InformationPanel -> InformationPanel(appCtx)
                     RightPaneOpened.FiltersPanel -> ImageFiltersPane(appCtx)
                 }
             }
@@ -60,17 +66,31 @@ fun FiltersPane(appCtx: AppContext) {
             //.border(2.dp, MaterialTheme.colors.onBackground, shape = RectangleShape)
         ) {
 
-            Divider(color = Color(0xFF_29_29_29),modifier = Modifier.fillMaxHeight().width(1.dp))
+            Divider(color = Color(0xFF_29_29_29), modifier = Modifier.fillMaxHeight().width(1.dp))
 
             Column {
                 IconButton({
-                    if (appCtx.imageIsLoaded) {
-                        if (appCtx.openPane == RightPaneOpened.FiltersPanel) {
-                            appCtx.openPane = RightPaneOpened.None
-                        } else {
-                            appCtx.openPane = RightPaneOpened.FiltersPanel
-                        }
+                    if (appCtx.openPane == RightPaneOpened.InformationPanel) {
+                        appCtx.openPane = RightPaneOpened.None
+                    } else {
+                        appCtx.openPane = RightPaneOpened.InformationPanel
                     }
+
+                }, enabled = appCtx.imageIsLoaded) {
+                    Icon(
+                        painter = painterResource("info-svgrepo.svg"),
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+
+                IconButton({
+                    if (appCtx.openPane == RightPaneOpened.FiltersPanel) {
+                        appCtx.openPane = RightPaneOpened.None
+                    } else {
+                        appCtx.openPane = RightPaneOpened.FiltersPanel
+                    }
+
                 }, enabled = appCtx.imageIsLoaded) {
                     Icon(
                         painter = painterResource("image-edit-svgrepo-com.svg"),
@@ -81,6 +101,72 @@ fun FiltersPane(appCtx: AppContext) {
             }
 
         }
+    }
+}
+
+
+@Composable
+fun ExifMetadataPane(appCtx: AppContext) {
+
+    val exif: Map<String, String> = appCtx.image.inner.exifMetadata()
+
+
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+
+
+        if (exif.isNotEmpty()) {
+            Divider()
+            Text(
+                "Exif Metadata",
+                modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
+                style = MaterialTheme.typography.h5
+            )
+            //Divider()
+        }
+        for ((k, v) in exif) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(all = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    k,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(end = 10.dp),
+                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                )
+                Text(
+                    v,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                )
+            }
+            Divider()
+        }
+    }
+}
+
+@Composable
+fun InformationPanel(appCtx: AppContext) {
+    val scrollState = rememberLazyListState()
+
+    Box(modifier = Modifier.fillMaxHeight().padding(horizontal = 10.dp)) {
+        LazyColumn(state = scrollState) {
+            item {
+                ImageInformationComponent(appCtx)
+            }
+            item {
+                ExifMetadataPane(appCtx)
+            }
+        }
+
+        VerticalScrollbar(
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            adapter = rememberScrollbarAdapter(
+                scrollState = scrollState
+            )
+        )
     }
 }
 
@@ -138,12 +224,6 @@ fun ImageFiltersPane(appCtx: AppContext) {
 
                 items(enumOrdering.size) {
                     when (val item = enumOrdering[it]) {
-                        FiltersPaneOrdering.ImageInfo -> {
-                            ReorderableItem(state, key = item, index = it) {
-                                ImageInformationComponent(appCtx)
-
-                            }
-                        }
 
                         FiltersPaneOrdering.LightFilters -> {
                             ReorderableItem(state, key = item, index = it) {
