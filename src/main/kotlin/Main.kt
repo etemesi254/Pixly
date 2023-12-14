@@ -292,9 +292,9 @@ fun App(appCtx: AppContext) {
                             first(0.dp) {
                                 Box(
 
-                                    Modifier.background(imBackgroundColor).fillMaxSize().padding(horizontal = 10.dp)
+                                    Modifier.background(imBackgroundColor).fillMaxSize().padding(horizontal = 0.dp)
                                         .clickable(enabled = !appCtx.imageIsLoaded) {
-                                            appCtx.showStates.showPopups = appCtx.showStates.showPopups.xor(true);
+                                            appCtx.showStates.showPopups = !appCtx.showStates.showPopups;
                                             if (!appCtx.imageIsLoaded) {
                                                 appCtx.showStates.showFilePicker = true;
                                             }
