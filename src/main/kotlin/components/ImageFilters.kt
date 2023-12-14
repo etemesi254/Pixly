@@ -64,7 +64,8 @@ fun LightFiltersComponent(appContext: AppContext) {
                     SliderTextComponent(
                         "Gamma", 0F,
                         valueRange = -5F..5F,
-                        decimalPattern = "0.00"
+                        decimalPattern = "0.00",
+                        scrollValueChangeBy = 0.2F
                     ) {
                         image.gamma(it + 2.3F)
                         appContext.broadcastImageChange()
@@ -76,7 +77,8 @@ fun LightFiltersComponent(appContext: AppContext) {
                     SliderTextComponent(
                         "Exposure", 0F,
                         valueRange = -1F..1F,
-                        decimalPattern = "0.00"
+                        decimalPattern = "0.00",
+                        scrollValueChangeBy = 0.01F
                     ) {
                         image.exposure(it + 1F)
                         appContext.broadcastImageChange()
