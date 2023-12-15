@@ -254,6 +254,11 @@ fun ImageFiltersPane(appCtx: AppContext) {
                                 LevelsFiltersComponent(appCtx)
                             }
                         }
+                        FiltersPaneOrdering.BlurFilters -> {
+                            ReorderableItem(state, key = item, index = it) {
+                                BlurFiltersComponent(appCtx)
+                            }
+                        }
                     }
                 }
             }

@@ -67,7 +67,14 @@ fun LightFiltersComponent(appContext: AppContext) {
                         decimalPattern = "0.00",
                         scrollValueChangeBy = 0.2F
                     ) {
-                        image.gamma(it + 2.3F)
+
+                        // gamma works in a weird way, higher gamma
+                        // is a darker image, which beats the logic of the
+                        // slider since we expect higher gamma to be a brighter
+                        // image, so just invert that here
+                        // this makes higher gamma -> brighter images
+                        // smaller gamma -> darker images
+                        image.gamma((-1*it) + 2.3F)
                         appContext.broadcastImageChange()
                     }
                 }
@@ -164,8 +171,48 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                 ) {
 
                     println(it);
-                    appContext.image.stretchContrast(it.start,it.endInclusive)
+                    appContext.image.stretchContrast(it.start, it.endInclusive)
                     appContext.broadcastImageChange()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BlurFiltersComponent(appContext: AppContext) {
+    Box(modifier = Modifier.padding(vertical = 10.dp)) {
+        CollapsibleBox("Blur", appContext.showStates.showBlurFilters, {
+            appContext.showStates.showBlurFilters = !appContext.showStates.showBlurFilters
+        }) {
+            Column {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Box Blur",
+                        0F,
+                        valueRange = 0F..255F,
+                        decimalPattern = "##0"
+                    ) {
+                        appContext.initializeImageChange()
+                        appContext.image.boxBlur(it.toLong())
+                        appContext.broadcastImageChange()
+                    }
+                }
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Gaussian Blur",
+                        0F,
+                        valueRange = 0F..255F,
+                        decimalPattern = "#0"
+                    ) {
+                        appContext.initializeImageChange()
+                        appContext.image.gaussianBlur(it.toLong())
+                        appContext.broadcastImageChange()
+                    }
                 }
             }
         }

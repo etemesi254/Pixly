@@ -11,7 +11,7 @@ class ShowModifiers {
     var showLightTheme by mutableStateOf(false)
     var showLightFilters by mutableStateOf(false)
     var showDirectoryViewer by mutableStateOf(true)
-    var showImageEditors by mutableStateOf(true)
+    var showBlurFilters by mutableStateOf(false)
     var showOrientationFilters by mutableStateOf(false)
     var showSaveDialog by mutableStateOf(false)
     var showHistogram by mutableStateOf(false)

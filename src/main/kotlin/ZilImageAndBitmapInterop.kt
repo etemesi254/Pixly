@@ -97,7 +97,6 @@ class ZilImageAndBitmapInterop() {
         }
         // ensure we can store it
         assert(canvasBitmap.computeByteSize() == info.computeByteSize(info.minRowBytes))
-        //canvas = androidx.compose.ui.graphics.Canvas(canvas());
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)
@@ -128,7 +127,9 @@ class ZilImageAndBitmapInterop() {
             if (mutex.tryLock()) {
                 // unlock when composition is done
                 SideEffect {
-                    mutex.unlock()
+                    if (mutex.isLocked) {
+                        mutex.unlock()
+                    }
                 }
                 /*
                 * Let's talk about getting compose to redraw.
@@ -143,8 +144,6 @@ class ZilImageAndBitmapInterop() {
                 * telling compose to redraw the image
                 *
                 * */
-
-
                 ScalableImage(
                     appContext,
                     modifier = Modifier.fillMaxSize().modifyOnChange(isModified)
@@ -174,7 +173,6 @@ class ZilImageAndBitmapInterop() {
     fun contrast(value: Float) {
         inner.contrast(value)
         postProcessPixelsManipulated()
-        isModified = isModified.xor(true)
     }
 
     fun gamma(value: Float) {
@@ -194,6 +192,16 @@ class ZilImageAndBitmapInterop() {
 
     fun stretchContrast(lower: Float, higher: Float) {
         inner.stretchContrast(lower, higher)
+        postProcessPixelsManipulated()
+    }
+
+    fun gaussianBlur(radius: Long) {
+        inner.gaussianBlur(radius)
+        postProcessPixelsManipulated()
+    }
+
+    fun boxBlur(radius: Long) {
+        inner.boxBlur(radius)
         postProcessPixelsManipulated()
     }
 
@@ -228,19 +236,13 @@ class ZilImageAndBitmapInterop() {
     private fun postProcessAlloc() {
         allocBuffer()
         installPixels()
-        isModified = isModified.xor(true)
-
+        isModified = !isModified
     }
 
 
     private fun postProcessPixelsManipulated() {
         installPixels()
-        isModified = isModified.xor(true)
-    }
-
-    @OptIn(ExperimentalUnsignedTypes::class)
-    public fun buffer(): UByteArray {
-        return inner.toBuffer()
+        isModified = !isModified;
     }
 
 }

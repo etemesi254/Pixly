@@ -9,6 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.unit.dp
@@ -90,6 +93,22 @@ fun SliderTextComponent(
                     1.dp, Color.Gray, shape = RoundedCornerShape(20)
                 )
                     .padding(5.dp)
+                    .onKeyEvent {
+                        if (it.key == Key.DirectionUp || it.key == Key.DirectionDown) {
+                            if (it.key == Key.DirectionUp) {
+
+                                sliderValue += scrollValueChangeBy
+                            } else {
+                                sliderValue -= scrollValueChangeBy
+                            }
+                            // clamp to range allowed
+                            sliderValue = sliderValue.coerceIn(valueRange)
+
+                            shownValue = df.format(sliderValue)
+                            onValueChange(sliderValue)
+                        }
+                        false
+                    }
                     .onPointerEvent(PointerEventType.Scroll, pass = PointerEventPass.Main) {
                         val delta = it.changes[0].scrollDelta
                         if (delta.y < 0.0) {

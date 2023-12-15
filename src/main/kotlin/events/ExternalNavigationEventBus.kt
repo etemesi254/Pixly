@@ -36,8 +36,7 @@ suspend fun handleKeyEvents(appCtx: AppContext) {
         }
         if (it == ExternalImageViewerEvent.ReloadImage && appCtx.imageIsLoaded && appCtx.imFile.exists() && appCtx.imFile.isFile) {
 
-            appCtx.showStates.showTopLinearIndicator = true;
-
+            appCtx.initializeImageChange()
             loadImage(appCtx)
 
         }

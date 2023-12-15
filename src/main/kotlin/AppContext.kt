@@ -46,9 +46,16 @@ class AppContext {
         return filters[imFile]!!
     }
 
+    fun initializeImageChange() {
+        showStates.showTopLinearIndicator = true;
+
+    }
+
     fun broadcastImageChange() {
         // tell whoever is listening to this to rebuild
         recomposeWidgets.rerunHistogram = recomposeWidgets.rerunHistogram.xor(true)
+        showStates.showTopLinearIndicator = false;
+
     }
 }
 

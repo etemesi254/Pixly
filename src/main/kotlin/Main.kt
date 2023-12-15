@@ -27,7 +27,9 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import components.*
 import events.ExternalImageViewerEvent
 import events.handleKeyEvents
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
@@ -38,11 +40,8 @@ import kotlin.system.measureTimeMillis
 
 suspend fun loadImage(appCtx: AppContext) {
 
-
-    appCtx.showStates.showTopLinearIndicator = true
     val time = measureTimeMillis { appCtx.image.loadFile(appCtx.imFile.path) }
     appCtx.bottomStatus = "Loaded ${appCtx.imFile.name} in ${time} ms"
-    appCtx.showStates.showTopLinearIndicator = false;
     appCtx.imageIsLoaded = true;
     appCtx.broadcastImageChange()
 }
@@ -76,7 +75,7 @@ fun App(appCtx: AppContext) {
      * when that is fixed, revert this to local
      *
      */
-    LaunchedEffect(Unit) {
+    GlobalScope.launch  {
         handleKeyEvents(appCtx)
     }
     // TODO: See if we can get smoother for themes transitions
@@ -143,9 +142,9 @@ fun App(appCtx: AppContext) {
                                     appCtx.imFile = File(file.path)
                                     appCtx.rootDirectory = appCtx.imFile.parent;
 
-                                    appCtx.showStates.showTopLinearIndicator = true;
+                                    appCtx.initializeImageChange()
 
-                                    coroutineScope.launch {
+                                    GlobalScope.launch {
                                         loadImage(appCtx)
                                     }
 
@@ -261,13 +260,15 @@ fun App(appCtx: AppContext) {
                                     // on file clicked
                                     if (isImage(it)) {
                                         appCtx.imFile = it;
+                                        appCtx.initializeImageChange()
+
                                         /*
                                         * For some weird reason, using a local scope doesn't cause LinearProgressIndicator
                                         * to render, it appears on screen, the animation just doesn't run, which is weird
                                         * So for now we use GlobalScope until we figure out
                                         *
                                         */
-                                        scope.launch {
+                                        GlobalScope.launch {
                                             loadImage(appCtx)
                                         }
 
@@ -402,9 +403,18 @@ fun App(appCtx: AppContext) {
 
                     Text(
                         appCtx.bottomStatus,
-                        modifier = Modifier.padding(horizontal = 5.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp),
                         style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
                     )
+
+                    Box(
+                        contentAlignment = Alignment.CenterEnd,
+                        modifier = Modifier.fillMaxWidth().padding(end = 50.dp)
+                    ) {
+                        if (appCtx.showStates.showTopLinearIndicator) {
+                            LinearProgressIndicator()
+                        }
+                    }
                 }
 
             }

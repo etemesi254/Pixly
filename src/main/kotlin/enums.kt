@@ -7,6 +7,7 @@ enum class FiltersPaneOrdering {
     OrientationFilters,
     HistogramFilters,
     Levels,
+    BlurFilters
 }
 
 /**
