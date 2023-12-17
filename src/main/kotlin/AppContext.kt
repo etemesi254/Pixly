@@ -37,8 +37,8 @@ class AppContext {
     var filters: MutableMap<File, FilterValues> by mutableStateMapOf()
 
     var zoomState by mutableStateOf(ScalableState())
-    var rightPaneOpened by mutableStateOf(RightPaneOpened.None)
-    var leftPaneOpened by mutableStateOf(LeftPaneOpened.None)
+    var openedRightPane by mutableStateOf(RightPaneOpened.None)
+    var openedLeftPane by mutableStateOf(LeftPaneOpened.None)
 
     /**
      * Contains history of currently executed image operaions
