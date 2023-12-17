@@ -1,6 +1,8 @@
 import androidx.compose.runtime.*
 import components.ScalableState
 import events.ExternalNavigationEventBus
+import history.HistoryOperations
+import history.HistoryOperationsEnum
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import java.io.File
 
@@ -35,7 +37,13 @@ class AppContext {
     var filters: MutableMap<File, FilterValues> by mutableStateMapOf()
 
     var zoomState by mutableStateOf(ScalableState())
-    var openPane by mutableStateOf(RightPaneOpened.None);
+    var rightPaneOpened by mutableStateOf(RightPaneOpened.None)
+    var leftPaneOpened by mutableStateOf(LeftPaneOpened.None)
+
+    /**
+     * Contains history of currently executed image operaions
+     * */
+    private var history: HistoryOperations = HistoryOperations();
 
 
     fun createFilterMap() {
@@ -57,7 +65,24 @@ class AppContext {
         showStates.showTopLinearIndicator = false;
 
     }
+
+    fun getHistory(): HistoryOperations {
+        return history
+
+    }
+
+    fun setHistory(history: HistoryOperations) {
+        this.history = history
+    }
+
+    fun appendToHistory(newValue: HistoryOperationsEnum, value: Any? = null) {
+        this.history.addHistory(newValue, value)
+    }
+    fun resetHistory(){
+        this.history.reset()
+    }
 }
+
 
 class RecomposeWidgets {
     var rerunHistogram by mutableStateOf(false)
