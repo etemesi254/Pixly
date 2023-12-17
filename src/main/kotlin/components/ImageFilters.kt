@@ -1,23 +1,17 @@
 package components
 
 import AppContext
-import ZilImageAndBitmapInterop
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.TooltipArea
-import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import history.HistoryOperationsEnum
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -40,6 +34,8 @@ fun LightFiltersComponent(appContext: AppContext) {
                         valueRange = 0F..255F,
                         decimalPattern = "##0"
                     ) {
+                        appContext.appendToHistory(HistoryOperationsEnum.Brighten,it)
+
                         image.brighten(it)
                         appContext.broadcastImageChange()
                     }
@@ -53,6 +49,8 @@ fun LightFiltersComponent(appContext: AppContext) {
                         valueRange = 0F..255F,
                         decimalPattern = "#0"
                     ) {
+
+                        appContext.appendToHistory(HistoryOperationsEnum.Contrast,it)
                         image.contrast(it)
                         appContext.broadcastImageChange()
                     }
@@ -68,6 +66,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                         scrollValueChangeBy = 0.2F
                     ) {
 
+                        appContext.appendToHistory(HistoryOperationsEnum.Gamma,it)
                         // gamma works in a weird way, higher gamma
                         // is a darker image, which beats the logic of the
                         // slider since we expect higher gamma to be a brighter
@@ -87,6 +86,8 @@ fun LightFiltersComponent(appContext: AppContext) {
                         decimalPattern = "0.00",
                         scrollValueChangeBy = 0.01F
                     ) {
+                        appContext.appendToHistory(HistoryOperationsEnum.Exposure,it);
+
                         image.exposure(it + 1F)
                         appContext.broadcastImageChange()
                     }
@@ -114,6 +115,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                     ) {
 
                         IconButton(onClick = {
+                            appContext.appendToHistory(HistoryOperationsEnum.VerticalFlip);
+
                             appContext.image.verticalFlip()
                         }) {
                             Icon(
@@ -125,6 +128,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         }
 
                         IconButton(onClick = {
+                            appContext.appendToHistory(HistoryOperationsEnum.HorizontalFlip);
+
                             appContext.image.flop()
                         }) {
                             Icon(
@@ -135,6 +140,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                             )
                         }
                         IconButton(onClick = {
+                            // add to history
+                            appContext.appendToHistory(HistoryOperationsEnum.Transposition);
                             appContext.image.transpose()
                         }) {
                             Icon(
@@ -164,13 +171,12 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                     //HistogramChart(ctx = appContext)
                 }
                 RangeSliderTextComponent(
-                    "Levels Adjustment",
                     value = 0F..256F,
                     valueRange = 0F..256F,
                     decimalPattern = "##0"
                 ) {
 
-                    println(it);
+                    appContext.appendToHistory(HistoryOperationsEnum.Levels,it)
                     appContext.image.stretchContrast(it.start, it.endInclusive)
                     appContext.broadcastImageChange()
                 }
@@ -214,6 +220,9 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         appContext.broadcastImageChange()
                     }
                 }
+//                ColorPicker {
+//                    println(it)
+//                }
             }
         }
     }
