@@ -30,7 +30,9 @@ dependencies {
     // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
     implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.5.0")
     // color picking
+    implementation("com.godaddy.android.colorpicker:compose-color-picker-jvm:0.7.0")
 
+    // re-ordable components
     implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
 
     implementation("zil:pixly-image:0.4.0")
