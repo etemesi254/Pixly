@@ -2,6 +2,7 @@
 package components
 
 import AppContext
+import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -9,9 +10,12 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.DropdownMenuState
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Text
+import androidx.compose.material.contextMenuOpenDetector
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -23,14 +27,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.pow
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.*
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.isSpecified
 import kotlin.math.max
 import kotlin.math.min
@@ -41,6 +39,7 @@ import kotlin.math.min
  */
 class ScalableState {
     var defaultClickLimit = 3F
+
     /// zoom until you can see the devil
     private var zoomLimits = 0.1f..8000f
 
@@ -172,6 +171,7 @@ class ScalableState {
         }
     }
 }
+
 fun Modifier.onPointerEvent(
     eventType: PointerEventType,
     pass: PointerEventPass = PointerEventPass.Main,
@@ -190,6 +190,7 @@ fun Modifier.onPointerEvent(
         }
     }
 }
+
 /**
  * Initial zoom of the image. 1.0f means the image fully fits the window.
  */
@@ -200,6 +201,7 @@ private const val INITIAL_ZOOM = 1.0f
  */
 private const val SLIGHTLY_INCREASED_ZOOM = 1.5f
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
     BoxWithConstraints {
@@ -207,68 +209,81 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
 
         val image = appContext.image.canvas()
         val imageSize = image.size
+        val menu = remember { DropdownMenuState(initialStatus = DropdownMenuState.Status.Closed) }
 
         val imageCenter = Offset(image.width / 2f, image.height / 2f)
         val areaCenter = Offset(areaSize.width / 2f, areaSize.height / 2f)
 
-        val state = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
-            // note: scale goes by factor, not an absolute difference, so we need to multiply it
-            // for this example, we don't allow downscaling, so cap it to 1f
-
-            appContext.zoomState.addZoom(zoomChange,offsetChange)
-            println("Zoom change ${zoomChange} ${offsetChange} ${rotationChange}");
-            println(zoomChange)
-        }
+//        val state = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
+//            // note: scale goes by factor, not an absolute difference, so we need to multiply it
+//            // for this example, we don't allow downscaling, so cap it to 1f
+//
+//            appContext.zoomState.addZoom(zoomChange,offsetChange)
+//            println("Zoom change ${zoomChange} ${offsetChange} ${rotationChange}");
+//            println(zoomChange)
+//        }
         Box(
-            modifier
-                .drawWithContent {
-                    drawIntoCanvas {
-                        it.withSave {
-                            it.translate(areaCenter.x, areaCenter.y)
-                            it.translate(
-                                appContext.zoomState.transformation.offset.x,
-                                appContext.zoomState.transformation.offset.y
-                            )
-                            it.scale(
-                                appContext.zoomState.transformation.scale,
-                                appContext.zoomState.transformation.scale
-                            )
-                            it.translate(-imageCenter.x, -imageCenter.y)
-                            drawImage(image)
+            modifier = Modifier.contextMenuOpenDetector(menu),
+
+            ) {
+
+//            if (menu.status != DropdownMenuState.Status.Closed) {
+//
+//                Column {
+//                    Text("Open  a file")
+//                }
+//            }
+            Box(
+                modifier
+                    .drawWithContent {
+                        drawIntoCanvas {
+                            it.withSave {
+                                it.translate(areaCenter.x, areaCenter.y)
+                                it.translate(
+                                    appContext.zoomState.transformation.offset.x,
+                                    appContext.zoomState.transformation.offset.y
+                                )
+                                it.scale(
+                                    appContext.zoomState.transformation.scale,
+                                    appContext.zoomState.transformation.scale
+                                )
+                                it.translate(-imageCenter.x, -imageCenter.y)
+                                drawImage(image)
+                            }
                         }
                     }
-                }
-                //.transformable(state)
-                .pointerInput(Unit) {
+                    //.transformable(state)
+                    .pointerInput(Unit) {
 
-                    detectTransformGestures { centroid, pan, zoom, _ ->
-                        println("${centroid} ${pan} ${zoom}")
-                        appContext.zoomState.addPan(pan)
+                        detectTransformGestures { centroid, pan, zoom, _ ->
+                            //        println("${centroid} ${pan} ${zoom}")
+                            appContext.zoomState.addPan(pan)
+                            appContext.zoomState.addZoom(zoom, centroid - areaCenter)
+                        }
+                    }
+                    .onPointerEvent(PointerEventType.Scroll) {
+                        val centroid = it.changes[0].position
+                        val delta = it.changes[0].scrollDelta
+                        val zoom = 1.2f.pow(-delta.y)
                         appContext.zoomState.addZoom(zoom, centroid - areaCenter)
                     }
-                }
-                .onPointerEvent(PointerEventType.Scroll) {
-                    val centroid = it.changes[0].position
-                    val delta = it.changes[0].scrollDelta
-                    val zoom = 1.2f.pow(-delta.y)
-                    appContext.zoomState.addZoom(zoom, centroid - areaCenter)
-                }
 
-                .pointerInput(Unit) {
-                    detectTapGestures(onDoubleTap = { position ->
-                        // If a user zoomed significantly, the zoom should be the restored on double tap,
-                        // otherwise the zoom should be increased
-                        appContext.zoomState.setZoom(
-                            if (appContext.zoomState.zoom > SLIGHTLY_INCREASED_ZOOM) {
-                                INITIAL_ZOOM
-                            } else {
-                                appContext.zoomState.defaultClickLimit
-                            },
-                            position - areaCenter
-                        )
-                    }) { }
-                },
-        )
+                    .pointerInput(Unit) {
+                        detectTapGestures(onDoubleTap = { position ->
+                            // If a user zoomed significantly, the zoom should be the restored on double tap,
+                            // otherwise the zoom should be increased
+                            appContext.zoomState.setZoom(
+                                if (appContext.zoomState.zoom > SLIGHTLY_INCREASED_ZOOM) {
+                                    INITIAL_ZOOM
+                                } else {
+                                    appContext.zoomState.defaultClickLimit
+                                },
+                                position - areaCenter
+                            )
+                        })
+                    },
+            )
+        }
 
         SideEffect {
             appContext.zoomState.limitTargetInsideArea(areaSize, imageSize)
