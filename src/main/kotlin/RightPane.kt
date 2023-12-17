@@ -64,7 +64,7 @@ fun RightPanel(appCtx: AppContext) {
             //.border(2.dp, MaterialTheme.colors.onBackground, shape = RectangleShape)
         ) {
 
-            Divider(color = Color(0x1F_29_29_29), modifier = Modifier.fillMaxHeight().width(1.dp))
+            Divider( modifier = Modifier.fillMaxHeight().width(1.dp))
 
             Column {
                 PixlyToolTip(

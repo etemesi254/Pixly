@@ -1,11 +1,10 @@
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
 import components.ScalableImage
-import components.ScalableState
+import history.HistoryOperationsEnum
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
@@ -15,6 +14,9 @@ class ZilImageAndBitmapInterop() {
 
     // it may happen that this may be called from multiple coroutines
     // so we keep it single threaded since we do a lot of memory sharing
+    // otherwise we will crash.
+    //
+    // NB: All calls that can be called from separate coroutines should use this
     private val mutex = Mutex();
     private var canvasBitmap = Bitmap();
     private var info: ImageInfo = ImageInfo.makeUnknown(0, 0);
@@ -170,59 +172,142 @@ class ZilImageAndBitmapInterop() {
     }
 
 
-    fun contrast(value: Float) {
-        inner.contrast(value)
-        postProcessPixelsManipulated()
+    fun contrast(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
+        appContext.initializeImageChange()
+        // store history
+        appContext.appendToHistory(HistoryOperationsEnum.Contrast, value)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.contrast(value)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
     }
 
-    fun gamma(value: Float) {
-        inner.gamma(value)
-        postProcessPixelsManipulated()
+    fun gamma(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.Gamma, value)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.gamma(value)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
+
     }
 
-    fun exposure(value: Float, blackPoint: Float = 0.0F) {
-        inner.exposure(value, blackPoint)
-        postProcessPixelsManipulated()
+    fun exposure(appContext: AppContext, coroutineScope: CoroutineScope, value: Float, blackPoint: Float = 0.0F) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.Exposure, value)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.exposure(value, blackPoint)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
     }
 
-    fun brighten(value: Float) {
-        inner.brightness(value)
-        postProcessPixelsManipulated()
+    fun brighten(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.Brighten, value)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.brightness(value)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
     }
 
-    fun stretchContrast(lower: Float, higher: Float) {
-        inner.stretchContrast(lower, higher)
-        postProcessPixelsManipulated()
+    fun stretchContrast(
+        appContext: AppContext,
+        coroutineScope: CoroutineScope,
+        value: ClosedFloatingPointRange<Float>
+    ) {
+
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.Levels, value)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.stretchContrast(value.start, value.endInclusive)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
     }
 
-    fun gaussianBlur(radius: Long) {
-        inner.gaussianBlur(radius)
-        postProcessPixelsManipulated()
+    fun gaussianBlur(appContext: AppContext, coroutineScope: CoroutineScope, radius: Long) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.GaussianBlur, radius)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.gaussianBlur(radius)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
     }
 
-    fun boxBlur(radius: Long) {
-        inner.boxBlur(radius)
-        postProcessPixelsManipulated()
+    fun boxBlur(appContext: AppContext, coroutineScope: CoroutineScope, radius: Long) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.BoxBlur, radius)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.boxBlur(radius)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
     }
 
-    fun flip() {
-        inner.flip()
-        postProcessAlloc()
+    fun flip(appContext: AppContext, coroutineScope: CoroutineScope) {
+        appContext.initializeImageChange()
+        //appContext.appendToHistory(HistoryOperationsEnum.F)
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.flip()
+                postProcessAlloc(appContext)
+            }
+        }
     }
 
-    fun verticalFlip() {
-        inner.verticalFlip()
-        postProcessAlloc()
+    fun verticalFlip(appContext: AppContext, coroutineScope: CoroutineScope) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.VerticalFlip)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.verticalFlip()
+                postProcessAlloc(appContext)
+            }
+        }
     }
 
-    fun flop() {
-        inner.flop()
-        postProcessAlloc()
+    fun flop(appContext: AppContext, coroutineScope: CoroutineScope) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.HorizontalFlip)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.flop()
+                postProcessAlloc(appContext)
+            }
+        }
     }
 
-    fun transpose() {
-        inner.transpose()
-        postProcessAlloc()
+    fun transpose(appContext: AppContext, coroutineScope: CoroutineScope) {
+        appContext.initializeImageChange()
+        appContext.appendToHistory(HistoryOperationsEnum.Transposition)
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                inner.transpose()
+                postProcessAlloc(appContext)
+            }
+        }
     }
 
     fun save(file: String) {
@@ -233,16 +318,18 @@ class ZilImageAndBitmapInterop() {
         inner.save(file, format)
     }
 
-    private fun postProcessAlloc() {
+    private fun postProcessAlloc(appContext: AppContext) {
         allocBuffer()
         installPixels()
         isModified = !isModified
+        appContext.broadcastImageChange()
     }
 
 
-    private fun postProcessPixelsManipulated() {
+    private fun postProcessPixelsManipulated(appContext: AppContext) {
         installPixels()
         isModified = !isModified;
+        appContext.broadcastImageChange()
     }
 
 }

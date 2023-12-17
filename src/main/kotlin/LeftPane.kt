@@ -97,7 +97,7 @@ fun LeftPane(appCtx: AppContext) {
                     }
                 }
             }
-            Divider(color = Color(0x1F_29_29_29), modifier = Modifier.fillMaxHeight().width(1.dp))
+            Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
         }
     }

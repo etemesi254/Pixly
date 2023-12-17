@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import history.HistoryOperationsEnum
+import kotlinx.coroutines.CoroutineScope
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -20,6 +22,7 @@ fun LightFiltersComponent(appContext: AppContext) {
     val image = appContext.image
 
     Box(modifier = Modifier.padding(vertical = 10.dp)) {
+        val scope = rememberCoroutineScope();
         CollapsibleBox(title = "Light", appContext.showStates.showLightFilters, {
             appContext.showStates.showLightFilters = appContext.showStates.showLightFilters.xor(true)
         }) {
@@ -34,9 +37,8 @@ fun LightFiltersComponent(appContext: AppContext) {
                         valueRange = 0F..255F,
                         decimalPattern = "##0"
                     ) {
-                        appContext.appendToHistory(HistoryOperationsEnum.Brighten,it)
 
-                        image.brighten(it)
+                        image.brighten(appContext, scope, it)
                         appContext.broadcastImageChange()
                     }
                 }
@@ -50,9 +52,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                         decimalPattern = "#0"
                     ) {
 
-                        appContext.appendToHistory(HistoryOperationsEnum.Contrast,it)
-                        image.contrast(it)
-                        appContext.broadcastImageChange()
+                        image.contrast(appContext, scope, it)
                     }
                 }
 
@@ -66,15 +66,14 @@ fun LightFiltersComponent(appContext: AppContext) {
                         scrollValueChangeBy = 0.2F
                     ) {
 
-                        appContext.appendToHistory(HistoryOperationsEnum.Gamma,it)
+                        appContext.appendToHistory(HistoryOperationsEnum.Gamma, it)
                         // gamma works in a weird way, higher gamma
                         // is a darker image, which beats the logic of the
                         // slider since we expect higher gamma to be a brighter
                         // image, so just invert that here
                         // this makes higher gamma -> brighter images
                         // smaller gamma -> darker images
-                        image.gamma((-1*it) + 2.3F)
-                        appContext.broadcastImageChange()
+                        image.gamma(appContext, scope, (-1 * it) + 2.3F)
                     }
                 }
                 Box(
@@ -86,10 +85,9 @@ fun LightFiltersComponent(appContext: AppContext) {
                         decimalPattern = "0.00",
                         scrollValueChangeBy = 0.01F
                     ) {
-                        appContext.appendToHistory(HistoryOperationsEnum.Exposure,it);
+                        appContext.appendToHistory(HistoryOperationsEnum.Exposure, it);
 
-                        image.exposure(it + 1F)
-                        appContext.broadcastImageChange()
+                        image.exposure(appContext, scope, it + 1F)
                     }
                 }
             }
@@ -105,6 +103,7 @@ fun OrientationFiltersComponent(appContext: AppContext) {
         CollapsibleBox("Orientation", appContext.showStates.showOrientationFilters, {
             appContext.showStates.showOrientationFilters = appContext.showStates.showOrientationFilters.xor(true)
         }) {
+            val scope = rememberCoroutineScope()
             Column {
                 Box(modifier = Modifier.fillMaxWidth().padding(10.dp)) {
 
@@ -115,9 +114,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                     ) {
 
                         IconButton(onClick = {
-                            appContext.appendToHistory(HistoryOperationsEnum.VerticalFlip);
 
-                            appContext.image.verticalFlip()
+                            appContext.image.verticalFlip(appContext, scope)
                         }) {
                             Icon(
                                 painter = painterResource("flip-vertical-svgrepo-com.svg"),
@@ -128,9 +126,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         }
 
                         IconButton(onClick = {
-                            appContext.appendToHistory(HistoryOperationsEnum.HorizontalFlip);
 
-                            appContext.image.flop()
+                            appContext.image.flop(appContext, scope)
                         }) {
                             Icon(
                                 painter = painterResource("flip-horizontal-svgrepo-com.svg"),
@@ -141,8 +138,7 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         }
                         IconButton(onClick = {
                             // add to history
-                            appContext.appendToHistory(HistoryOperationsEnum.Transposition);
-                            appContext.image.transpose()
+                            appContext.image.transpose(appContext, scope)
                         }) {
                             Icon(
                                 painter = painterResource("transpose-svgrepo-com.png"),
@@ -165,6 +161,7 @@ fun LevelsFiltersComponent(appContext: AppContext) {
         CollapsibleBox("Levels", appContext.showStates.showLevels, {
             appContext.showStates.showLevels = appContext.showStates.showLevels.not()
         }) {
+            val scope = rememberCoroutineScope()
             Column {
                 Box(modifier = Modifier.height(100.dp))
                 {
@@ -176,9 +173,7 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                     decimalPattern = "##0"
                 ) {
 
-                    appContext.appendToHistory(HistoryOperationsEnum.Levels,it)
-                    appContext.image.stretchContrast(it.start, it.endInclusive)
-                    appContext.broadcastImageChange()
+                    appContext.image.stretchContrast(appContext, scope, it)
                 }
             }
         }
@@ -191,6 +186,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
         CollapsibleBox("Blur", appContext.showStates.showBlurFilters, {
             appContext.showStates.showBlurFilters = !appContext.showStates.showBlurFilters
         }) {
+            val scope = rememberCoroutineScope()
             Column {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
@@ -201,9 +197,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         valueRange = 0F..255F,
                         decimalPattern = "##0"
                     ) {
-                        appContext.initializeImageChange()
-                        appContext.image.boxBlur(it.toLong())
-                        appContext.broadcastImageChange()
+                        appContext.image.boxBlur(appContext, scope, it.toLong())
                     }
                 }
                 Box(
@@ -215,9 +209,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         valueRange = 0F..255F,
                         decimalPattern = "#0"
                     ) {
-                        appContext.initializeImageChange()
-                        appContext.image.gaussianBlur(it.toLong())
-                        appContext.broadcastImageChange()
+                        appContext.image.gaussianBlur(appContext, scope, it.toLong())
                     }
                 }
 //                ColorPicker {
