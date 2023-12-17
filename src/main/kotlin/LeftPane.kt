@@ -2,20 +2,15 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import components.DirectoryViewer
 import components.PixlyToolTip
@@ -65,12 +60,12 @@ fun LeftPane(appCtx: AppContext) {
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier.fillMaxSize().defaultMinSize(80.dp)
     ) {
-        if (appCtx.leftPaneOpened != LeftPaneOpened.None) {
+        if (appCtx.openedLeftPane != LeftPaneOpened.None) {
             Surface(
                 color = MaterialTheme.colors.background,
                 modifier = Modifier.fillMaxWidth().padding(start = 54.dp)
             ) {
-                when (appCtx.leftPaneOpened) {
+                when (appCtx.openedLeftPane) {
                     LeftPaneOpened.None -> Box {}
                     LeftPaneOpened.DirectoryViewer -> DirectoryViewerEntry(appCtx)
                 }
@@ -83,16 +78,16 @@ fun LeftPane(appCtx: AppContext) {
                     helpfulMessage = "This is a simple navigator for viewing other files in the current directory containing a loaded image ") {
                     IconButton(
                         {
-                            if (appCtx.leftPaneOpened == LeftPaneOpened.DirectoryViewer) {
-                                appCtx.leftPaneOpened = LeftPaneOpened.None
+                            if (appCtx.openedLeftPane == LeftPaneOpened.DirectoryViewer) {
+                                appCtx.openedLeftPane = LeftPaneOpened.None
                             } else {
-                                appCtx.leftPaneOpened = LeftPaneOpened.DirectoryViewer
+                                appCtx.openedLeftPane = LeftPaneOpened.DirectoryViewer
                             }
 
                         },
                         // enabled = appCtx.imageIsLoaded,
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
-                            appCtx.leftPaneOpened == LeftPaneOpened.DirectoryViewer
+                            appCtx.openedLeftPane == LeftPaneOpened.DirectoryViewer
                         }) {
                         Icon(
                             painter = painterResource("folder-svgrepo-com.svg"),

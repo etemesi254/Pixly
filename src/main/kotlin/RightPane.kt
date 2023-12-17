@@ -1,21 +1,16 @@
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -24,6 +19,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import components.*
+import history.HistoryWidget
+import modifiers.backgroundColorIfCondition
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
@@ -43,21 +40,22 @@ fun histogramPane(appCtx: AppContext) {
 
 
 @Composable
-fun FiltersPane(appCtx: AppContext) {
+fun RightPanel(appCtx: AppContext) {
 
     Box(
         contentAlignment = Alignment.CenterEnd,
         modifier = Modifier.fillMaxSize().defaultMinSize(80.dp)
     ) {
-        if (appCtx.openPane != RightPaneOpened.None) {
+        if (appCtx.openedRightPane != RightPaneOpened.None) {
             Surface(
                 color = MaterialTheme.colors.background,
                 modifier = Modifier.fillMaxWidth().padding(end = 40.dp)
             ) {
-                when (appCtx.openPane) {
+                when (appCtx.openedRightPane) {
                     RightPaneOpened.None -> Box {}
                     RightPaneOpened.InformationPanel -> InformationPanel(appCtx)
                     RightPaneOpened.FiltersPanel -> ImageFiltersPane(appCtx)
+                    RightPaneOpened.HistoryPanel -> HistoryWidget(appCtx)
                 }
             }
         }
@@ -66,40 +64,76 @@ fun FiltersPane(appCtx: AppContext) {
             //.border(2.dp, MaterialTheme.colors.onBackground, shape = RectangleShape)
         ) {
 
-            Divider(color = Color(0xFF_29_29_29), modifier = Modifier.fillMaxHeight().width(1.dp))
+            Divider(color = Color(0x1F_29_29_29), modifier = Modifier.fillMaxHeight().width(1.dp))
 
             Column {
-                IconButton({
-                    if (appCtx.openPane == RightPaneOpened.InformationPanel) {
-                        appCtx.openPane = RightPaneOpened.None
-                    } else {
-                        appCtx.openPane = RightPaneOpened.InformationPanel
-                    }
+                PixlyToolTip(
+                    title = "Show Image Information",
+                    helpfulMessage = "This will show both general image information, (width, height) and Exif information if present "
+                ) {
+                    IconButton(
+                        {
+                            if (appCtx.openedRightPane == RightPaneOpened.InformationPanel) {
+                                appCtx.openedRightPane = RightPaneOpened.None
+                            } else {
+                                appCtx.openedRightPane = RightPaneOpened.InformationPanel
+                            }
 
-                }, enabled = appCtx.imageIsLoaded) {
-                    Icon(
-                        painter = painterResource("info-svgrepo.svg"),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
+                        },
+                        enabled = appCtx.imageIsLoaded,
+                        modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                            appCtx.openedRightPane == RightPaneOpened.InformationPanel
+                        }) {
+                        Icon(
+                            painter = painterResource("info-svgrepo.svg"),
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
                 }
 
-                IconButton({
-                    if (appCtx.openPane == RightPaneOpened.FiltersPanel) {
-                        appCtx.openPane = RightPaneOpened.None
-                    } else {
-                        appCtx.openPane = RightPaneOpened.FiltersPanel
-                    }
+                PixlyToolTip(title = "Show the edits panel") {
+                    IconButton(
+                        {
+                            if (appCtx.openedRightPane == RightPaneOpened.FiltersPanel) {
+                                appCtx.openedRightPane = RightPaneOpened.None
+                            } else {
+                                appCtx.openedRightPane = RightPaneOpened.FiltersPanel
+                            }
 
-                }, enabled = appCtx.imageIsLoaded) {
+                        },
+                        enabled = appCtx.imageIsLoaded,
+                        modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                            appCtx.openedRightPane == RightPaneOpened.FiltersPanel
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource("image-edit-svgrepo-com.svg"),
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                }
+                IconButton(
+                    {
+                        if (appCtx.openedRightPane == RightPaneOpened.HistoryPanel) {
+                            appCtx.openedRightPane = RightPaneOpened.None
+                        } else {
+                            appCtx.openedRightPane = RightPaneOpened.HistoryPanel
+                        }
+                    },
+                    enabled = appCtx.imageIsLoaded,
+                    modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                        appCtx.openedRightPane == RightPaneOpened.HistoryPanel
+                    }
+                ) {
                     Icon(
-                        painter = painterResource("image-edit-svgrepo-com.svg"),
+                        painter = painterResource("history-svgrepo-com.svg"),
                         contentDescription = null,
                         modifier = Modifier.size(30.dp)
                     )
                 }
             }
-
         }
     }
 }
@@ -112,7 +146,6 @@ fun ExifMetadataPane(appCtx: AppContext) {
 
 
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-
 
         if (exif.isNotEmpty()) {
             Divider()
@@ -201,7 +234,7 @@ fun ImageFiltersPane(appCtx: AppContext) {
     })
 
     AnimatedVisibility(
-        visible = appCtx.openPane == RightPaneOpened.FiltersPanel,
+        visible = appCtx.openedRightPane == RightPaneOpened.FiltersPanel,
         enter = slideInHorizontally { with(density) { +40.dp.roundToPx() } },
         exit = slideOutHorizontally { with(density) { +400.dp.roundToPx() } },
         modifier = Modifier.fillMaxHeight()
@@ -254,6 +287,7 @@ fun ImageFiltersPane(appCtx: AppContext) {
                                 LevelsFiltersComponent(appCtx)
                             }
                         }
+
                         FiltersPaneOrdering.BlurFilters -> {
                             ReorderableItem(state, key = item, index = it) {
                                 BlurFiltersComponent(appCtx)
@@ -262,13 +296,6 @@ fun ImageFiltersPane(appCtx: AppContext) {
                     }
                 }
             }
-
-//            VerticalScrollbar(
-//                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-//                adapter = rememberScrollbarAdapter(
-//                    scrollState = scrollState
-//                )
-//            )
         }
     }
 }
