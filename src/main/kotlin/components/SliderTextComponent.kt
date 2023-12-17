@@ -78,7 +78,7 @@ fun SliderTextComponent(
                         // we depend on this crashing
                         // to catch invalid inputs in the slider
                         // so DON'T remove
-                        val c = it.toFloat()
+                        it.toFloat()
                         val newValue = df.parse(it).toFloat()
                         sliderValue = newValue;
                         shownValue = it
@@ -125,7 +125,22 @@ fun SliderTextComponent(
                     })
         }
         Slider(
-            value = sliderValue, modifier = Modifier.fillMaxWidth(), onValueChange = {
+            value = sliderValue,
+            modifier = Modifier.fillMaxWidth()
+                .onPointerEvent(PointerEventType.Scroll, pass = PointerEventPass.Main) {
+                    val delta = it.changes[0].scrollDelta
+                    if (delta.y < 0.0) {
+
+                        sliderValue += scrollValueChangeBy
+                    } else {
+                        sliderValue -= scrollValueChangeBy
+                    }
+                    // clamp to range allowed
+                    sliderValue = sliderValue.coerceIn(valueRange)
+
+                    shownValue = df.format(sliderValue)
+                    onValueChange(sliderValue)
+                }, onValueChange = {
                 sliderValue = it;
                 shownValue = df.format(sliderValue)
                 onValueChange(sliderValue)
@@ -140,7 +155,6 @@ fun SliderTextComponent(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun RangeSliderTextComponent(
-    label: String,
     value: ClosedFloatingPointRange<Float>,
     valueRange: ClosedFloatingPointRange<Float>,
     decimalPattern: String = "###0.#########",
