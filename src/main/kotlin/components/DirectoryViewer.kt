@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import isImage
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.nio.file.Files
+import java.nio.file.Paths
 
 
 fun loadAndDecodeImage(file: File): ImageBitmap {
@@ -41,17 +41,6 @@ fun SingleDirectoryView(path: File, ctx: AppContext, onDirectoryClicked: (File) 
 
     val folderBitmap = painterResource("folder-svgrepo.svg")
     val fileBitmap = painterResource("file-svgrepo.svg")
-    var shouldShowImage = false
-
-
-//    if (path.extension == "png" || path.extension=="jpg"|| path.extension=="jpeg") {
-//        shouldShowImage=true
-//        GlobalScope.launch {
-//            loadedImage=loadAndDecodeImage(path)
-//
-//        }
-//    }
-
 
     if (ctx.imFile == path) {
         // show which image is in focus
@@ -135,10 +124,17 @@ fun DirectoryViewer(appCtx: AppContext, onFileClicked: (file: File) -> Unit) {
             // clear the paths first
             appCtx.paths.clear();
 
+            var i = 0;
             files.forEach {
-                if (it.isFile && isImage(it)) {
+                val path = Paths.get(it.toURI())
+                if (it.isFile && Files.isReadable(path) && isImage(it)) {
                     appCtx.paths.add(it)
                 }
+                // now make left and right switch work
+                if (appCtx.imFile == it) {
+                    appCtx.position = i
+                }
+                i += 1
             }
 
         }
