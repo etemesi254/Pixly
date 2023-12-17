@@ -1,6 +1,3 @@
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -13,7 +10,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,9 +23,8 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import components.*
 import events.ExternalImageViewerEvent
 import events.handleKeyEvents
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
@@ -38,6 +33,12 @@ import java.text.DecimalFormat
 import kotlin.system.measureTimeMillis
 
 
+/**
+ * Load the image specified by appCtx.imFile
+ *
+ * NB: DO NOT RUN THIS ON THE MAIN THREAD AS IT WILL BLOCK
+ * OTHER I/0, RUN IT ON IO THREAD
+ * */
 suspend fun loadImage(appCtx: AppContext) {
 
     val time = measureTimeMillis { appCtx.image.loadFile(appCtx.imFile.path) }
@@ -46,7 +47,7 @@ suspend fun loadImage(appCtx: AppContext) {
     appCtx.broadcastImageChange()
 }
 
-@OptIn(ExperimentalStdlibApi::class, ExperimentalSplitPaneApi::class, ExperimentalUnsignedTypes::class)
+@OptIn(ExperimentalSplitPaneApi::class)
 @Composable
 @Preview
 fun App(appCtx: AppContext) {
@@ -75,8 +76,11 @@ fun App(appCtx: AppContext) {
      * when that is fixed, revert this to local
      *
      */
-    GlobalScope.launch  {
-        handleKeyEvents(appCtx)
+    LaunchedEffect(Unit) {
+        this.launch(Dispatchers.IO) {
+            handleKeyEvents(appCtx)
+        }
+
     }
     // TODO: See if we can get smoother for themes transitions
     //  https://stackoverflow.com/questions/70942573/android-jetpack-composecomposable-change-theme-color-smoothly
@@ -101,35 +105,24 @@ fun App(appCtx: AppContext) {
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Spacer(modifier = Modifier.padding(horizontal = 10.dp))
-                        IconButton(onClick = {
 
-                            appCtx.showStates.showDirectoryViewer = appCtx.showStates.showDirectoryViewer.xor(true);
-                        }, modifier = Modifier.padding(horizontal = 10.dp)) {
-                            Icon(
-                                painter = painterResource("open-panel-filled-left-svgrepo-com.png"),
-                                contentDescription = null,
-                                modifier = Modifier.size(40.dp),
-                            )
-                        }
-                        Divider(
-                            //color = Color.Red,
-                            modifier = Modifier
-                                .fillMaxHeight()  //fill the max height
-                                .width(1.5.dp)
-                        )
                         // open file
                         Box(modifier = Modifier.padding(horizontal = 5.dp)) {
                             val coroutineScope = rememberCoroutineScope()
 
-                            IconButton(onClick = {
-                                appCtx.showStates.showFilePicker = true;
-                            }) {
-                                Icon(
-                                    painter = painterResource("open-file-svgrepo-com.svg"),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(35.dp)
-                                )
+                            PixlyToolTip(
+                                "Open a file",
+                                helpfulMessage = "This opens a file using the native file picker of your platform"
+                            ) {
+                                IconButton(onClick = {
+                                    appCtx.showStates.showFilePicker = true;
+                                }) {
+                                    Icon(
+                                        painter = painterResource("open-file-svgrepo-com (1).svg"),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(35.dp)
+                                    )
+                                }
                             }
 
                             FilePicker(
@@ -144,7 +137,7 @@ fun App(appCtx: AppContext) {
 
                                     appCtx.initializeImageChange()
 
-                                    GlobalScope.launch {
+                                    coroutineScope.launch(Dispatchers.IO) {
                                         loadImage(appCtx)
                                     }
 
@@ -152,24 +145,31 @@ fun App(appCtx: AppContext) {
                                 }
                             }
                         }
-                        // open directory
-                        Box(modifier = Modifier.padding(horizontal = 5.dp)) {
-                            IconButton(onClick = {
-                                appCtx.showStates.showDirectoryPicker = true;
+                        PixlyToolTip(
+                            title = "Open a directory",
+                            helpfulMessage = "This opens a directory in your native directory picker\nOn choosing a directory, the files can be navigated via the in-app directory viewer"
+                        ) {
+                            // open directory
+                            Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+                                IconButton(onClick = {
+                                    appCtx.showStates.showDirectoryPicker = true;
 
-                            }) {
-                                Icon(
-                                    painter = painterResource("open-folder-svgrepo-com.svg"),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(30.dp)
-                                )
-                            }
+                                }) {
+                                    Icon(
+                                        painter = painterResource("open-folder-svgrepo-com.svg"),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(30.dp)
+                                    )
+                                }
 
-                            DirectoryPicker(show = appCtx.showStates.showDirectoryPicker) { dir ->
-                                appCtx.showStates.showDirectoryPicker = false
-                                // do something with the directory
-                                if (dir != null) {
-                                    appCtx.rootDirectory = dir
+
+                                DirectoryPicker(show = appCtx.showStates.showDirectoryPicker) { dir ->
+                                    appCtx.showStates.showDirectoryPicker = false
+                                    appCtx.openedLeftPane = LeftPaneOpened.DirectoryViewer
+                                    // do something with the directory
+                                    if (dir != null) {
+                                        appCtx.rootDirectory = dir
+                                    }
                                 }
                             }
                         }
@@ -212,22 +212,24 @@ fun App(appCtx: AppContext) {
                                     .width(1.dp)
                             )
 
+                            PixlyToolTip(
+                                title = "Toggle the App Theme",
+                                helpfulMessage = "This changes the app theme from dark to light and vice versa"
+                            ) {
 
-                            IconButton({
-                                appCtx.showStates.showLightTheme = appCtx.showStates.showLightTheme.xor(true)
-                            }) {
-                                Icon(
-                                    painter = if (!appCtx.showStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
-                                        "moon-svgrepo-com.svg"
-                                    ), contentDescription = null, modifier = Modifier.size(35.dp)
-                                )
+                                IconButton({
+                                    appCtx.showStates.showLightTheme = appCtx.showStates.showLightTheme.xor(true)
+                                }) {
+                                    Icon(
+                                        painter = if (!appCtx.showStates.showLightTheme) painterResource("sun-svgrepo-com.svg") else painterResource(
+                                            "moon-svgrepo-com.svg"
+                                        ), contentDescription = null, modifier = Modifier.size(35.dp)
+                                    )
+                                }
                             }
 
                         }
                     }
-//                    if (appCtx.showStates.showTopLinearIndicator) {
-//                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-//                    }
 
                 }
 
@@ -239,50 +241,8 @@ fun App(appCtx: AppContext) {
                     splitPaneState = topHorizontalSplitterState
                 ) {
 
-                    first(
-                        if (appCtx.showStates.showDirectoryViewer) {
-                            250.dp
-                        } else {
-                            0.dp
-                        }
-                    ) {
-
-                        val density = LocalDensity.current;
-
-                        AnimatedVisibility(
-                            visible = appCtx.showStates.showDirectoryViewer,
-                            enter = slideInHorizontally { with(density) { -40.dp.roundToPx() } },
-                            exit = slideOutHorizontally { with(density) { -400.dp.roundToPx() } }) {
-                            Row {
-                                val scope = rememberCoroutineScope();
-
-                                DirectoryViewer(appCtx) {
-                                    // on file clicked
-                                    if (isImage(it)) {
-                                        appCtx.imFile = it;
-                                        appCtx.initializeImageChange()
-
-                                        /*
-                                        * For some weird reason, using a local scope doesn't cause LinearProgressIndicator
-                                        * to render, it appears on screen, the animation just doesn't run, which is weird
-                                        * So for now we use GlobalScope until we figure out
-                                        *
-                                        */
-                                        GlobalScope.launch {
-                                            loadImage(appCtx)
-                                        }
-
-
-                                    }
-                                }
-                                Divider(
-
-                                    modifier = Modifier
-                                        .fillMaxHeight()  //fill the max height
-                                        .width(1.dp)
-                                )
-                            }
-                        }
+                    first(if (appCtx.openedLeftPane != LeftPaneOpened.None) 250.dp else 54.dp) {
+                        LeftPane(appCtx)
                     }
 
                     second(0.dp) {
@@ -336,7 +296,7 @@ fun App(appCtx: AppContext) {
                                                 modifier = Modifier.fillMaxSize(),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                // this computer is weird
+                                                // this language is weird
                                                 appCtx.image.image(appCtx)
                                             }
                                         }
@@ -348,8 +308,8 @@ fun App(appCtx: AppContext) {
 
                                 }
                             }
-                            second(if (appCtx.imageIsLoaded && appCtx.openPane != RightPaneOpened.None) 400.dp else 54.dp) {
-                                FiltersPane(appCtx)
+                            second(if (appCtx.imageIsLoaded && appCtx.openedRightPane != RightPaneOpened.None) 400.dp else 54.dp) {
+                                RightPanel(appCtx)
                             }
                         }
                     }
@@ -363,16 +323,6 @@ fun App(appCtx: AppContext) {
                                     .background(MaterialTheme.colors.onPrimary)
                             )
                         }
-//                        handle {
-//                            Box(
-//                                Modifier
-//                                   .markAsHandle()
-////                                    .pointerHoverIcon(PointerIcon.Default)
-////                                    .background(SolidColor(Color.Gray), alpha = 0.50f)
-//                                    .width(9.dp)
-//                                    .fillMaxHeight()
-//                            )
-//                        }
                     }
                 }
 
