@@ -51,6 +51,7 @@ fun SliderTextComponent(
     label: String,
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
+    modifier: Modifier = Modifier,
     decimalPattern: String = "###0.#########",
     scrollValueChangeBy: Float = 1.0F,
     onValueChange: (Float) -> Unit,
@@ -58,12 +59,12 @@ fun SliderTextComponent(
 
     val df = remember { DecimalFormat(decimalPattern) };
     // contains whatever value the slider is pointing to
-    var sliderValue by remember { mutableStateOf(value) }
+    var sliderValue by mutableStateOf(value)
     // value shown in the text-field
-    var shownValue by remember { mutableStateOf(df.format(sliderValue)) }
+    var shownValue by mutableStateOf(df.format(sliderValue))
 
 
-    Column {
+    Column(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 7.dp),
             horizontalArrangement = Arrangement.SpaceBetween,

@@ -43,6 +43,8 @@ suspend fun loadImage(appCtx: AppContext) {
 
     val time = measureTimeMillis { appCtx.image.loadFile(appCtx.imFile.path) }
     appCtx.bottomStatus = "Loaded ${appCtx.imFile.name} in ${time} ms"
+    appCtx.initializeImageSpecificStates()
+
     appCtx.imageIsLoaded = true;
     appCtx.broadcastImageChange()
 }

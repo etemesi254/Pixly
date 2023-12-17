@@ -14,6 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import history.HistoryOperationsEnum
 import kotlinx.coroutines.CoroutineScope
+import modifyOnChange
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -23,6 +24,7 @@ fun LightFiltersComponent(appContext: AppContext) {
 
     Box(modifier = Modifier.padding(vertical = 10.dp)) {
         val scope = rememberCoroutineScope();
+
         CollapsibleBox(title = "Light", appContext.showStates.showLightFilters, {
             appContext.showStates.showLightFilters = appContext.showStates.showLightFilters.xor(true)
         }) {
@@ -33,13 +35,13 @@ fun LightFiltersComponent(appContext: AppContext) {
                 ) {
                     SliderTextComponent(
                         "Brighten",
-                        0F,
+                        appContext.imageFilterValues().brightness,
+                        modifier = Modifier.modifyOnChange(appContext.recomposeWidgets.rerunImageSpecificStates),
                         valueRange = 0F..255F,
                         decimalPattern = "##0"
                     ) {
 
                         image.brighten(appContext, scope, it)
-                        appContext.broadcastImageChange()
                     }
                 }
                 Box(
@@ -47,7 +49,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                 ) {
                     SliderTextComponent(
                         "Contrast",
-                        0F,
+                        appContext.imageFilterValues().contrast,
                         valueRange = 0F..255F,
                         decimalPattern = "#0"
                     ) {
@@ -60,7 +62,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
                     SliderTextComponent(
-                        "Gamma", 0F,
+                        "Gamma", appContext.imageFilterValues().gamma,
                         valueRange = -5F..5F,
                         decimalPattern = "0.00",
                         scrollValueChangeBy = 0.2F

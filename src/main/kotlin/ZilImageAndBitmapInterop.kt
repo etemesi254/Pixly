@@ -180,6 +180,7 @@ class ZilImageAndBitmapInterop() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.contrast(value)
+                appContext.imageFilterValues().contrast = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -192,6 +193,7 @@ class ZilImageAndBitmapInterop() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.gamma(value)
+                appContext.imageFilterValues().gamma = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -205,6 +207,7 @@ class ZilImageAndBitmapInterop() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.exposure(value, blackPoint)
+                appContext.imageFilterValues().exposure = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -217,6 +220,7 @@ class ZilImageAndBitmapInterop() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.brightness(value)
+                appContext.imageFilterValues().brightness = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -234,6 +238,7 @@ class ZilImageAndBitmapInterop() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.stretchContrast(value.start, value.endInclusive)
+                appContext.imageFilterValues().stretchContrastRange.value = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -246,6 +251,7 @@ class ZilImageAndBitmapInterop() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.gaussianBlur(radius)
+                appContext.imageFilterValues().gaussianBlur = radius.toUInt()
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -258,6 +264,8 @@ class ZilImageAndBitmapInterop() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.boxBlur(radius)
+                appContext.imageFilterValues().boxBlur = radius.toUInt()
+
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -265,7 +273,6 @@ class ZilImageAndBitmapInterop() {
 
     fun flip(appContext: AppContext, coroutineScope: CoroutineScope) {
         appContext.initializeImageChange()
-        //appContext.appendToHistory(HistoryOperationsEnum.F)
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.flip()

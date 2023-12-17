@@ -7,10 +7,21 @@ import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import java.io.File
 
 class FilterValues {
-    val contrast by mutableStateOf(0F);
-    val gamma by mutableStateOf(0F)
-    val exposure by mutableStateOf(0F)
+    var contrast by mutableStateOf(0F)
+    var brightness by mutableStateOf(0F)
+    var gamma by mutableStateOf(0F)
+    var exposure by mutableStateOf(0F)
+    var boxBlur by mutableStateOf(0u)
+    var gaussianBlur by mutableStateOf(0u)
+    var stretchContrastRange: MutableState<ClosedFloatingPointRange<Float>> = mutableStateOf(0F..256.0F)
 
+
+}
+
+
+class ImageSpecificStates {
+    val filterValues by mutableStateOf(FilterValues())
+    var history by mutableStateOf(HistoryOperations())
 }
 
 @OptIn(ExperimentalSplitPaneApi::class)
@@ -34,7 +45,7 @@ class AppContext {
 
     var recomposeWidgets by mutableStateOf(RecomposeWidgets())
 
-    var filters: MutableMap<File, FilterValues> by mutableStateMapOf()
+    private var imageSpecificStates: MutableMap<File, ImageSpecificStates> = HashMap()
 
     var zoomState by mutableStateOf(ScalableState())
     var openedRightPane by mutableStateOf(RightPaneOpened.None)
@@ -43,15 +54,17 @@ class AppContext {
     /**
      * Contains history of currently executed image operaions
      * */
-    private var history: HistoryOperations = HistoryOperations();
 
 
-    fun createFilterMap() {
-        filters[imFile] = FilterValues()
+    fun initializeImageSpecificStates() {
+        imageSpecificStates.putIfAbsent(imFile, ImageSpecificStates())
+        recomposeWidgets.rerunImageSpecificStates = recomposeWidgets.rerunImageSpecificStates
+
+
     }
 
     fun returnFilterValues(): FilterValues {
-        return filters[imFile]!!
+        return imageSpecificStates[imFile]!!.filterValues
     }
 
     fun initializeImageChange() {
@@ -61,30 +74,44 @@ class AppContext {
 
     fun broadcastImageChange() {
         // tell whoever is listening to this to rebuild
-        recomposeWidgets.rerunHistogram = recomposeWidgets.rerunHistogram.xor(true)
+        recomposeWidgets.rerunHistogram = !recomposeWidgets.rerunHistogram
+        recomposeWidgets.rerunImageSpecificStates = !recomposeWidgets.rerunImageSpecificStates
         showStates.showTopLinearIndicator = false;
 
     }
 
     fun getHistory(): HistoryOperations {
-        return history
+        imageSpecificStates.putIfAbsent(imFile, ImageSpecificStates())
+
+        return imageSpecificStates[imFile]!!.history
 
     }
 
     fun setHistory(history: HistoryOperations) {
-        this.history = history
+        imageSpecificStates.putIfAbsent(imFile, ImageSpecificStates())
+        imageSpecificStates[imFile]!!.history = history;
     }
 
     fun appendToHistory(newValue: HistoryOperationsEnum, value: Any? = null) {
-        this.history.addHistory(newValue, value)
+        imageSpecificStates.putIfAbsent(imFile, ImageSpecificStates())
+
+        imageSpecificStates[imFile]!!.history.addHistory(newValue, value);
     }
-    fun resetHistory(){
-        this.history.reset()
+
+    fun resetHistory() {
+        imageSpecificStates.putIfAbsent(imFile, ImageSpecificStates())
+        imageSpecificStates[imFile]!!.history.reset()
+    }
+
+    fun imageFilterValues(): FilterValues {
+        imageSpecificStates.putIfAbsent(imFile, ImageSpecificStates())
+        return imageSpecificStates[imFile]!!.filterValues
     }
 }
 
 
 class RecomposeWidgets {
     var rerunHistogram by mutableStateOf(false)
+    var rerunImageSpecificStates by mutableStateOf(false)
 
 }
