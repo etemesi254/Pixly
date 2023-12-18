@@ -39,7 +39,7 @@ class AppContext {
     var imageIsLoaded by mutableStateOf(false)
     var externalNavigationEventBus by mutableStateOf(ExternalNavigationEventBus())
 
-    var image by mutableStateOf(ZilImageAndBitmapInterop());
+    var image by mutableStateOf(ZilBitmap());
     var imFile by mutableStateOf(File(""))
     var rootDirectory by mutableStateOf("/")
 

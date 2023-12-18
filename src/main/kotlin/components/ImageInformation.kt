@@ -1,7 +1,6 @@
 package components
 
 import AppContext
-import ZilImageAndBitmapInterop
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
@@ -11,7 +10,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import java.io.File
 import java.text.DecimalFormat
 
 @Composable

@@ -22,3 +22,9 @@ An image editor built on kotlin and Rust
   - Zoom in on the image, pan around a zoomed image and see pixel effects in real time
 - Image metadata information
   - View info such as file size, width height and even exif information where present
+
+### Shortcomings
+- Skia can't let us tell it where to point to a native memory pointer
+which means we waste 2x image memory
+- Although there exists an `ImageBitmap` interface, it's a useless one since nothing will be drawn
+unless its `SkiaBackedImageBitmap`,  see https://github.com/JetBrains/compose-multiplatform/issues/108

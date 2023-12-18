@@ -2,14 +2,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.colorspace.ColorSpace
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import components.ScalableImage
 import history.HistoryOperationsEnum
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-class ZilImageAndBitmapInterop() {
+
+class ZilBitmap() {
     var inner: ZilImage = ZilImage();
 
     // it may happen that this may be called from multiple coroutines
@@ -24,7 +29,6 @@ class ZilImageAndBitmapInterop() {
 
     // a boolean to see if we have modified stuff
     private var isModified by mutableStateOf(true)
-    //private var canvas:androidx.compose.ui.graphics.Canvas? = null;
 
 
     constructor(file: String) : this() {
@@ -97,6 +101,8 @@ class ZilImageAndBitmapInterop() {
             // TODO change color type to be pre-multiplied once its exposed from native
             assert(canvasBitmap.allocPixels(info))
         }
+
+        // canvasBitmap.()
         // ensure we can store it
         assert(canvasBitmap.computeByteSize() == info.computeByteSize(info.minRowBytes))
     }
@@ -104,7 +110,6 @@ class ZilImageAndBitmapInterop() {
     @OptIn(ExperimentalUnsignedTypes::class)
     private fun installPixels() {
         val buffer = inner.toBuffer();
-
         assert(canvasBitmap.installPixels(buffer.asByteArray()))
     }
 
@@ -341,6 +346,64 @@ class ZilImageAndBitmapInterop() {
 
 }
 
+const val BPP = 4
+
+
+//class ZilBitmap(
+//    val internalBuffer: ByteArray,
+//    override val height: Int,
+//    override val width: Int,
+//    override val colorSpace: ColorSpace = ColorSpaces.Srgb,
+//    override val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888,
+//    override val hasAlpha: Boolean = true,
+//) : ImageBitmap {
+//    override fun prepareToDraw() = Unit
+//
+//    override fun readPixels(
+//        buffer: IntArray,
+//        startX: Int,
+//        startY: Int,
+//        width: Int,
+//        height: Int,
+//        bufferOffset: Int,
+//        stride: Int
+//    ) {
+//
+//        // similar to https://cs.android.com/android/platform/superproject/+/42c50042d1f05d92ecc57baebe3326a57aeecf77:frameworks/base/graphics/java/android/graphics/Bitmap.java;l=2007
+//        val lastScanline: Int = bufferOffset + (height - 1) * stride
+//        require(startX >= 0 && startY >= 0)
+//        require(width > 0 && startX + width <= this.width)
+//        require(height > 0 && startY + height <= this.height)
+//        require(bufferOffset >= 0 && bufferOffset + width <= buffer.size)
+//        require(lastScanline >= 0 && lastScanline + width <= buffer.size)
+//        require(stride == width) // TODO: Allow strides, will be fixed soon
+//
+//        // similar to https://cs.android.com/android/platform/superproject/+/9054ca2b342b2ea902839f629e820546d8a2458b:frameworks/base/libs/hwui/jni/Bitmap.cpp;l=898;bpv=1
+//
+//        val start = (startY * stride) + startX
+//        val end = start + buffer.size
+//        // wrap it in a bytebuffer
+//        val slice = ByteBuffer.wrap(internalBuffer).slice(start, end).array()
+//
+//
+//        // read pixels
+//        println("${start} ${end} ${startX} ${startY}")
+//        slice.putBytesIntoX(buffer, bufferOffset, slice.size / BPP)
+//    }
+//
+//}
+//
+//internal fun ByteArray.putBytesIntoX(array: IntArray, offset: Int, length: Int) {
+//    ByteBuffer.wrap(this)
+//        .order(ByteOrder.LITTLE_ENDIAN) // to return ARGB
+//        .asIntBuffer()
+//        .get(array, offset, length)
+//}
+//
+//@OptIn(ExperimentalUnsignedTypes::class)
+//fun ZilImage.asZilBitmap(): ZilBitmap {
+//    return ZilBitmap(this.toBuffer().asByteArray(), height = this.height().toInt(), width = this.width().toInt())
+//}
 
 /** A stub modifier that can be used to tell compose to
  * rebuild a widget
