@@ -1,5 +1,4 @@
 import androidx.compose.ui.res.loadImageBitmap
-import components.loadAndDecodeImage
 import java.io.File
 
 @OptIn(ExperimentalUnsignedTypes::class)

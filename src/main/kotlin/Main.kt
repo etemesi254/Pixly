@@ -41,14 +41,17 @@ import kotlin.system.measureTimeMillis
 /**
  * Load the image specified by appCtx.imFile
  *
+ * @param appCtx: Application context
+ * @param forceReload: Reload the image even if it's currently loaded
+ *
  * NB: DO NOT RUN THIS ON THE MAIN THREAD AS IT WILL BLOCK
  * OTHER I/0, RUN IT ON IO THREAD
  * */
-fun loadImage(appCtx: AppContext) {
+fun loadImage(appCtx: AppContext, forceReload: Boolean = false) {
 
     // check if we loaded this image, and move to that instead
     // of reloading
-    if (appCtx.imageStates().containsKey(appCtx.imFile)) {
+    if (appCtx.imageStates().containsKey(appCtx.imFile) && !forceReload) {
         appCtx.imageStates().asSequence().forEachIndexed { idx, it ->
             if (it.key == appCtx.imFile) {
                 appCtx.tabIndex = idx
@@ -57,7 +60,7 @@ fun loadImage(appCtx: AppContext) {
 
     } else {
         val time = measureTimeMillis {
-            val image = ZilBitmap(appCtx.imFile.path)
+            val image = ZilBitmap(appCtx.imFile.path,appCtx.sharedBuffer)
             appCtx.initializeImageSpecificStates(image)
         }
         appCtx.bottomStatus = "Loaded ${appCtx.imFile.name} in $time ms"
@@ -80,24 +83,15 @@ fun App(appCtx: AppContext) {
     // give the image maximum split plane support
     val nestedHorizontalSplitterState = rememberSplitPaneState(1F)
 
+    var isFirstDraw by remember { mutableStateOf(false) }
 
-    if (appCtx.isFirstDraw) {
+    if (isFirstDraw) {
         // take system theme based
         appCtx.showStates.showLightTheme = !isSystemInDarkTheme();
-        appCtx.isFirstDraw = false;
+        isFirstDraw = false;
     }
 
 
-    /*
-     *  BUG, BUG, BUG
-     *
-     * For some reason, using local coroutine scope/LaunchedEffect causes the linear indicator
-     * to not render, so it shows, but it doesn't show any pro
-     * For now we are forced to use the global scope which miraculously works
-     *
-     * when that is fixed, revert this to local
-     *
-     */
     LaunchedEffect(Unit) {
         this.launch(Dispatchers.IO) {
             handleKeyEvents(appCtx)

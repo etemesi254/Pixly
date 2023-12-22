@@ -39,8 +39,6 @@ fun DirectoryViewerEntry(appCtx: AppContext) {
                     scope.launch(Dispatchers.IO) {
                         loadImage(appCtx)
                     }
-
-
                 }
             }
             Divider(

@@ -33,62 +33,69 @@ fun LightFiltersComponent(appContext: AppContext) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Brighten",
-                        appContext.imageFilterValues().brightness,
-                        modifier = Modifier.modifyOnChange(appContext.recomposeWidgets.rerunImageSpecificStates),
-                        valueRange = 0F..255F,
-                        decimalPattern = "##0"
-                    ) {
+                    appContext.imageFilterValues()?.brightness?.let {
+                        SliderTextComponent(
+                            "Brighten",
+                            it,
+                            valueRange = 0F..255F,
+                            decimalPattern = "##0"
+                        ) {
 
-                        image.brighten(appContext, scope, it)
+                            image.brighten(appContext, scope, it)
+                        }
                     }
                 }
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Contrast",
-                        appContext.imageFilterValues().contrast,
-                        valueRange = 0F..255F,
-                        decimalPattern = "#0"
-                    ) {
+                    appContext.imageFilterValues()?.let {
+                        SliderTextComponent(
+                            "Contrast",
+                            it.contrast,
+                            valueRange = 0F..255F,
+                            decimalPattern = "#0"
+                        ) {
 
-                        image.contrast(appContext, scope, it)
+                            image.contrast(appContext, scope, it)
+                        }
                     }
                 }
 
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Gamma", appContext.imageFilterValues().gamma,
-                        valueRange = -5F..5F,
-                        decimalPattern = "0.00",
-                        scrollValueChangeBy = 0.02F
-                    ) {
+                    appContext.imageFilterValues()?.let {
+                        SliderTextComponent(
+                            "Gamma", it.gamma,
+                            valueRange = -5F..5F,
+                            decimalPattern = "0.00",
+                            scrollValueChangeBy = 0.02F
+                        ) {
 
-                        appContext.appendToHistory(HistoryOperationsEnum.Gamma, it)
-                        // gamma works in a weird way, higher gamma
-                        // is a darker image, which beats the logic of the
-                        // slider since we expect higher gamma to be a brighter
-                        // image, so just invert that here
-                        // this makes higher gamma -> brighter images
-                        // smaller gamma -> darker images
-                        image.gamma(appContext, scope, (-1 * it) + 2.3F)
+                            appContext.appendToHistory(HistoryOperationsEnum.Gamma, it)
+                            // gamma works in a weird way, higher gamma
+                            // is a darker image, which beats the logic of the
+                            // slider since we expect higher gamma to be a brighter
+                            // image, so just invert that here
+                            // this makes higher gamma -> brighter images
+                            // smaller gamma -> darker images
+                            image.gamma(appContext, scope, (-1 * it) + 2.3F)
+                        }
                     }
                 }
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Exposure", appContext.imageFilterValues().exposure,
-                        valueRange = -1F..1F,
-                        decimalPattern = "0.00",
-                        scrollValueChangeBy = 0.01F
-                    ) {
+                    appContext.imageFilterValues()?.let {
+                        SliderTextComponent(
+                            "Exposure", it.exposure,
+                            valueRange = -1F..1F,
+                            decimalPattern = "0.00",
+                            scrollValueChangeBy = 0.01F
+                        ) {
 
-                        image.exposure(appContext, scope, it + 1F)
+                            image.exposure(appContext, scope, it + 1F)
+                        }
                     }
                 }
             }
@@ -128,7 +135,9 @@ fun OrientationFiltersComponent(appContext: AppContext) {
 
                         IconButton(onClick = {
 
-                            appContext.getImage().flop(appContext, scope)
+                            if (appContext.imageIsLoaded()) {
+                                appContext.getImage().flop(appContext, scope)
+                            }
                         }) {
                             Icon(
                                 painter = painterResource("flip-horizontal-svgrepo-com.svg"),

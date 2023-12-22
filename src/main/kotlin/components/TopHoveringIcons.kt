@@ -95,7 +95,10 @@ fun TopHoveringIcons(appContext: AppContext){
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
-                                    IconButton(onClick = {}) {
+                                    IconButton(onClick = {
+
+                                        appContext.showStates.showSaveDialog = true
+                                    }) {
                                         Image(
                                             painter = painterResource("save-svgrepo.svg"),
                                             contentDescription = null,
@@ -111,7 +114,7 @@ fun TopHoveringIcons(appContext: AppContext){
                                     }
 
                                     IconButton(onClick = {
-                                        appContext.showStates.showInformation= true
+                                        appContext.openedRightPane= RightPaneOpened.InformationPanel
                                     }) {
                                         Image(
                                             painter = painterResource("info-svgrepo.svg"),

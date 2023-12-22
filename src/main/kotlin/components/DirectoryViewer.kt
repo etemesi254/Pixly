@@ -1,11 +1,9 @@
 package components
 
 import AppContext
-import ZilImage
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -17,10 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.LinearGradient
-import androidx.compose.ui.graphics.asSkiaBitmap
-import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -31,10 +25,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 
-fun loadAndDecodeImage(file: File): ImageBitmap {
-
-    return loadImageBitmap(file.inputStream())
-}
 
 @Composable
 fun SingleDirectoryView(path: File, ctx: AppContext, onDirectoryClicked: (File) -> Unit) {
@@ -132,7 +122,7 @@ fun DirectoryViewer(appCtx: AppContext, onFileClicked: (file: File) -> Unit) {
                 }
                 // now make left and right switch work
                 if (appCtx.imFile == it) {
-                    appCtx.position = i
+                    appCtx.pathPosition = i
                 }
                 i += 1
             }

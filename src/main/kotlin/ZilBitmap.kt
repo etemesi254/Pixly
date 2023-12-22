@@ -10,11 +10,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
+import java.lang.ref.Cleaner
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 
-class ZilBitmap() {
+class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
     var inner: ZilImage = ZilImage();
 
     // it may happen that this may be called from multiple coroutines
@@ -31,7 +32,7 @@ class ZilBitmap() {
     private var isModified by mutableStateOf(true)
 
 
-    constructor(file: String) : this() {
+    constructor(file: String, tempSharedBuffer: SharedBuffer) : this(tempSharedBuffer) {
 
         this.file = file
         inner = ZilImage(file)
@@ -107,10 +108,21 @@ class ZilBitmap() {
         assert(canvasBitmap.computeByteSize() == info.computeByteSize(info.minRowBytes))
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     private fun installPixels() {
-        val buffer = inner.toBuffer();
-        assert(canvasBitmap.installPixels(buffer.asByteArray()))
+        runBlocking {
+            tempSharedBuffer.mutex.withLock {
+                // resize if small
+                if (tempSharedBuffer.sharedBuffer.size < inner.outputBufferSize()) {
+                    tempSharedBuffer.sharedBuffer = ByteArray(inner.outputBufferSize().toInt())
+                }
+                // wrap in a bytebuffer to ensure slice fits
+
+                inner.writeTo(tempSharedBuffer.sharedBuffer);
+                val wrappedBuffer = ByteBuffer.wrap(tempSharedBuffer.sharedBuffer)
+                val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
+                assert(canvasBitmap.installPixels(slice.array()))
+            }
+        }
     }
 
     @Composable
@@ -185,7 +197,7 @@ class ZilBitmap() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.contrast(value)
-                appContext.imageFilterValues().contrast = value
+                appContext.imageFilterValues()?.contrast = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -198,7 +210,7 @@ class ZilBitmap() {
             mutex.withLock {
                 appContext.initializeImageChange()
                 inner.gamma(value)
-                appContext.imageFilterValues().gamma = value
+                appContext.imageFilterValues()?.gamma = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -212,7 +224,7 @@ class ZilBitmap() {
             mutex.withLock {
                 appContext.initializeImageChange()
                 inner.exposure(value, blackPoint)
-                appContext.imageFilterValues().exposure = value
+                appContext.imageFilterValues()?.exposure = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -225,7 +237,7 @@ class ZilBitmap() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.brightness(value)
-                appContext.imageFilterValues().brightness = value
+                appContext.imageFilterValues()?.brightness = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -243,7 +255,7 @@ class ZilBitmap() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.stretchContrast(value.start, value.endInclusive)
-                appContext.imageFilterValues().stretchContrastRange.value = value
+                appContext.imageFilterValues()?.stretchContrastRange?.value = value
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -256,7 +268,7 @@ class ZilBitmap() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.gaussianBlur(radius)
-                appContext.imageFilterValues().gaussianBlur = radius.toUInt()
+                appContext.imageFilterValues()?.gaussianBlur = radius.toUInt()
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -269,7 +281,7 @@ class ZilBitmap() {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 inner.boxBlur(radius)
-                appContext.imageFilterValues().boxBlur = radius.toUInt()
+                appContext.imageFilterValues()?.boxBlur = radius.toUInt()
 
                 postProcessPixelsManipulated(appContext)
             }

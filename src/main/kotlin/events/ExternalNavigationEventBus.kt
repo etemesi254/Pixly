@@ -5,7 +5,6 @@ import isImage
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import loadImage
 
 enum class ExternalImageViewerEvent {
@@ -38,24 +37,24 @@ suspend fun handleKeyEvents(appCtx: AppContext) {
 
             appCtx.initializeImageChange()
             appCtx.resetHistory()
-            loadImage(appCtx)
+            loadImage(appCtx,forceReload = true)
 
         }
         if (it == ExternalImageViewerEvent.Next || it == ExternalImageViewerEvent.Previous) {
             if (appCtx.paths.isNotEmpty()) {
                 var value = if (it == ExternalImageViewerEvent.Next)
-                    appCtx.position++
+                    appCtx.pathPosition++
                 else {
-                    appCtx.position--
+                    appCtx.pathPosition--
                 }
 
                 if (value < 0) {
                     value = appCtx.paths.size - 1
-                    appCtx.position = value
+                    appCtx.pathPosition = value
 
                 } else if (value > appCtx.paths.size - 1) {
                     value = 0
-                    appCtx.position = value
+                    appCtx.pathPosition = value
 
                 }
                 val fileValue = appCtx.paths.getOrNull(value)

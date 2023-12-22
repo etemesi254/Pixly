@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
@@ -206,6 +207,7 @@ private const val SLIGHTLY_INCREASED_ZOOM = 1.5f
 fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
     BoxWithConstraints {
         var areaSize = areaSize
+        val interactionSource = remember { MutableInteractionSource() };
 
         val image = appContext.getImage().canvas()
         val imageSize = image.size
@@ -235,6 +237,10 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
 //            }
             Box(
                 modifier
+                    .clickable(interactionSource = interactionSource, indication = null) {
+                        // https://stackoverflow.com/questions/66703448/how-to-disable-ripple-effect-when-clicking-in-jetpack-compose
+                        appContext.showStates.showPopups = !appContext.showStates.showPopups
+                    }
                     .drawWithContent {
                         drawIntoCanvas {
                             it.withSave {
@@ -256,7 +262,6 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
                     .pointerInput(Unit) {
 
                         detectTransformGestures { centroid, pan, zoom, _ ->
-                            //        println("${centroid} ${pan} ${zoom}")
                             appContext.currentImageState().zoomState.addPan(pan)
                             appContext.currentImageState().zoomState.addZoom(zoom, centroid - areaCenter)
                         }
