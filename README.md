@@ -22,6 +22,9 @@ An image editor built on kotlin and Rust
   - Zoom in on the image, pan around a zoomed image and see pixel effects in real time
 - Image metadata information
   - View info such as file size, width height and even exif information where present
+- Tab Based nagivation
+  - Load multiple images in many tabs, edit, each image individually, and save.
+  - Information is specific to each tab, and preserved across tab switches
 
 ### Shortcomings
 - Skia can't let us tell it where to point to a native memory pointer

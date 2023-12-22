@@ -50,7 +50,12 @@ fun _calculateHistogram(input: UByteArray): MutableMap<String, FloatArray> {
 @Composable
 fun HistogramChart(ctx: AppContext) {
     var array: Map<String, LongArray> =
-        remember(ctx.recomposeWidgets.rerunHistogram) { ctx.image.inner.histogram() }
+        remember(ctx.recomposeWidgets.rerunHistogram) {
+
+            if (ctx.imageIsLoaded()) ctx.getImage().inner.histogram() else {
+                mutableMapOf()
+            }
+        }
 
     // array type is BGRA, but histogram returns 1,2,3,4
     // 0->B,1->R, 2->G
@@ -89,7 +94,7 @@ fun HistogramChart(ctx: AppContext) {
                         }
                         val color2 = colors[k] ?: Color.Gray.copy(0.4F);
                         val max = v.max().toInt()
-                        if (max == (ctx.image.inner.width() * ctx.image.inner.height()).toInt()) {
+                        if (max == (ctx.getImage().inner.width() * ctx.getImage().inner.height()).toInt()) {
                             // just one point, do not redraw, just store ignore it
                             continue
                         }

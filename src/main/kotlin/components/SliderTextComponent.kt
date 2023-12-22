@@ -54,6 +54,7 @@ fun SliderTextComponent(
     modifier: Modifier = Modifier,
     decimalPattern: String = "###0.#########",
     scrollValueChangeBy: Float = 1.0F,
+   // delta:Float = 0F,
     onValueChange: (Float) -> Unit,
 ) {
 

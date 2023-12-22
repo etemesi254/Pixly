@@ -20,7 +20,7 @@ import modifyOnChange
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LightFiltersComponent(appContext: AppContext) {
-    val image = appContext.image
+    val image = appContext.getImage()
 
     Box(modifier = Modifier.padding(vertical = 10.dp)) {
         val scope = rememberCoroutineScope();
@@ -65,7 +65,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                         "Gamma", appContext.imageFilterValues().gamma,
                         valueRange = -5F..5F,
                         decimalPattern = "0.00",
-                        scrollValueChangeBy = 0.2F
+                        scrollValueChangeBy = 0.02F
                     ) {
 
                         appContext.appendToHistory(HistoryOperationsEnum.Gamma, it)
@@ -82,12 +82,11 @@ fun LightFiltersComponent(appContext: AppContext) {
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
                     SliderTextComponent(
-                        "Exposure", 0F,
+                        "Exposure", appContext.imageFilterValues().exposure,
                         valueRange = -1F..1F,
                         decimalPattern = "0.00",
                         scrollValueChangeBy = 0.01F
                     ) {
-                        appContext.appendToHistory(HistoryOperationsEnum.Exposure, it);
 
                         image.exposure(appContext, scope, it + 1F)
                     }
@@ -117,7 +116,7 @@ fun OrientationFiltersComponent(appContext: AppContext) {
 
                         IconButton(onClick = {
 
-                            appContext.image.verticalFlip(appContext, scope)
+                            appContext.getImage().verticalFlip(appContext, scope)
                         }) {
                             Icon(
                                 painter = painterResource("flip-vertical-svgrepo-com.svg"),
@@ -129,7 +128,7 @@ fun OrientationFiltersComponent(appContext: AppContext) {
 
                         IconButton(onClick = {
 
-                            appContext.image.flop(appContext, scope)
+                            appContext.getImage().flop(appContext, scope)
                         }) {
                             Icon(
                                 painter = painterResource("flip-horizontal-svgrepo-com.svg"),
@@ -140,7 +139,7 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         }
                         IconButton(onClick = {
                             // add to history
-                            appContext.image.transpose(appContext, scope)
+                            appContext.getImage().transpose(appContext, scope)
                         }) {
                             Icon(
                                 painter = painterResource("transpose-svgrepo-com.png"),
@@ -175,7 +174,7 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                     decimalPattern = "##0"
                 ) {
 
-                    appContext.image.stretchContrast(appContext, scope, it)
+                    appContext.getImage().stretchContrast(appContext, scope, it)
                 }
             }
         }
@@ -195,11 +194,11 @@ fun BlurFiltersComponent(appContext: AppContext) {
                 ) {
                     SliderTextComponent(
                         "Box Blur",
-                        0F,
+                        appContext.currentImageState().filterValues.boxBlur.toFloat(),
                         valueRange = 0F..255F,
                         decimalPattern = "##0"
                     ) {
-                        appContext.image.boxBlur(appContext, scope, it.toLong())
+                        appContext.getImage().boxBlur(appContext, scope, it.toLong())
                     }
                 }
                 Box(
@@ -207,11 +206,11 @@ fun BlurFiltersComponent(appContext: AppContext) {
                 ) {
                     SliderTextComponent(
                         "Gaussian Blur",
-                        0F,
+                        appContext.currentImageState().filterValues.gaussianBlur.toFloat(),
                         valueRange = 0F..255F,
                         decimalPattern = "#0"
                     ) {
-                        appContext.image.gaussianBlur(appContext, scope, it.toLong())
+                        appContext.getImage().gaussianBlur(appContext, scope, it.toLong())
                     }
                 }
 //                ColorPicker {

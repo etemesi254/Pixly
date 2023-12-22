@@ -34,7 +34,7 @@ suspend fun handleKeyEvents(appCtx: AppContext) {
         if (it == ExternalImageViewerEvent.OpenImage) {
             appCtx.showStates.showFilePicker = true;
         }
-        if (it == ExternalImageViewerEvent.ReloadImage && appCtx.imageIsLoaded && appCtx.imFile.exists() && appCtx.imFile.isFile) {
+        if (it == ExternalImageViewerEvent.ReloadImage && appCtx.imageIsLoaded() && appCtx.imFile.exists() && appCtx.imFile.isFile) {
 
             appCtx.initializeImageChange()
             appCtx.resetHistory()

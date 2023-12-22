@@ -192,11 +192,11 @@ class ZilBitmap() {
     }
 
     fun gamma(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
-        appContext.initializeImageChange()
         appContext.appendToHistory(HistoryOperationsEnum.Gamma, value)
 
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
+                appContext.initializeImageChange()
                 inner.gamma(value)
                 appContext.imageFilterValues().gamma = value
                 postProcessPixelsManipulated(appContext)
@@ -206,11 +206,11 @@ class ZilBitmap() {
     }
 
     fun exposure(appContext: AppContext, coroutineScope: CoroutineScope, value: Float, blackPoint: Float = 0.0F) {
-        appContext.initializeImageChange()
         appContext.appendToHistory(HistoryOperationsEnum.Exposure, value)
 
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
+                appContext.initializeImageChange()
                 inner.exposure(value, blackPoint)
                 appContext.imageFilterValues().exposure = value
                 postProcessPixelsManipulated(appContext)

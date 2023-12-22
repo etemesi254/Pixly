@@ -46,7 +46,7 @@ fun RightPanel(appCtx: AppContext) {
         contentAlignment = Alignment.CenterEnd,
         modifier = Modifier.fillMaxSize().defaultMinSize(80.dp)
     ) {
-        if (appCtx.openedRightPane != RightPaneOpened.None) {
+        if (appCtx.openedRightPane != RightPaneOpened.None && appCtx.imageIsLoaded()) {
             Surface(
                 color = MaterialTheme.colors.background,
                 modifier = Modifier.fillMaxWidth().padding(end = 40.dp)
@@ -80,7 +80,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled = appCtx.imageIsLoaded,
+                        enabled = appCtx.imageIsLoaded(),
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.InformationPanel
                         }) {
@@ -102,7 +102,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled = appCtx.imageIsLoaded,
+                        enabled =appCtx.imageIsLoaded(),
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.FiltersPanel
                         }
@@ -122,7 +122,7 @@ fun RightPanel(appCtx: AppContext) {
                             appCtx.openedRightPane = RightPaneOpened.HistoryPanel
                         }
                     },
-                    enabled = appCtx.imageIsLoaded,
+                    enabled =appCtx.imageIsLoaded(),
                     modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                         appCtx.openedRightPane == RightPaneOpened.HistoryPanel
                     }
@@ -142,7 +142,7 @@ fun RightPanel(appCtx: AppContext) {
 @Composable
 fun ExifMetadataPane(appCtx: AppContext) {
 
-    val exif: Map<String, String> = appCtx.image.inner.exifMetadata()
+    val exif: Map<String, String> = appCtx.getImage().inner.exifMetadata()
 
 
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {

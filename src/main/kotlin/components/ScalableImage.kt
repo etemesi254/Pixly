@@ -207,7 +207,7 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
     BoxWithConstraints {
         var areaSize = areaSize
 
-        val image = appContext.image.canvas()
+        val image = appContext.getImage().canvas()
         val imageSize = image.size
         val menu = remember { DropdownMenuState(initialStatus = DropdownMenuState.Status.Closed) }
 
@@ -240,12 +240,12 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
                             it.withSave {
                                 it.translate(areaCenter.x, areaCenter.y)
                                 it.translate(
-                                    appContext.zoomState.transformation.offset.x,
-                                    appContext.zoomState.transformation.offset.y
+                                    appContext.currentImageState().zoomState.transformation.offset.x,
+                                    appContext.currentImageState().zoomState.transformation.offset.y
                                 )
                                 it.scale(
-                                    appContext.zoomState.transformation.scale,
-                                    appContext.zoomState.transformation.scale
+                                    appContext.currentImageState().zoomState.transformation.scale,
+                                    appContext.currentImageState().zoomState.transformation.scale
                                 )
                                 it.translate(-imageCenter.x, -imageCenter.y)
                                 drawImage(image)
@@ -257,26 +257,26 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
 
                         detectTransformGestures { centroid, pan, zoom, _ ->
                             //        println("${centroid} ${pan} ${zoom}")
-                            appContext.zoomState.addPan(pan)
-                            appContext.zoomState.addZoom(zoom, centroid - areaCenter)
+                            appContext.currentImageState().zoomState.addPan(pan)
+                            appContext.currentImageState().zoomState.addZoom(zoom, centroid - areaCenter)
                         }
                     }
                     .onPointerEvent(PointerEventType.Scroll) {
                         val centroid = it.changes[0].position
                         val delta = it.changes[0].scrollDelta
                         val zoom = 1.2f.pow(-delta.y)
-                        appContext.zoomState.addZoom(zoom, centroid - areaCenter)
+                        appContext.currentImageState().zoomState.addZoom(zoom, centroid - areaCenter)
                     }
 
                     .pointerInput(Unit) {
                         detectTapGestures(onDoubleTap = { position ->
                             // If a user zoomed significantly, the zoom should be the restored on double tap,
                             // otherwise the zoom should be increased
-                            appContext.zoomState.setZoom(
-                                if (appContext.zoomState.zoom > SLIGHTLY_INCREASED_ZOOM) {
+                            appContext.currentImageState().zoomState.setZoom(
+                                if (appContext.currentImageState().zoomState.zoom > SLIGHTLY_INCREASED_ZOOM) {
                                     INITIAL_ZOOM
                                 } else {
-                                    appContext.zoomState.defaultClickLimit
+                                    appContext.currentImageState().zoomState.defaultClickLimit
                                 },
                                 position - areaCenter
                             )
@@ -286,7 +286,7 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
         }
 
         SideEffect {
-            appContext.zoomState.limitTargetInsideArea(areaSize, imageSize)
+            appContext.currentImageState().zoomState.limitTargetInsideArea(areaSize, imageSize)
         }
     }
 }

@@ -15,7 +15,7 @@ import java.text.DecimalFormat
 @Composable
 fun ImageInformationComponent(appCtx: AppContext) {
     val file = appCtx.imFile
-    val innerImage = appCtx.image.inner;
+    val innerImage = appCtx.getImage().inner;
 
 
     Column(modifier = Modifier.padding(vertical = 10.dp)) {
