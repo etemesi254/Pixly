@@ -115,9 +115,12 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
                 if (tempSharedBuffer.sharedBuffer.size < inner.outputBufferSize()) {
                     tempSharedBuffer.sharedBuffer = ByteArray(inner.outputBufferSize().toInt())
                 }
+                if (tempSharedBuffer.nativeBuffer.capacity() < inner.outputBufferSize()) {
+                    tempSharedBuffer.nativeBuffer = ByteBuffer.allocateDirect(inner.outputBufferSize().toInt())
+                }
                 // wrap in a bytebuffer to ensure slice fits
 
-                inner.writeTo(tempSharedBuffer.sharedBuffer);
+                inner.writeToBuffer(tempSharedBuffer.nativeBuffer, tempSharedBuffer.sharedBuffer);
                 val wrappedBuffer = ByteBuffer.wrap(tempSharedBuffer.sharedBuffer)
                 val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
                 assert(canvasBitmap.installPixels(slice.array()))
@@ -209,7 +212,14 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
                 appContext.initializeImageChange()
-                inner.gamma(value)
+                // gamma works in a weird way, higher gamma
+                // is a darker image, which beats the logic of the
+                // slider since we expect higher gamma to be a brighter
+                // image, so just invert that here
+                // this makes higher gamma -> brighter images
+                // smaller gamma -> darker images
+                inner.gamma((-1 * value) + 2.3F)
+
                 appContext.imageFilterValues()?.gamma = value
                 postProcessPixelsManipulated(appContext)
             }
@@ -222,8 +232,9 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
 
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
+
                 appContext.initializeImageChange()
-                inner.exposure(value, blackPoint)
+                inner.exposure(value + 1F, blackPoint)
                 appContext.imageFilterValues()?.exposure = value
                 postProcessPixelsManipulated(appContext)
             }
@@ -352,7 +363,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
 
     private fun postProcessPixelsManipulated(appContext: AppContext) {
         installPixels()
-        isModified = !isModified;
+        isModified = !isModified
         appContext.broadcastImageChange()
     }
 

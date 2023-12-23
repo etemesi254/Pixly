@@ -4,12 +4,13 @@ import events.ExternalNavigationEventBus
 import history.HistoryOperations
 import history.HistoryOperationsEnum
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.io.File
+import java.nio.ByteBuffer
 
 class SharedBuffer {
     val mutex: Mutex = Mutex()
     var sharedBuffer: ByteArray = ByteArray(0)
+    var nativeBuffer: ByteBuffer = ByteBuffer.allocate(0)
 
 }
 
@@ -127,7 +128,7 @@ class AppContext {
      * Contains history of currently executed image operaions
      * */
     fun initializeImageSpecificStates(image: ZilBitmap) {
-        imageSpecificStates[imFile] = ImageSpecificStates(image,sharedBuffer)
+        imageSpecificStates[imFile] = ImageSpecificStates(image, sharedBuffer)
 
         // move the tab index to the newly loaded tab
         imageSpecificStates.asSequence().forEachIndexed { idx, it ->
@@ -143,7 +144,7 @@ class AppContext {
     }
 
     fun initializeImageChange() {
-        showStates.showTopLinearIndicator = true;
+        showStates.showTopLinearIndicator = true
 
     }
 
@@ -151,7 +152,7 @@ class AppContext {
         // tell whoever is listening to this to rebuild
         recomposeWidgets.rerunHistogram = !recomposeWidgets.rerunHistogram
         recomposeWidgets.rerunImageSpecificStates = !recomposeWidgets.rerunImageSpecificStates
-        showStates.showTopLinearIndicator = false;
+        showStates.showTopLinearIndicator = false
 
     }
 

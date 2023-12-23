@@ -73,13 +73,8 @@ fun LightFiltersComponent(appContext: AppContext) {
                         ) {
 
                             appContext.appendToHistory(HistoryOperationsEnum.Gamma, it)
-                            // gamma works in a weird way, higher gamma
-                            // is a darker image, which beats the logic of the
-                            // slider since we expect higher gamma to be a brighter
-                            // image, so just invert that here
-                            // this makes higher gamma -> brighter images
-                            // smaller gamma -> darker images
-                            image.gamma(appContext, scope, (-1 * it) + 2.3F)
+
+                            image.gamma(appContext, scope, it)
                         }
                     }
                 }
@@ -94,7 +89,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                             scrollValueChangeBy = 0.01F
                         ) {
 
-                            image.exposure(appContext, scope, it + 1F)
+                            image.exposure(appContext, scope, it)
                         }
                     }
                 }
@@ -177,13 +172,15 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                 {
                     //HistogramChart(ctx = appContext)
                 }
-                RangeSliderTextComponent(
-                    value = 0F..256F,
-                    valueRange = 0F..256F,
-                    decimalPattern = "##0"
-                ) {
+                appContext.imageFilterValues()?.stretchContrastRange?.value?.let {
+                    RangeSliderTextComponent(
+                        value = it,
+                        valueRange = 0F..256F,
+                        decimalPattern = "##0"
+                    ) {value->
 
-                    appContext.getImage().stretchContrast(appContext, scope, it)
+                        appContext.getImage().stretchContrast(appContext, scope, value)
+                    }
                 }
             }
         }

@@ -83,8 +83,8 @@ fun HistogramChart(ctx: AppContext) {
         Box(
             Modifier.fillMaxWidth().height(200.dp).drawWithCache {
 
-                var width = this.size.width
-                var height = this.size.height
+                val width = this.size.width
+                val height = this.size.height
                 val singleRange = width * recip
 
                 onDrawWithContent {

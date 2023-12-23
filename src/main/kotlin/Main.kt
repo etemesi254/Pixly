@@ -329,7 +329,7 @@ fun App(appCtx: AppContext) {
 
                                         Modifier.background(imBackgroundColor).fillMaxSize()
                                             .padding(horizontal = 0.dp)
-                                            .clickable(enabled = !appCtx.imageIsLoaded()) {
+                                            .clickable(enabled = !appCtx.imageIsLoaded() && !appCtx.showStates.showTopLinearIndicator) {
                                                 appCtx.showStates.showPopups = !appCtx.showStates.showPopups;
                                                 if (!appCtx.imageIsLoaded()) {
                                                     appCtx.showStates.showFilePicker = true;
@@ -348,14 +348,24 @@ fun App(appCtx: AppContext) {
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                 modifier = Modifier.fillMaxSize()
                                             ) {
-                                                Icon(
-                                                    painter = painterResource("add-circle.svg"),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(100.dp),
 
-                                                    )
-                                                Spacer(modifier = Modifier.height(30.dp))
-                                                Text("Drag an image here\nUse the directory picker to start \nOr click me to open an image")
+                                                if (appCtx.showStates.showTopLinearIndicator) {
+
+                                                    // An image is loading or something
+                                                    CircularProgressIndicator()
+                                                    Spacer(modifier = Modifier.height(30.dp))
+
+                                                    Text("Loading")
+                                                } else {
+                                                    Icon(
+                                                        painter = painterResource("add-circle.svg"),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(100.dp),
+
+                                                        )
+                                                    Spacer(modifier = Modifier.height(30.dp))
+                                                    Text("Drag an image here\nUse the directory picker to start \nOr click me to open an image")
+                                                }
                                             }
                                         } else {
 
@@ -411,12 +421,12 @@ fun App(appCtx: AppContext) {
 
                     Box(
                         contentAlignment = Alignment.CenterEnd,
-                        modifier = Modifier.width(70.dp).padding(horizontal = 5.dp),
+                        modifier = Modifier.width(48.dp).padding(horizontal = 5.dp),
                     ) {
                         if (appCtx.imageIsLoaded()) {
                             Text(
                                 "${formatter.format(appCtx.currentImageState().zoomState.zoom * 100F)} %",
-                                style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)),
+                                style = TextStyle(fontSize = TextUnit(12F, TextUnitType.Sp)),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1
                             )

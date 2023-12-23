@@ -44,14 +44,12 @@ fun ImageInformationComponent(appCtx: AppContext) {
         }
 
         Divider()
-
-        Divider()
         Row(
             modifier = Modifier.fillMaxWidth().padding(10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "Size",
+                "Size in Disk",
                 style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
             )
             Text(
@@ -59,6 +57,29 @@ fun ImageInformationComponent(appCtx: AppContext) {
                 style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
             );
         }
+        Divider()
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                "Size in Memory",
+                style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+            )
+            Text(
+                formatSize(
+                    (innerImage.height()
+                            * innerImage.width()
+                            * innerImage.colorspace().components().toUInt()
+                            * innerImage.depth().sizeOf().toUInt()
+                            ).toLong()
+                ),
+                style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+            );
+        }
+
+
     }
 
 

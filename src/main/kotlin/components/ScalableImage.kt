@@ -3,15 +3,9 @@ package components
 
 import AppContext
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.BoxWithConstraintsScope
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.DropdownMenuState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Text
@@ -31,6 +25,7 @@ import kotlin.math.pow
 import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.math.max
 import kotlin.math.min
 
@@ -104,7 +99,7 @@ class ScalableState {
     ) {
         this.areaSize = areaSize
         this.targetSize = targetSize
-        zoomLimits = (scaleForFullVisibility / scaleFor100PercentZoom)..zoomLimits.endInclusive
+        zoomLimits = scaleForFullVisibility..zoomLimits.endInclusive
         applyLimits()
     }
 
@@ -215,19 +210,31 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
 
         val imageCenter = Offset(image.width / 2f, image.height / 2f)
         val areaCenter = Offset(areaSize.width / 2f, areaSize.height / 2f)
+       // var rotation by remember { mutableStateOf(0f) }
 
+        var scale by remember { mutableStateOf(1f) }
+        var rotation by remember { mutableStateOf(0f) }
+        var offset by remember { mutableStateOf(Offset.Zero) }
+        val state = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
+            scale *= zoomChange
+            rotation += rotationChange
+            offset += offsetChange
+        }
+//
 //        val state = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
 //            // note: scale goes by factor, not an absolute difference, so we need to multiply it
 //            // for this example, we don't allow downscaling, so cap it to 1f
+//            rotation += rotationChange
+//            println("${rotationChange}, ${offsetChange},${zoomChange}")
 //
-//            appContext.zoomState.addZoom(zoomChange,offsetChange)
-//            println("Zoom change ${zoomChange} ${offsetChange} ${rotationChange}");
+//            appContext.currentImageState().zoomState.addZoom(zoomChange, offsetChange)
 //            println(zoomChange)
 //        }
         Box(
-            modifier = Modifier.contextMenuOpenDetector(menu),
+            modifier = Modifier.contextMenuOpenDetector(menu).fillMaxSize(),
 
             ) {
+
 
 //            if (menu.status != DropdownMenuState.Status.Closed) {
 //
@@ -241,6 +248,14 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
                         // https://stackoverflow.com/questions/66703448/how-to-disable-ripple-effect-when-clicking-in-jetpack-compose
                         appContext.showStates.showPopups = !appContext.showStates.showPopups
                     }
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        rotationZ = rotation,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
+                    .transformable(state=state)
                     .drawWithContent {
                         drawIntoCanvas {
                             it.withSave {
@@ -286,8 +301,15 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
                                 position - areaCenter
                             )
                         })
+//                        detectDragGestures { change, dragAmount ->
+//                            println("panning")
+//                            appContext.currentImageState().zoomState.addPan(change.position)
+//                            //appContext.currentImageState().zoomState.addZoom(zoom, centroid - areaCenter)
+//
+//                        }
                     },
             )
+
         }
 
         SideEffect {

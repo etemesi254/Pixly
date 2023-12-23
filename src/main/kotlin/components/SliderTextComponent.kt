@@ -54,7 +54,7 @@ fun SliderTextComponent(
     modifier: Modifier = Modifier,
     decimalPattern: String = "###0.#########",
     scrollValueChangeBy: Float = 1.0F,
-   // delta:Float = 0F,
+    // delta:Float = 0F,
     onValueChange: (Float) -> Unit,
 ) {
 
@@ -128,21 +128,7 @@ fun SliderTextComponent(
         }
         Slider(
             value = sliderValue,
-            modifier = Modifier.fillMaxWidth()
-                .onPointerEvent(PointerEventType.Scroll, pass = PointerEventPass.Main) {
-                    val delta = it.changes[0].scrollDelta
-                    if (delta.y < 0.0) {
-
-                        sliderValue += scrollValueChangeBy
-                    } else {
-                        sliderValue -= scrollValueChangeBy
-                    }
-                    // clamp to range allowed
-                    sliderValue = sliderValue.coerceIn(valueRange)
-
-                    shownValue = df.format(sliderValue)
-                    onValueChange(sliderValue)
-                }, onValueChange = {
+            modifier = Modifier.fillMaxWidth(), onValueChange = {
                 sliderValue = it;
                 shownValue = df.format(sliderValue)
                 onValueChange(sliderValue)
