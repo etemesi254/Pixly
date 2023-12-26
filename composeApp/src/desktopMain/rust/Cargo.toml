@@ -1,0 +1,15 @@
+[package]
+name = "zune-jni-bindings"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "0.21.1"
+zune-image = { version = "0.4", path = "/home/caleb/Documents/rust/zune-image/crates/zune-image" }
+zune-core = { version = "0.4", path = "/home/caleb/Documents/rust/zune-image/crates/zune-core" }
+zune-imageprocs = { version = "0.4", path = "/home/caleb/Documents/rust/zune-image/crates/zune-imageprocs" }
+libc = "0.2.1"
