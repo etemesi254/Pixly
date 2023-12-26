@@ -64,7 +64,7 @@ fun RightPanel(appCtx: AppContext) {
             //.border(2.dp, MaterialTheme.colors.onBackground, shape = RectangleShape)
         ) {
 
-            Divider( modifier = Modifier.fillMaxHeight().width(1.dp))
+            Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
             Column {
                 PixlyToolTip(
@@ -102,7 +102,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled =appCtx.imageIsLoaded(),
+                        enabled = appCtx.imageIsLoaded(),
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.FiltersPanel
                         }
@@ -122,7 +122,7 @@ fun RightPanel(appCtx: AppContext) {
                             appCtx.openedRightPane = RightPaneOpened.HistoryPanel
                         }
                     },
-                    enabled =appCtx.imageIsLoaded(),
+                    enabled = appCtx.imageIsLoaded(),
                     modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                         appCtx.openedRightPane == RightPaneOpened.HistoryPanel
                     }
@@ -187,11 +187,15 @@ fun InformationPanel(appCtx: AppContext) {
     Box(modifier = Modifier.fillMaxHeight().padding(horizontal = 10.dp)) {
         LazyColumn(state = scrollState) {
             item {
+                histogramPane(appCtx)
+            }
+            item {
                 ImageInformationComponent(appCtx)
             }
             item {
                 ExifMetadataPane(appCtx)
             }
+
         }
 
         VerticalScrollbar(
@@ -272,14 +276,16 @@ fun ImageFiltersPane(appCtx: AppContext) {
                             ) { OrientationFiltersComponent(appCtx) }
                         }
 
-                        FiltersPaneOrdering.HistogramFilters -> {
+
+                        FiltersPaneOrdering.HSLFilters -> {
                             ReorderableItem(
                                 state,
                                 key = item,
                                 index = it
                             ) {
-                                histogramPane(appCtx)
+                                HslFiltersComponent(appCtx)
                             }
+
                         }
 
                         FiltersPaneOrdering.Levels -> {

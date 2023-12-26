@@ -81,7 +81,21 @@ enum class HistoryOperationsEnum(historyType: HistoryType) : HistoryOperationsIn
         override fun trivialUndo(): Boolean = true
         override fun requiresValue(): Boolean = false
 
-    }
+    },
+    Hue(HistoryType.ImageFilter) {
+        override fun requiresValue(): Boolean = true
+        override fun trivialUndo(): Boolean = false
+    },
+
+    MedianBlur(HistoryType.ImageFilter) {
+        override fun requiresValue(): Boolean = true
+        override fun trivialUndo(): Boolean = false
+    },
+    BilateralBlur(HistoryType.ImageFilter) {
+        override fun requiresValue(): Boolean = true
+        override fun trivialUndo(): Boolean = false
+    },
+
 
 }
 
@@ -96,12 +110,12 @@ class HistoryOperations {
         val newValue = passedValue ?: 0
         values.add(newValue)
         history.add(historyEnum)
-        println(history)
     }
 
     fun getHistory(): MutableList<HistoryOperationsEnum> {
         return history
     }
+
     fun getValue(): MutableList<Any> {
         return values
     }

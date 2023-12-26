@@ -17,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import modifyOnChange
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LightFiltersComponent(appContext: AppContext) {
     val image = appContext.getImage()
@@ -37,8 +36,9 @@ fun LightFiltersComponent(appContext: AppContext) {
                         SliderTextComponent(
                             "Brighten",
                             it,
-                            valueRange = 0F..255F,
-                            decimalPattern = "##0"
+                            valueRange = -100F..100F,
+                            decimalPattern = "##0",
+                            enabled = !appContext.isImageOperationRunning()
                         ) {
 
                             image.brighten(appContext, scope, it)
@@ -52,8 +52,10 @@ fun LightFiltersComponent(appContext: AppContext) {
                         SliderTextComponent(
                             "Contrast",
                             it.contrast,
-                            valueRange = 0F..255F,
-                            decimalPattern = "#0"
+                            valueRange = -100F..100F,
+                            decimalPattern = "#0",
+                            enabled = !appContext.isImageOperationRunning()
+
                         ) {
 
                             image.contrast(appContext, scope, it)
@@ -66,27 +68,12 @@ fun LightFiltersComponent(appContext: AppContext) {
                 ) {
                     appContext.imageFilterValues()?.let {
                         SliderTextComponent(
-                            "Gamma", it.gamma,
-                            valueRange = -5F..5F,
-                            decimalPattern = "0.00",
-                            scrollValueChangeBy = 0.02F
-                        ) {
-
-                            appContext.appendToHistory(HistoryOperationsEnum.Gamma, it)
-
-                            image.gamma(appContext, scope, it)
-                        }
-                    }
-                }
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
-                ) {
-                    appContext.imageFilterValues()?.let {
-                        SliderTextComponent(
                             "Exposure", it.exposure,
                             valueRange = -1F..1F,
                             decimalPattern = "0.00",
-                            scrollValueChangeBy = 0.01F
+                            scrollValueChangeBy = 0.01F,
+                            enabled = !appContext.isImageOperationRunning()
+
                         ) {
 
                             image.exposure(appContext, scope, it)
@@ -116,10 +103,12 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
 
-                        IconButton(onClick = {
+                        IconButton(
+                            onClick = {
 
-                            appContext.getImage().verticalFlip(appContext, scope)
-                        }) {
+                                appContext.getImage().verticalFlip(appContext, scope)
+                            }, enabled = !appContext.isImageOperationRunning()
+                        ) {
                             Icon(
                                 painter = painterResource("flip-vertical-svgrepo-com.svg"),
                                 contentDescription = null,
@@ -128,12 +117,14 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                             )
                         }
 
-                        IconButton(onClick = {
+                        IconButton(
+                            onClick = {
 
-                            if (appContext.imageIsLoaded()) {
-                                appContext.getImage().flop(appContext, scope)
-                            }
-                        }) {
+                                if (appContext.imageIsLoaded()) {
+                                    appContext.getImage().flop(appContext, scope)
+                                }
+                            }, enabled = !appContext.isImageOperationRunning()
+                        ) {
                             Icon(
                                 painter = painterResource("flip-horizontal-svgrepo-com.svg"),
                                 contentDescription = null,
@@ -141,10 +132,12 @@ fun OrientationFiltersComponent(appContext: AppContext) {
 
                             )
                         }
-                        IconButton(onClick = {
-                            // add to history
-                            appContext.getImage().transpose(appContext, scope)
-                        }) {
+                        IconButton(
+                            onClick = {
+                                // add to history
+                                appContext.getImage().transpose(appContext, scope)
+                            }, enabled = !appContext.isImageOperationRunning()
+                        ) {
                             Icon(
                                 painter = painterResource("transpose-svgrepo-com.png"),
                                 contentDescription = null,
@@ -176,8 +169,10 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                     RangeSliderTextComponent(
                         value = it,
                         valueRange = 0F..256F,
-                        decimalPattern = "##0"
-                    ) {value->
+                        decimalPattern = "##0",
+                        enabled = !appContext.isImageOperationRunning()
+
+                    ) { value ->
 
                         appContext.getImage().stretchContrast(appContext, scope, value)
                     }
@@ -202,7 +197,9 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         "Box Blur",
                         appContext.currentImageState().filterValues.boxBlur.toFloat(),
                         valueRange = 0F..255F,
-                        decimalPattern = "##0"
+                        decimalPattern = "##0",
+                        enabled = !appContext.isImageOperationRunning()
+
                     ) {
                         appContext.getImage().boxBlur(appContext, scope, it.toLong())
                     }
@@ -214,14 +211,119 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         "Gaussian Blur",
                         appContext.currentImageState().filterValues.gaussianBlur.toFloat(),
                         valueRange = 0F..255F,
-                        decimalPattern = "#0"
+                        decimalPattern = "#0",
+                        enabled = !appContext.isImageOperationRunning()
+
                     ) {
                         appContext.getImage().gaussianBlur(appContext, scope, it.toLong())
                     }
                 }
-//                ColorPicker {
-//                    println(it)
-//                }
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Median Blur",
+                        appContext.currentImageState().filterValues.medianBlur.toFloat(),
+                        valueRange = 0F..255F,
+                        decimalPattern = "#0",
+                        enabled = !appContext.isImageOperationRunning()
+
+                    ) {
+                        appContext.getImage().medianBlur(appContext, scope, it.toLong())
+                    }
+                }
+
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Bilateral Blur",
+                        appContext.currentImageState().filterValues.bilateralBlur.toFloat(),
+                        valueRange = 0F..255F,
+                        decimalPattern = "#0",
+                        enabled = !appContext.isImageOperationRunning()
+
+                    ) {
+                        appContext.getImage().bilateralBlur(appContext, scope, it.toLong())
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun HslFiltersComponent(appContext: AppContext) {
+    Box(modifier = Modifier.padding(vertical = 10.dp)) {
+        CollapsibleBox("Hue, Saturation, Lightness", appContext.showStates.showHslFilters, {
+            appContext.showStates.showHslFilters = !appContext.showStates.showHslFilters
+        }) {
+            val scope = rememberCoroutineScope()
+            Column {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Hue",
+                        appContext.currentImageState().filterValues.hue,
+                        valueRange = -360F..360F,
+                        decimalPattern = "##0",
+                        enabled = !appContext.isImageOperationRunning()
+
+                    ) {
+                        appContext.getImage().hslAdjust(
+                            appContext,
+                            scope,
+                            it,
+                            appContext.currentImageState().filterValues.saturation,
+                            appContext.currentImageState().filterValues.lightness
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Saturation",
+                        appContext.currentImageState().filterValues.saturation,
+                        valueRange = -2f..4f,
+                        scrollValueChangeBy = 0.5f,
+                        decimalPattern = "#0.##",
+                        enabled = !appContext.isImageOperationRunning()
+
+                    ) {
+                        appContext.getImage().hslAdjust(
+                            appContext,
+                            scope,
+                            appContext.currentImageState().filterValues.hue,
+                            it,
+                            appContext.currentImageState().filterValues.lightness
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
+                ) {
+                    SliderTextComponent(
+                        "Lightness",
+                        appContext.currentImageState().filterValues.lightness,
+                        valueRange = 0f..2f,
+                        scrollValueChangeBy = 0.5f,
+                        decimalPattern = "#0.##",
+                        enabled = !appContext.isImageOperationRunning()
+
+                    ) {
+
+                        appContext.getImage().hslAdjust(
+                            appContext,
+                            scope,
+                            appContext.currentImageState().filterValues.hue,
+                            appContext.currentImageState().filterValues.saturation,
+                            it
+                        )
+                    }
+                }
             }
         }
     }

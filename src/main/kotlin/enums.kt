@@ -5,9 +5,9 @@
 enum class FiltersPaneOrdering {
     LightFilters,
     OrientationFilters,
-    HistogramFilters,
     Levels,
-    BlurFilters
+    BlurFilters,
+    HSLFilters
 }
 
 /**
@@ -38,6 +38,7 @@ enum class RightPaneOpened {
      * */
     HistoryPanel
 }
+
 /**
  * Indicates which left pane item was clicked
  * and is currently opened

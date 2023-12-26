@@ -22,7 +22,7 @@ An image editor built on kotlin and Rust
   - Zoom in on the image, pan around a zoomed image and see pixel effects in real time
 - Image metadata information
   - View info such as file size, width height and even exif information where present
-- Tab Based nagivation
+- Tab Based navigation
   - Load multiple images in many tabs, edit, each image individually, and save.
   - Information is specific to each tab, and preserved across tab switches
 
@@ -31,3 +31,5 @@ An image editor built on kotlin and Rust
 which means we waste 2x image memory
 - Although there exists an `ImageBitmap` interface, it's a useless one since nothing will be drawn
 unless its `SkiaBackedImageBitmap`,  see https://github.com/JetBrains/compose-multiplatform/issues/108
+
+- The image is being fully redrawn after modification, causes some ugly flickering every time a redraw happens

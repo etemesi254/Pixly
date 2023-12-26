@@ -25,6 +25,7 @@ import kotlin.math.pow
 import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.math.max
 import kotlin.math.min
@@ -199,9 +200,11 @@ private const val SLIGHTLY_INCREASED_ZOOM = 1.5f
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
+fun ScalableImage(appContext: AppContext, isModified: Boolean, modifier: Modifier = Modifier) {
     BoxWithConstraints {
         var areaSize = areaSize
+
+
         val interactionSource = remember { MutableInteractionSource() };
 
         val image = appContext.getImage().canvas()
@@ -210,52 +213,19 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
 
         val imageCenter = Offset(image.width / 2f, image.height / 2f)
         val areaCenter = Offset(areaSize.width / 2f, areaSize.height / 2f)
-       // var rotation by remember { mutableStateOf(0f) }
 
-        var scale by remember { mutableStateOf(1f) }
-        var rotation by remember { mutableStateOf(0f) }
-        var offset by remember { mutableStateOf(Offset.Zero) }
-        val state = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
-            scale *= zoomChange
-            rotation += rotationChange
-            offset += offsetChange
-        }
-//
-//        val state = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
-//            // note: scale goes by factor, not an absolute difference, so we need to multiply it
-//            // for this example, we don't allow downscaling, so cap it to 1f
-//            rotation += rotationChange
-//            println("${rotationChange}, ${offsetChange},${zoomChange}")
-//
-//            appContext.currentImageState().zoomState.addZoom(zoomChange, offsetChange)
-//            println(zoomChange)
-//        }
         Box(
             modifier = Modifier.contextMenuOpenDetector(menu).fillMaxSize(),
 
             ) {
 
-
-//            if (menu.status != DropdownMenuState.Status.Closed) {
-//
-//                Column {
-//                    Text("Open  a file")
-//                }
-//            }
             Box(
                 modifier
+                    .fillMaxSize()
                     .clickable(interactionSource = interactionSource, indication = null) {
                         // https://stackoverflow.com/questions/66703448/how-to-disable-ripple-effect-when-clicking-in-jetpack-compose
                         appContext.showStates.showPopups = !appContext.showStates.showPopups
                     }
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        rotationZ = rotation,
-                        translationX = offset.x,
-                        translationY = offset.y
-                    )
-                    .transformable(state=state)
                     .drawWithContent {
                         drawIntoCanvas {
                             it.withSave {
@@ -308,7 +278,9 @@ fun ScalableImage(appContext: AppContext, modifier: Modifier = Modifier) {
 //
 //                        }
                     },
-            )
+            ){
+                Image(image,null)
+            }
 
         }
 

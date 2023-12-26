@@ -13,6 +13,7 @@ import org.jetbrains.skia.*
 import java.lang.ref.Cleaner
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.absoluteValue
 
 
 class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
@@ -146,31 +147,26 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
         * only one thing runs at a time
         */
         key(isModified) {
-            if (mutex.tryLock()) {
-                // unlock when composition is done
-                SideEffect {
-                    if (mutex.isLocked) {
-                        mutex.unlock()
-                    }
-                }
-                /*
-                * Let's talk about getting compose to redraw.
-                *
-                * So we need it to redraw the image for real time effects viewing
-                *
-                * but we don't have a way to tell compose, hey, redraw me
-                * So we make it think that the modifier has been modified, forcing a redraw
-                *
-                *
-                * All image filters modify the isModified parameter, which acts as a signal
-                * telling compose to redraw the image
-                *
-                * */
-                ScalableImage(
-                    appContext,
-                    modifier = Modifier.fillMaxSize().modifyOnChange(isModified)
-                )
-            }
+
+            /*
+            * Let's talk about getting compose to redraw.
+            *
+            * So we need it to redraw the image for real time effects viewing
+            *
+            * but we don't have a way to tell compose, hey, redraw me
+            * So we make it think that the modifier has been modified, forcing a redraw
+            *
+            *
+            * All image filters modify the isModified parameter, which acts as a signal
+            * telling compose to redraw the image
+            *
+            * */
+            ScalableImage(
+                appContext,
+                isModified,
+
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
     }
@@ -184,72 +180,94 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
         // ensure we are the only ones who can access this at a go,
         // because it happens that we may load too fast and we are called from coroutines
         // and invalidate our pointer causing skia to break
-        mutex.withLock {
-            inner.loadFile(file)
-            this.file = file;
-            prepareNewFile()
-        }
+        inner.loadFile(file)
+        this.file = file;
+        prepareNewFile()
+
     }
 
 
     fun contrast(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
-        appContext.initializeImageChange()
-        // store history
-        appContext.appendToHistory(HistoryOperationsEnum.Contrast, value)
 
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
-                inner.contrast(value)
-                appContext.imageFilterValues()?.contrast = value
-                postProcessPixelsManipulated(appContext)
+
+                val prevValue = appContext.imageFilterValues()?.contrast!!;
+                val delta = value - prevValue;
+
+
+                if (delta.absoluteValue > EPSILON) {
+                    appContext.initializeImageChange()
+                    appContext.appendToHistory(HistoryOperationsEnum.Contrast, value)
+
+
+                    inner.contrast(delta)
+                    appContext.imageFilterValues()?.contrast = value
+                    postProcessPixelsManipulated(appContext)
+                }
             }
         }
     }
-
-    fun gamma(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
-        appContext.appendToHistory(HistoryOperationsEnum.Gamma, value)
-
-        coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
-                appContext.initializeImageChange()
-                // gamma works in a weird way, higher gamma
-                // is a darker image, which beats the logic of the
-                // slider since we expect higher gamma to be a brighter
-                // image, so just invert that here
-                // this makes higher gamma -> brighter images
-                // smaller gamma -> darker images
-                inner.gamma((-1 * value) + 2.3F)
-
-                appContext.imageFilterValues()?.gamma = value
-                postProcessPixelsManipulated(appContext)
-            }
-        }
-
-    }
+//
+//    fun gamma(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
+//        appContext.appendToHistory(HistoryOperationsEnum.Gamma, value)
+//
+//        coroutineScope.launch(Dispatchers.IO) {
+//            mutex.withLock {
+//
+//                val prevValue = appContext.imageFilterValues()?.gamma!!;
+//                val delta = value - prevValue;
+//                appContext.initializeImageChange()
+//                // gamma works in a weird way, higher gamma
+//                // is a darker image, which beats the logic of the
+//                // slider since we expect higher gamma to be a brighter
+//                // image, so just invert that here
+//                // this makes higher gamma -> brighter images
+//                // smaller gamma -> darker images
+//                inner.gamma((-1 * value) + 2.3F)
+//
+//                appContext.imageFilterValues()?.gamma = value
+//                postProcessPixelsManipulated(appContext)
+//            }
+//        }
+//    }
 
     fun exposure(appContext: AppContext, coroutineScope: CoroutineScope, value: Float, blackPoint: Float = 0.0F) {
-        appContext.appendToHistory(HistoryOperationsEnum.Exposure, value)
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
 
-                appContext.initializeImageChange()
-                inner.exposure(value + 1F, blackPoint)
-                appContext.imageFilterValues()?.exposure = value
-                postProcessPixelsManipulated(appContext)
+
+            mutex.withLock {
+                val prevValue = appContext.imageFilterValues()?.exposure!!;
+                val delta = value - prevValue;
+                if (delta.absoluteValue > EPSILON) {
+
+                    appContext.appendToHistory(HistoryOperationsEnum.Exposure, value)
+                    appContext.initializeImageChange()
+                    inner.exposure(delta + 1F, blackPoint)
+                    appContext.imageFilterValues()?.exposure = value
+                    postProcessPixelsManipulated(appContext)
+                }
             }
         }
     }
 
     fun brighten(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
-        appContext.initializeImageChange()
-        appContext.appendToHistory(HistoryOperationsEnum.Brighten, value)
 
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
-                inner.brightness(value)
-                appContext.imageFilterValues()?.brightness = value
-                postProcessPixelsManipulated(appContext)
+                val prevValue = appContext.imageFilterValues()?.brightness!!;
+                val delta = value - prevValue;
+
+                if (delta.absoluteValue > EPSILON) {
+                    appContext.initializeImageChange()
+                    appContext.appendToHistory(HistoryOperationsEnum.Brighten, value)
+
+                    // brightness expects a value between -1 and 1, so scale it here
+                    inner.brightness(delta / 100F)
+                    appContext.imageFilterValues()?.brightness = value
+                    postProcessPixelsManipulated(appContext)
+                }
             }
         }
     }
@@ -259,12 +277,11 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
         coroutineScope: CoroutineScope,
         value: ClosedFloatingPointRange<Float>
     ) {
-
-        appContext.initializeImageChange()
-        appContext.appendToHistory(HistoryOperationsEnum.Levels, value)
-
         coroutineScope.launch(Dispatchers.IO) {
             mutex.withLock {
+
+                appContext.initializeImageChange()
+                appContext.appendToHistory(HistoryOperationsEnum.Levels, value)
                 inner.stretchContrast(value.start, value.endInclusive)
                 appContext.imageFilterValues()?.stretchContrastRange?.value = value
                 postProcessPixelsManipulated(appContext)
@@ -280,6 +297,34 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
             mutex.withLock {
                 inner.gaussianBlur(radius)
                 appContext.imageFilterValues()?.gaussianBlur = radius.toUInt()
+                postProcessPixelsManipulated(appContext)
+            }
+        }
+    }
+
+    fun medianBlur(appContext: AppContext, coroutineScope: CoroutineScope, radius: Long) {
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                appContext.initializeImageChange()
+                appContext.appendToHistory(HistoryOperationsEnum.MedianBlur, radius)
+                appContext.imageFilterValues()?.medianBlur = radius.toUInt()
+                // median filter is god slow
+                inner.medianBlur(radius)
+                postProcessPixelsManipulated(appContext)
+            }
+        }
+    }
+
+    fun bilateralBlur(appContext: AppContext, coroutineScope: CoroutineScope, radius: Long) {
+
+        coroutineScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                appContext.initializeImageChange()
+                appContext.appendToHistory(HistoryOperationsEnum.BilateralBlur, radius)
+                appContext.imageFilterValues()?.bilateralBlur = radius.toUInt()
+                // mean filter is god slow
+                inner.bilateralFilter(radius.toInt(), radius.toFloat(), radius.toFloat())
                 postProcessPixelsManipulated(appContext)
             }
         }
@@ -367,10 +412,32 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer) {
         appContext.broadcastImageChange()
     }
 
+    fun hslAdjust(appContext: AppContext, scope: CoroutineScope, hue: Float, saturation: Float, lightness: Float) {
+        scope.launch(Dispatchers.IO) {
+
+            mutex.withLock {
+                // TODO: Add deltas
+
+
+                appContext.initializeImageChange()
+                appContext.appendToHistory(HistoryOperationsEnum.Hue, listOf(hue, saturation, lightness))
+
+                inner.hslAdjust(hue, saturation, lightness)
+                appContext.imageFilterValues()?.hue = hue
+                appContext.imageFilterValues()?.saturation = saturation
+                appContext.imageFilterValues()?.lightness = lightness
+
+                postProcessPixelsManipulated(appContext)
+            }
+
+        }
+
+    }
 }
 
 const val BPP = 4
 
+val EPSILON = 0.003F;
 
 //class ZilBitmap(
 //    val internalBuffer: ByteArray,

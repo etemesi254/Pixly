@@ -54,6 +54,7 @@ fun SliderTextComponent(
     modifier: Modifier = Modifier,
     decimalPattern: String = "###0.#########",
     scrollValueChangeBy: Float = 1.0F,
+    enabled: Boolean = true,
     // delta:Float = 0F,
     onValueChange: (Float) -> Unit,
 ) {
@@ -74,6 +75,7 @@ fun SliderTextComponent(
             Text(label)
             BasicTextField(
                 value = shownValue,
+                enabled = enabled,
                 onValueChange = {
 
                     try {
@@ -128,12 +130,22 @@ fun SliderTextComponent(
         }
         Slider(
             value = sliderValue,
-            modifier = Modifier.fillMaxWidth(), onValueChange = {
+            modifier = Modifier.fillMaxWidth(),
+            onValueChange = {
                 sliderValue = it;
                 shownValue = df.format(sliderValue)
                 onValueChange(sliderValue)
 
-            }, valueRange = valueRange, colors = SliderDefaults.colors()
+            },
+            enabled = enabled,
+            valueRange = valueRange,
+            colors = SliderDefaults.colors(
+                activeTrackColor = MaterialTheme.colors.onSurface.copy(alpha = 0.1F),
+                inactiveTrackColor = MaterialTheme.colors.onSurface.copy(alpha = 0.1F),
+                disabledActiveTrackColor = MaterialTheme.colors.onSurface.copy(alpha = 0.1F),
+
+                disabledThumbColor =  MaterialTheme.colors.primary,
+            )
         )
 
     }
@@ -146,6 +158,7 @@ fun RangeSliderTextComponent(
     value: ClosedFloatingPointRange<Float>,
     valueRange: ClosedFloatingPointRange<Float>,
     decimalPattern: String = "###0.#########",
+    enabled: Boolean = true,
     onValueChange: (ClosedFloatingPointRange<Float>) -> Unit,
 
     ) {
@@ -165,7 +178,10 @@ fun RangeSliderTextComponent(
     Column {
 
         RangeSlider(
-            value = sliderValue, modifier = Modifier.fillMaxWidth(), onValueChange = {
+            value = sliderValue,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            onValueChange = {
                 sliderValue = it;
                 // currentValue = itonValueChange
                 // shownValue = df.format(currentValue)
@@ -184,6 +200,7 @@ fun RangeSliderTextComponent(
 
             BasicTextField(
                 value = shownStartValue,
+                enabled = enabled,
                 onValueChange = {
 
                     try {
@@ -199,6 +216,7 @@ fun RangeSliderTextComponent(
 
             )
             BasicTextField(
+                enabled = enabled,
                 value = shownEndValue,
                 onValueChange = {
 

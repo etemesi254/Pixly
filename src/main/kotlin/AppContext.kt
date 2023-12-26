@@ -23,11 +23,16 @@ class FilterValues {
     var boxBlur by mutableStateOf(0u)
     var gaussianBlur by mutableStateOf(0u)
     var stretchContrastRange: MutableState<ClosedFloatingPointRange<Float>> = mutableStateOf(0F..256.0F)
+    var hue by mutableStateOf(0f)
+    var saturation by mutableStateOf(1f)
+    var lightness by mutableStateOf(1f)
+    var medianBlur by mutableStateOf(0u)
+    var bilateralBlur by mutableStateOf(0u)
 }
 
 
 class ImageSpecificStates(tempSharedBuffer: SharedBuffer) {
-    val filterValues by mutableStateOf(FilterValues())
+    var filterValues by mutableStateOf(FilterValues())
     var history by mutableStateOf(HistoryOperations())
     var image by mutableStateOf(ZilBitmap(tempSharedBuffer))
     var imageIsLoaded by mutableStateOf(false)
@@ -36,6 +41,13 @@ class ImageSpecificStates(tempSharedBuffer: SharedBuffer) {
 
     constructor(image: ZilBitmap, tempSharedBuffer: SharedBuffer) : this(tempSharedBuffer) {
         this.image = image;
+    }
+
+    fun resetStates(newImage: ZilBitmap) {
+        filterValues = FilterValues()
+        history = HistoryOperations()
+        image = newImage
+        imageIsLoaded = false
     }
 }
 
@@ -128,7 +140,12 @@ class AppContext {
      * Contains history of currently executed image operaions
      * */
     fun initializeImageSpecificStates(image: ZilBitmap) {
-        imageSpecificStates[imFile] = ImageSpecificStates(image, sharedBuffer)
+        if (imageSpecificStates.containsKey(imFile)) {
+            // preserve things like zoom
+            imageSpecificStates[imFile]?.resetStates(image);
+        } else {
+            imageSpecificStates[imFile] = ImageSpecificStates(image, sharedBuffer)
+        }
 
         // move the tab index to the newly loaded tab
         imageSpecificStates.asSequence().forEachIndexed { idx, it ->
@@ -205,6 +222,10 @@ class AppContext {
 
         // if this is null it means the initializer didn't initialize the image
         return imageSpecificStates[imFile]!!.image
+    }
+
+    fun isImageOperationRunning(): Boolean {
+        return this.showStates.showTopLinearIndicator;
     }
 }
 
