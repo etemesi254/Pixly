@@ -27,6 +27,12 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.min
 
@@ -239,7 +245,21 @@ fun ScalableImage(appContext: AppContext, isModified: Boolean, modifier: Modifie
                                     appContext.currentImageState().zoomState.transformation.scale
                                 )
                                 it.translate(-imageCenter.x, -imageCenter.y)
-                                drawImage(image)
+                                runBlocking {
+                                    // the lock is an interesting one
+                                    // we may get image  buffer when we acquire but then another thread
+                                    // invalidates it, e.g. think a very fast operation that ends up calling
+                                    //  allocPixels while this runs, this would inadvertently end up seg-faulting
+                                    // with the error J 3394  org.jetbrains.skia.ImageKt._nMakeFromBitmap(J)J (0 bytes) @ 0x00007fa518e19061 [0x00007fa518e19020+0x0000000000000041]
+                                    //
+                                    // The solution is to protect skia operations with a mutex, to force a synchronization,
+                                    // in that no two skia operations can be said to run concurrently
+                                    // that's the work of the mutex
+                                    //
+                                    appContext.getImage().protectSkiaMutex.withLock {
+                                        drawImage(image)
+                                    }
+                                }
                             }
                         }
                     }
@@ -278,8 +298,8 @@ fun ScalableImage(appContext: AppContext, isModified: Boolean, modifier: Modifie
 //
 //                        }
                     },
-            ){
-                Image(image,null)
+            ) {
+                Image(image, null)
             }
 
         }

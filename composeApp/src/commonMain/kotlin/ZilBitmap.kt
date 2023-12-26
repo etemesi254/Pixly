@@ -16,7 +16,7 @@ import java.nio.ByteOrder
 import kotlin.math.absoluteValue
 
 
-class ZilBitmap(private val tempSharedBuffer: SharedBuffer,image:ZilImageInterface) {
+class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInterface) {
     var inner: ZilImageInterface = image;
 
     // it may happen that this may be called from multiple coroutines
@@ -25,6 +25,9 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer,image:ZilImageInterfa
     //
     // NB: All calls that can be called from separate coroutines should use this
     private val mutex = Mutex();
+    val protectSkiaMutex = Mutex();
+
+    // USE CAREFULLY
     private var canvasBitmap = Bitmap();
     private var info: ImageInfo = ImageInfo.makeUnknown(0, 0);
     private var file: String = "";
@@ -33,7 +36,10 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer,image:ZilImageInterfa
     private var isModified by mutableStateOf(true)
 
 
-    constructor(file: String, tempSharedBuffer: SharedBuffer,image:ZilImageInterface) : this(tempSharedBuffer,image) {
+    constructor(file: String, tempSharedBuffer: SharedBuffer, image: ZilImageInterface) : this(
+        tempSharedBuffer,
+        image
+    ) {
 
         this.file = file
         prepareNewFile()
@@ -100,7 +106,11 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer,image:ZilImageInterfa
 
         if (infoSize != imageSize) {
             // TODO change color type to be pre-multiplied once its exposed from native
-            assert(canvasBitmap.allocPixels(info))
+            runBlocking {
+                protectSkiaMutex.withLock {
+                    assert(canvasBitmap.allocPixels(info))
+                }
+            }
         }
 
         // canvasBitmap.()
@@ -122,8 +132,10 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer,image:ZilImageInterfa
 
                 inner.writeToBuffer(tempSharedBuffer.nativeBuffer, tempSharedBuffer.sharedBuffer);
                 val wrappedBuffer = ByteBuffer.wrap(tempSharedBuffer.sharedBuffer)
-                val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
-                assert(canvasBitmap.installPixels(slice.array()))
+                protectSkiaMutex.withLock {
+                    val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
+                    assert(canvasBitmap.installPixels(slice.array()))
+                }
             }
         }
     }
