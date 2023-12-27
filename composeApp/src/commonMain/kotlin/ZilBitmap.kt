@@ -2,6 +2,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.painterResource
 import components.ScalableImage
 import history.HistoryOperationsEnum
 import kotlinx.coroutines.*
@@ -40,9 +41,9 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     val protectSkiaMutex = Mutex();
 
     // USE CAREFULLY
-    private var canvasBitmap = Bitmap();
-    private var info: ImageInfo = ImageInfo.makeUnknown(0, 0);
-    private var file: String = "";
+    private var canvasBitmap = Bitmap()
+    private var info: ImageInfo = ImageInfo.makeUnknown(0, 0)
+    private var file: String = ""
 
     // a boolean to see if we have modified stuff
     private var isModified by mutableStateOf(true)
@@ -410,12 +411,19 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         }
     }
 
-    fun save(file: String) {
-        inner.save(file)
-    }
+//    fun save(file: String) {
+//        inner.save(file)
+//    }
 
-    fun save(file: String, format: ZilImageFormat) {
-        inner.save(file, format)
+    fun save(file: String, format: ZilImageFormat, appContext: AppContext, coroutineScope: CoroutineScope) {
+        coroutineScope.launch(Dispatchers.IO) {
+            appContext.initializeImageChange()
+            inner.save(file, format)
+
+            appContext.broadcastImageChange()
+            appContext.bottomStatus = "Saved ${file.substringAfterLast("/")} to ${file.substringBeforeLast("/")}"
+            appContext.showStates.showSaveDialog = false
+        }
     }
 
     private fun postProcessAlloc(appContext: AppContext) {

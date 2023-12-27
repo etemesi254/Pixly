@@ -49,3 +49,18 @@ enum class ZilImageFormat {
      */
     BMP
 }
+
+fun ZilImageFormat.hasEncoder(): Boolean {
+    return when (this) {
+        ZilImageFormat.UnknownFormat -> false
+        ZilImageFormat.JPEG -> true
+        ZilImageFormat.PNG -> true
+        ZilImageFormat.PPM -> true
+        ZilImageFormat.PSD -> false
+        ZilImageFormat.Farbfeld -> true
+        ZilImageFormat.QOI -> false
+        ZilImageFormat.JPEG_XL -> true
+        ZilImageFormat.HDR -> true
+        ZilImageFormat.BMP -> false
+    }
+}

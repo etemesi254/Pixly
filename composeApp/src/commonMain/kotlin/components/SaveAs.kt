@@ -17,9 +17,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import hasEncoder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -27,15 +33,16 @@ fun SaveAsDialog(ctx: AppContext) {
     var expanded by remember { mutableStateOf(false) }
 
     // drop ImageFormat.UnknownFormat
-    val items = ZilImageFormat.values().drop(1)
+    val items = ZilImageFormat.entries.filter { it.hasEncoder() }
     var selectedIndex by remember { mutableStateOf(0) }
-    var selectedText by remember { mutableStateOf(ZilImageFormat.JPEG) }
+    var selectedFormat by remember { mutableStateOf(ZilImageFormat.JPEG) }
     val icon = if (expanded)
         Icons.Filled.KeyboardArrowUp //it requires androidx.compose.material:material-icons-extended
     else
         Icons.Filled.ArrowDropDown
 
     var textFieldSize by remember { mutableStateOf(IntSize.Zero) }
+    var filePath by remember { mutableStateOf(ctx.imFile.path) }
 
 
     Dialog(onDismissRequest = { ctx.showStates.showSaveDialog = false }) {
@@ -48,10 +55,12 @@ fun SaveAsDialog(ctx: AppContext) {
                 Box {
 
                     OutlinedTextField(
-                        value = selectedText.toString(),
-                        onValueChange = {  },
+                        value = selectedFormat.toString(),
+                        onValueChange = { },
                         enabled = false,
-                        colors = TextFieldDefaults.outlinedTextFieldColors(disabledTextColor = TextFieldDefaults.outlinedTextFieldColors().textColor(true).value),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            disabledTextColor = TextFieldDefaults.outlinedTextFieldColors().textColor(true).value
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .onGloballyPositioned { coordinates ->
@@ -78,14 +87,39 @@ fun SaveAsDialog(ctx: AppContext) {
                             run {
                                 DropdownMenuItem(onClick = {
                                     selectedIndex = index
-                                    selectedText = s
-                                    expanded =false
+                                    selectedFormat = s
+                                    expanded = false
 
                                 }) {
                                     Text(s.toString())
                                 }
                             }
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.padding(15.dp))
+
+                Box {
+                    OutlinedTextField(
+                        value = filePath,
+                        textStyle = TextStyle(fontSize = TextUnit(13F, TextUnitType.Sp)),
+                        onValueChange = {
+                            filePath = it
+                        },
+                        modifier = Modifier.fillMaxWidth(), label = { Text("File path") },
+                    )
+                }
+                Spacer(modifier = Modifier.padding(15.dp))
+
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    val scope = rememberCoroutineScope();
+                    Button(onClick = {
+                        ctx.getImage().save(filePath, selectedFormat, ctx, scope)
+
+
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Save")
                     }
                 }
             }
