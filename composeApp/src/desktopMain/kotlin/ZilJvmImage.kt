@@ -1,9 +1,3 @@
-package image.desktop
-
-import ZilColorspace
-import ZilDepth
-import ZilImageFormat
-import ZilImageInterface
 import java.nio.ByteBuffer
 
 class ZilJvmImage() : ZilImageInterface {
@@ -18,9 +12,6 @@ class ZilJvmImage() : ZilImageInterface {
         this.jni = jni
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
-    private var array = UByteArray(0)
-    private var intArray = IntArray(0)
     override fun clone(): ZilImageInterface {
 
         return ZilJvmImage(jni.clone());

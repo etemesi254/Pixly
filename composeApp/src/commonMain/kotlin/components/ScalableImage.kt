@@ -246,19 +246,11 @@ fun ScalableImage(appContext: AppContext, isModified: Boolean, modifier: Modifie
                                 )
                                 it.translate(-imageCenter.x, -imageCenter.y)
                                 runBlocking {
-                                    // the lock is an interesting one
-                                    // we may get image  buffer when we acquire but then another thread
-                                    // invalidates it, e.g. think a very fast operation that ends up calling
-                                    //  allocPixels while this runs, this would inadvertently end up seg-faulting
-                                    // with the error J 3394  org.jetbrains.skia.ImageKt._nMakeFromBitmap(J)J (0 bytes) @ 0x00007fa518e19061 [0x00007fa518e19020+0x0000000000000041]
-                                    //
-                                    // The solution is to protect skia operations with a mutex, to force a synchronization,
-                                    // in that no two skia operations can be said to run concurrently
-                                    // that's the work of the mutex
-                                    //
-                                    appContext.getImage().protectSkiaMutex.withLock {
-                                        drawImage(image)
+                                    val im = appContext.getImage()
+                                    im.protectSkiaMutex.withLock {
+                                        drawImage(im.canvas())
                                     }
+
                                 }
                             }
                         }
@@ -291,16 +283,8 @@ fun ScalableImage(appContext: AppContext, isModified: Boolean, modifier: Modifie
                                 position - areaCenter
                             )
                         })
-//                        detectDragGestures { change, dragAmount ->
-//                            println("panning")
-//                            appContext.currentImageState().zoomState.addPan(change.position)
-//                            //appContext.currentImageState().zoomState.addZoom(zoom, centroid - areaCenter)
-//
-//                        }
                     },
-            ) {
-                Image(image, null)
-            }
+            )
 
         }
 

@@ -1,9 +1,5 @@
-package image.desktop
-
 import java.lang.ref.Cleaner
-import java.net.URL
 import java.nio.ByteBuffer
-import java.nio.file.Paths
 
 internal class ZilImageJni : Cleaner.Cleanable {
     constructor(file: String) {
@@ -52,15 +48,8 @@ internal class ZilImageJni : Cleaner.Cleanable {
 
     private external fun bilateralFilterNative(imagePtr: Long, d: Int, sigmaSpace: Float, sigmaColor: Float)
 
-    private external fun allocByteMemoryNative(nativeMemoryLength: Long): Long
-
-    private external fun resizeByteMemoryNative(nativeMemoryPtr: Long, size: Long): Long
-
-    private external fun freeByteMemoryNative(nativeMemoryPtr: Long)
 
     private external fun getImageOutBufferSizeNative(nativeMemoryPtr: Long): Long
-
-    private external fun writeToBufferNative(imagePtr: Long, nativeMemoryPtr: Long, length: Long, array: ByteArray)
 
     private external fun convertColorSpaceNative(imagePtr: Long, toColorspace: Long)
 
@@ -270,9 +259,7 @@ internal class ZilImageJni : Cleaner.Cleanable {
 
             val path = resource.getResource("shared_libs/linux/libzune_jni_bindings.so")!!.path;
 
-//            println(path)
-//            val new_path = path.removeSuffix(".so");
-            System.load(path)
+            System.loadLibrary("zune_jni_bindings")
         }
     }
 }

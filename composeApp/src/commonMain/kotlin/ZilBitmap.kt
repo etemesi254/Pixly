@@ -2,17 +2,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.colorspace.ColorSpace
-import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import components.ScalableImage
 import history.HistoryOperationsEnum
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
-import java.lang.ref.Cleaner
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.math.absoluteValue
 
 
@@ -24,7 +20,23 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     // otherwise we will crash.
     //
     // NB: All calls that can be called from separate coroutines should use this
-    private val mutex = Mutex();
+    private val operationsMutex = Mutex();
+
+    // the lock is an interesting one
+    // we may get image  buffer when we acquire but then another thread
+    // invalidates it, e.g. think a very fast operation that ends up calling
+    //  allocPixels while we are drawing the image to screen , this would inadvertently end up seg-faulting
+    // with the error J 3394  org.jetbrains.skia.ImageKt._nMakeFromBitmap(J)J (0 bytes) @ 0x00007fa518e19061 [0x00007fa518e19020+0x0000000000000041]
+    //
+    // or if caught early cause a null pointer
+    //
+    // The solution is to protect skia operations with a mutex, to force a synchronization,
+    // in that no two skia operations can be said to run concurrently
+    // that's the work of the mutex
+    //
+    // This is separate from the operations mutex because were we to use that, we can't do zooming and panning when
+    // an operation is underway
+    //
     val protectSkiaMutex = Mutex();
 
     // USE CAREFULLY
@@ -96,6 +108,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
 
     private fun allocBuffer() {
+
         // check if buffer would fit the new type
         // i.e do not pre-allocate
         val infoSize = info.height * info.width
@@ -106,14 +119,9 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
         if (infoSize != imageSize) {
             // TODO change color type to be pre-multiplied once its exposed from native
-            runBlocking {
-                protectSkiaMutex.withLock {
-                    assert(canvasBitmap.allocPixels(info))
-                }
-            }
+            assert(canvasBitmap.allocPixels(info))
         }
 
-        // canvasBitmap.()
         // ensure we can store it
         assert(canvasBitmap.computeByteSize() == info.computeByteSize(info.minRowBytes))
     }
@@ -132,10 +140,10 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
                 inner.writeToBuffer(tempSharedBuffer.nativeBuffer, tempSharedBuffer.sharedBuffer);
                 val wrappedBuffer = ByteBuffer.wrap(tempSharedBuffer.sharedBuffer)
-                protectSkiaMutex.withLock {
-                    val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
-                    assert(canvasBitmap.installPixels(slice.array()))
-                }
+
+                val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
+                assert(canvasBitmap.installPixels(slice.array()))
+
             }
         }
     }
@@ -201,7 +209,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     fun contrast(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
 
                 val prevValue = appContext.imageFilterValues()?.contrast!!;
                 val delta = value - prevValue;
@@ -248,7 +256,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         coroutineScope.launch(Dispatchers.IO) {
 
 
-            mutex.withLock {
+            operationsMutex.withLock {
                 val prevValue = appContext.imageFilterValues()?.exposure!!;
                 val delta = value - prevValue;
                 if (delta.absoluteValue > EPSILON) {
@@ -266,7 +274,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     fun brighten(appContext: AppContext, coroutineScope: CoroutineScope, value: Float) {
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 val prevValue = appContext.imageFilterValues()?.brightness!!;
                 val delta = value - prevValue;
 
@@ -289,7 +297,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         value: ClosedFloatingPointRange<Float>
     ) {
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
 
                 appContext.initializeImageChange()
                 appContext.appendToHistory(HistoryOperationsEnum.Levels, value)
@@ -301,11 +309,12 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     }
 
     fun gaussianBlur(appContext: AppContext, coroutineScope: CoroutineScope, radius: Long) {
-        appContext.initializeImageChange()
-        appContext.appendToHistory(HistoryOperationsEnum.GaussianBlur, radius)
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
+                appContext.initializeImageChange()
+                appContext.appendToHistory(HistoryOperationsEnum.GaussianBlur, radius)
+
                 inner.gaussianBlur(radius)
                 appContext.imageFilterValues()?.gaussianBlur = radius.toUInt()
                 postProcessPixelsManipulated(appContext)
@@ -316,7 +325,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     fun medianBlur(appContext: AppContext, coroutineScope: CoroutineScope, radius: Long) {
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 appContext.initializeImageChange()
                 appContext.appendToHistory(HistoryOperationsEnum.MedianBlur, radius)
                 appContext.imageFilterValues()?.medianBlur = radius.toUInt()
@@ -330,7 +339,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     fun bilateralBlur(appContext: AppContext, coroutineScope: CoroutineScope, radius: Long) {
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 appContext.initializeImageChange()
                 appContext.appendToHistory(HistoryOperationsEnum.BilateralBlur, radius)
                 appContext.imageFilterValues()?.bilateralBlur = radius.toUInt()
@@ -346,7 +355,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         appContext.appendToHistory(HistoryOperationsEnum.BoxBlur, radius)
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 inner.boxBlur(radius)
                 appContext.imageFilterValues()?.boxBlur = radius.toUInt()
 
@@ -358,7 +367,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     fun flip(appContext: AppContext, coroutineScope: CoroutineScope) {
         appContext.initializeImageChange()
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 inner.flip()
                 postProcessAlloc(appContext)
             }
@@ -370,7 +379,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         appContext.appendToHistory(HistoryOperationsEnum.VerticalFlip)
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 inner.verticalFlip()
                 postProcessAlloc(appContext)
             }
@@ -382,7 +391,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         appContext.appendToHistory(HistoryOperationsEnum.HorizontalFlip)
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 inner.flop()
                 postProcessAlloc(appContext)
             }
@@ -394,7 +403,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         appContext.appendToHistory(HistoryOperationsEnum.Transposition)
 
         coroutineScope.launch(Dispatchers.IO) {
-            mutex.withLock {
+            operationsMutex.withLock {
                 inner.transpose()
                 postProcessAlloc(appContext)
             }
@@ -410,23 +419,31 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     }
 
     private fun postProcessAlloc(appContext: AppContext) {
-        allocBuffer()
-        installPixels()
-        isModified = !isModified
-        appContext.broadcastImageChange()
+        runBlocking {
+            protectSkiaMutex.withLock {
+                allocBuffer()
+                installPixels()
+                isModified = !isModified
+                appContext.broadcastImageChange()
+            }
+        }
     }
 
 
     private fun postProcessPixelsManipulated(appContext: AppContext) {
-        installPixels()
-        isModified = !isModified
-        appContext.broadcastImageChange()
+        runBlocking {
+            protectSkiaMutex.withLock {
+                installPixels()
+                isModified = !isModified
+                appContext.broadcastImageChange()
+            }
+        }
     }
 
     fun hslAdjust(appContext: AppContext, scope: CoroutineScope, hue: Float, saturation: Float, lightness: Float) {
         scope.launch(Dispatchers.IO) {
 
-            mutex.withLock {
+            operationsMutex.withLock {
                 // TODO: Add deltas
 
 
