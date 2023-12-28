@@ -38,7 +38,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                             it,
                             valueRange = -100F..100F,
                             decimalPattern = "##0",
-                            enabled = !appContext.isImageOperationRunning()
+                            //enabled = !appContext.isImageOperationRunning()
                         ) {
 
                             image.brighten(appContext, scope, it)
@@ -54,7 +54,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                             it.contrast,
                             valueRange = -100F..100F,
                             decimalPattern = "#0",
-                            enabled = !appContext.isImageOperationRunning()
+                          //  enabled = !appContext.isImageOperationRunning()
 
                         ) {
 
@@ -72,7 +72,7 @@ fun LightFiltersComponent(appContext: AppContext) {
                             valueRange = -1F..1F,
                             decimalPattern = "0.00",
                             scrollValueChangeBy = 0.01F,
-                            enabled = !appContext.isImageOperationRunning()
+//                            enabled = !appContext.isImageOperationRunning()
 
                         ) {
 
@@ -107,7 +107,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                             onClick = {
 
                                 appContext.getImage().verticalFlip(appContext, scope)
-                            }, enabled = !appContext.isImageOperationRunning()
+                            },
+                            //enabled = !appContext.isImageOperationRunning()
                         ) {
                             Icon(
                                 painter = painterResource("flip-vertical-svgrepo-com.svg"),
@@ -123,7 +124,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                                 if (appContext.imageIsLoaded()) {
                                     appContext.getImage().flop(appContext, scope)
                                 }
-                            }, enabled = !appContext.isImageOperationRunning()
+                            },
+                            //enabled = !appContext.isImageOperationRunning()
                         ) {
                             Icon(
                                 painter = painterResource("flip-horizontal-svgrepo-com.svg"),
@@ -136,7 +138,8 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                             onClick = {
                                 // add to history
                                 appContext.getImage().transpose(appContext, scope)
-                            }, enabled = !appContext.isImageOperationRunning()
+                            },
+                            //enabled = !appContext.isImageOperationRunning()
                         ) {
                             Icon(
                                 painter = painterResource("transpose-svgrepo-com.png"),
@@ -170,7 +173,7 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                         value = it,
                         valueRange = 0F..256F,
                         decimalPattern = "##0",
-                        enabled = !appContext.isImageOperationRunning()
+                        //enabled = !appContext.isImageOperationRunning()
 
                     ) { value ->
 
@@ -198,7 +201,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         appContext.currentImageState().filterValues.boxBlur.toFloat(),
                         valueRange = 0F..255F,
                         decimalPattern = "##0",
-                        enabled = !appContext.isImageOperationRunning()
+                        //enabled = !appContext.isImageOperationRunning()
 
                     ) {
                         appContext.getImage().boxBlur(appContext, scope, it.toLong())
@@ -212,7 +215,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         appContext.currentImageState().filterValues.gaussianBlur.toFloat(),
                         valueRange = 0F..255F,
                         decimalPattern = "#0",
-                        enabled = !appContext.isImageOperationRunning()
+                        //enabled = !appContext.isImageOperationRunning()
 
                     ) {
                         appContext.getImage().gaussianBlur(appContext, scope, it.toLong())
@@ -226,7 +229,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         appContext.currentImageState().filterValues.medianBlur.toFloat(),
                         valueRange = 0F..255F,
                         decimalPattern = "#0",
-                        enabled = !appContext.isImageOperationRunning()
+                        //enabled = !appContext.isImageOperationRunning()
 
                     ) {
                         appContext.getImage().medianBlur(appContext, scope, it.toLong())
@@ -241,7 +244,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
                         appContext.currentImageState().filterValues.bilateralBlur.toFloat(),
                         valueRange = 0F..255F,
                         decimalPattern = "#0",
-                        enabled = !appContext.isImageOperationRunning()
+                        //enabled = !appContext.isImageOperationRunning()
 
                     ) {
                         appContext.getImage().bilateralBlur(appContext, scope, it.toLong())
@@ -269,7 +272,7 @@ fun HslFiltersComponent(appContext: AppContext) {
                         appContext.currentImageState().filterValues.hue,
                         valueRange = -360F..360F,
                         decimalPattern = "##0",
-                        enabled = !appContext.isImageOperationRunning()
+                        //enabled = !appContext.isImageOperationRunning()
 
                     ) {
                         appContext.getImage().hslAdjust(
@@ -290,7 +293,7 @@ fun HslFiltersComponent(appContext: AppContext) {
                         valueRange = -2f..4f,
                         scrollValueChangeBy = 0.5f,
                         decimalPattern = "#0.##",
-                        enabled = !appContext.isImageOperationRunning()
+                       // enabled = !appContext.isImageOperationRunning()
 
                     ) {
                         appContext.getImage().hslAdjust(
@@ -311,7 +314,7 @@ fun HslFiltersComponent(appContext: AppContext) {
                         valueRange = 0f..2f,
                         scrollValueChangeBy = 0.5f,
                         decimalPattern = "#0.##",
-                        enabled = !appContext.isImageOperationRunning()
+                      //  enabled = !appContext.isImageOperationRunning()
 
                     ) {
 

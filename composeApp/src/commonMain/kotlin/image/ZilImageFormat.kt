@@ -58,7 +58,7 @@ fun ZilImageFormat.hasEncoder(): Boolean {
         ZilImageFormat.PPM -> true
         ZilImageFormat.PSD -> false
         ZilImageFormat.Farbfeld -> true
-        ZilImageFormat.QOI -> false
+        ZilImageFormat.QOI -> true
         ZilImageFormat.JPEG_XL -> true
         ZilImageFormat.HDR -> true
         ZilImageFormat.BMP -> false

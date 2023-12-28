@@ -56,3 +56,13 @@ enum class LeftPaneOpened {
     DirectoryViewer
 
 }
+/**
+ * Layout for the image pane
+ * can either be single or two paned
+ * where two paned shows original/edited image
+ * and single pane just shows currently edited images
+ * */
+enum class ImageSpaceLayout{
+    SingleLayout,
+    PanedLayout,
+}

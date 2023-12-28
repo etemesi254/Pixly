@@ -23,6 +23,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.pow
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Canvas
@@ -255,6 +256,7 @@ fun ScalableImage(appContext: AppContext, isModified: Boolean, modifier: Modifie
                             }
                         }
                     }
+                    .clipToBounds()
                     //.transformable(state)
                     .pointerInput(Unit) {
 

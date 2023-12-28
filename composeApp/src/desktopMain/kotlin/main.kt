@@ -142,6 +142,7 @@ fun App(appCtx: AppContext) {
 
                             FilePicker(
                                 show = appCtx.showStates.showFilePicker,
+                                initialDirectory = appCtx.rootDirectory,
                                 fileExtensions = SUPPORTED_EXTENSIONS
                             ) { file ->
                                 appCtx.showStates.showFilePicker = false
@@ -153,7 +154,7 @@ fun App(appCtx: AppContext) {
                                     appCtx.initializeImageChange()
 
                                     coroutineScope.launch(Dispatchers.IO) {
-                                        loadImage(appCtx,false)
+                                        loadImage(appCtx, false)
                                     }
 
                                     // do something with the file
@@ -178,7 +179,10 @@ fun App(appCtx: AppContext) {
                                 }
 
 
-                                DirectoryPicker(show = appCtx.showStates.showDirectoryPicker) { dir ->
+                                DirectoryPicker(
+                                    show = appCtx.showStates.showDirectoryPicker,
+                                    initialDirectory = appCtx.rootDirectory,
+                                ) { dir ->
                                     appCtx.showStates.showDirectoryPicker = false
                                     appCtx.openedLeftPane = LeftPaneOpened.DirectoryViewer
                                     // do something with the directory
@@ -201,6 +205,24 @@ fun App(appCtx: AppContext) {
                             // See:  https://github.com/Wavesonics/compose-multiplatform-file-picker/issues/8
 
 
+                            Box(modifier = Modifier.padding(horizontal = 5.dp)) {
+
+                                IconButton(onClick = {
+                                    if (appCtx.imageIsLoaded()) {
+                                      appCtx.imageSpaceLayout=  when(appCtx.imageSpaceLayout){
+                                            ImageSpaceLayout.SingleLayout -> ImageSpaceLayout.PanedLayout
+                                            ImageSpaceLayout.PanedLayout -> ImageSpaceLayout.SingleLayout
+                                        }
+                                    }
+                                }, enabled = appCtx.imageIsLoaded()) {
+                                    Icon(
+                                        painter = painterResource("half-v-svgrepo-com.svg"),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
+
+                            }
                             Box(modifier = Modifier.padding(horizontal = 5.dp)) {
 
                                 IconButton(onClick = {
@@ -379,12 +401,10 @@ fun App(appCtx: AppContext) {
                                                     modifier = Modifier.fillMaxSize(),
                                                     contentAlignment = Alignment.Center
                                                 ) {
-                                                    // this language is weird
-                                                    appCtx.getImage().image(appCtx)
+                                                    ImageSpace(appCtx)
                                                 }
                                             }
 
-                                            //Image(image, contentDescription = null, modifier = Modifier.fillMaxSize())
                                         }
 
                                         TopHoveringIcons(appCtx)

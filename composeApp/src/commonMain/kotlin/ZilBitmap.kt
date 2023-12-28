@@ -58,6 +58,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         prepareNewFile()
     }
 
+
     private fun prepareNewFile() {
         // convert depth to u8
         inner.convertDepth(ZilDepth.U8);
@@ -184,7 +185,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
             ScalableImage(
                 appContext,
                 isModified,
-
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -468,6 +468,10 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
         }
 
+    }
+
+    fun clone(): ZilBitmap {
+       return ZilBitmap(this.tempSharedBuffer,this.inner.clone())
     }
 }
 

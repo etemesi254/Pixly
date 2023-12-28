@@ -118,6 +118,12 @@ class AppContext {
      * */
     var openedLeftPane by mutableStateOf(LeftPaneOpened.None)
 
+    /**
+     * Layout of the image space, can either be single paned i.e. one image
+     * or two paned showing unedited image + edited image
+     * */
+    var imageSpaceLayout by mutableStateOf(ImageSpaceLayout.SingleLayout)
+
 
     /**
      *  Contains a shared buffer used by images when we want to write
@@ -135,6 +141,8 @@ class AppContext {
      *
      * */
     var sharedBuffer: SharedBuffer = SharedBuffer()
+
+
 
     /**
      * Contains history of currently executed image operaions
@@ -156,9 +164,6 @@ class AppContext {
         recomposeWidgets.rerunImageSpecificStates = recomposeWidgets.rerunImageSpecificStates
     }
 
-    fun returnFilterValues(): FilterValues {
-        return imageSpecificStates[imFile]!!.filterValues
-    }
 
     fun initializeImageChange() {
         showStates.showTopLinearIndicator = true
@@ -224,9 +229,9 @@ class AppContext {
         return imageSpecificStates[imFile]!!.image
     }
 
-    fun isImageOperationRunning(): Boolean {
-        return this.showStates.showTopLinearIndicator;
-    }
+//    fun isImageOperationRunning(): Boolean {
+//        return this.showStates.showTopLinearIndicator;
+//    }
 }
 
 
