@@ -49,6 +49,6 @@ fun PixlyToolTip(title: String, helpfulMessage: String = "", content: @Composabl
                 }
             }
         },
-        delayMillis = 600, content = content
+        delayMillis = 1300, content = content
     )
 }
