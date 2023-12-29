@@ -25,7 +25,7 @@ fun ImageSpace(context: AppContext) {
         ImageSpaceLayout.SingleLayout -> {
             // showing only one image
             Box(modifier = Modifier.fillMaxSize()) {
-                context.getImage().image(context)
+                context.currentImageContext()?.imageToDisplay()?.image(context)
             }
         }
 
@@ -49,7 +49,7 @@ fun TwoPanedImageSpace(context: AppContext) {
             ) {
                 // For some weird reason, prevents clipping
                 Surface {
-                    context.getImage().image(context)
+                    context.currentImageContext()?.imageToDisplay()?.image(context)
                 }
 
 
@@ -64,7 +64,7 @@ fun TwoPanedImageSpace(context: AppContext) {
 
                 // For some weird reason, prevents clipping
                 Surface {
-                    context.getImage().image(context)
+                    context.currentImageContext()?.imageToDisplay()?.image(context)
                 }
                 //Image(context.getImage().canvas(), contentDescription = null)
             }

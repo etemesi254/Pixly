@@ -142,40 +142,42 @@ fun RightPanel(appCtx: AppContext) {
 @Composable
 fun ExifMetadataPane(appCtx: AppContext) {
 
-    val exif: Map<String, String> = appCtx.getImage().inner.exifMetadata()
+    val exif: Map<String, String>? = appCtx.currentImageContext()?.imageToDisplay()?.inner?.exifMetadata()
 
+    if (exif != null) {
 
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
 
-        if (exif.isNotEmpty()) {
-            Divider()
-            Text(
-                "Exif Metadata",
-                modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
-                style = MaterialTheme.typography.h5
-            )
-            //Divider()
-        }
-        for ((k, v) in exif) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(all = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            if (exif.isNotEmpty()) {
+                Divider()
                 Text(
-                    k,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(end = 10.dp),
-                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                    "Exif Metadata",
+                    modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
+                    style = MaterialTheme.typography.h5
                 )
-                Text(
-                    v,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-                )
+                //Divider()
             }
-            Divider()
+            for ((k, v) in exif) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(all = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        k,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(end = 10.dp),
+                        style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                    )
+                    Text(
+                        v,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                    )
+                }
+                Divider()
+            }
         }
     }
 }

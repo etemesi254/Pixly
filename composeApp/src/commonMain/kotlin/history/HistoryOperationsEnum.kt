@@ -1,9 +1,21 @@
 package history
 
+enum class HistoryResponse {
+    /**
+     * Indicates this type of operation was repeated previously
+     *
+     * I.e. two similar brightness operations were carried out, for such we have a different
+     * history layout*/
+    SameAsLastOperation,
+    /**
+     * A new operation different from the last type
+     * */
+    NewOperation,
+}
 
 interface HistoryOperationsInterface {
 
-    /** Return true if the buffer can be trivially undone
+    /** Return true if the buffer can be trivially undone,e.g bijection operations
      *
      * And we don't have to save information about it
      *
@@ -41,9 +53,9 @@ enum class HistoryOperationsEnum(historyType: HistoryType) : HistoryOperationsIn
         override fun requiresValue(): Boolean = true
 
     },
-    Gamma(HistoryType.ImageFilter) {
-        override fun trivialUndo(): Boolean = false
-        override fun requiresValue(): Boolean = true
+    Rotate180(HistoryType.ImageFilter) {
+        override fun trivialUndo(): Boolean = true
+        override fun requiresValue(): Boolean = false
 
     },
     Exposure(HistoryType.ImageFilter) {
@@ -99,17 +111,44 @@ enum class HistoryOperationsEnum(historyType: HistoryType) : HistoryOperationsIn
 
 }
 
+/**
+ * Time between two common history operations
+ * for which we consider them as separate operations
+ *
+ * E.g. if we have two contrast adjustment functions happening too fast, we don't store all
+ * of them, just one that takes the longest
+ * */
+const val TIME_THRESHOLD = 400L
+
 class HistoryOperations {
     private val history: MutableList<HistoryOperationsEnum> = mutableListOf()
     private val values: MutableList<Any> = mutableListOf()
 
-    fun addHistory(historyEnum: HistoryOperationsEnum, passedValue: Any?) {
+    // records the last time something was added
+    private var lastTimeAdded = 0L
+
+    fun addHistory(historyEnum: HistoryOperationsEnum, passedValue: Any?):HistoryResponse {
         if (historyEnum.requiresValue() && passedValue == null) {
             throw Exception("History operation $historyEnum requires value");
         }
         val newValue = passedValue ?: 0
+        if (history.lastOrNull() == historyEnum) {
+            // we ran the same operation
+            val currTime = System.currentTimeMillis()
+            val diff = currTime - lastTimeAdded
+
+            if (diff < TIME_THRESHOLD) {
+                // just update previous with new value, don't update new value
+                values[values.lastIndex] = newValue
+                lastTimeAdded = currTime
+
+                return HistoryResponse.SameAsLastOperation
+            }
+        }
         values.add(newValue)
         history.add(historyEnum)
+        lastTimeAdded = System.currentTimeMillis()
+        return HistoryResponse.NewOperation
     }
 
     fun getHistory(): MutableList<HistoryOperationsEnum> {

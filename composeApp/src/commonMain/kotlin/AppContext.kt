@@ -3,44 +3,101 @@ import components.ScalableState
 import events.ExternalNavigationEventBus
 import history.HistoryOperations
 import history.HistoryOperationsEnum
+import history.HistoryResponse
 import kotlinx.coroutines.sync.Mutex
 import java.io.File
 import java.nio.ByteBuffer
 
+/**
+ * A buffer used by native methods to write pixels to
+ * where java can understand
+ *
+ * This is used to tie zune-image to java to skia since we can't tie
+ * native memory just like that (and compose skia doesn't support native memory locations)
+ *
+ * We share this amongst multiple images and adjust size to be enough to hold interleaved pixels for the image
+ * (means the buffer can be larger than image pixels, but never smaller)
+ *
+ * Since we share this amongst multiple images which can be called from multiple threads, we protect it with a mutex
+ * */
 class SharedBuffer {
+    /**
+     * The sharedBuffer is used from multiple threads, which means it may happen that two threads
+     * write to this which is how you loose sleep.
+     *
+     * So this protects us, before accessing sharedBuffer and nativeBuffer, lock this mutex
+     * */
     val mutex: Mutex = Mutex()
+
+    /**
+     * A bytearray that can hold image pixels
+     *
+     * This is used by skia to read image pixels written by the zune-image
+     * */
     var sharedBuffer: ByteArray = ByteArray(0)
-    var nativeBuffer: ByteBuffer = ByteBuffer.allocate(0)
+
+    /**
+     * A bytebuffer used by zune-image to write pixels
+     *
+     * This is allocated via ByteBuffer.allocateDirect so that it can be used via
+     * jni otherwise the native function will raise an exception
+     * */
+    var nativeBuffer: ByteBuffer = ByteBuffer.allocate(1)
 
 }
 
-
+/**
+ * Image filter values
+ *
+ * This contains the current image filter values such as brightness, contrast
+ * e.t.c  and are modified by image filters
+ * */
 class FilterValues {
     var contrast by mutableStateOf(0F)
     var brightness by mutableStateOf(0F)
     var gamma by mutableStateOf(0F)
     var exposure by mutableStateOf(0F)
-    var boxBlur by mutableStateOf(0u)
-    var gaussianBlur by mutableStateOf(0u)
+    var boxBlur by mutableStateOf(0L)
+    var gaussianBlur by mutableStateOf(0L)
     var stretchContrastRange: MutableState<ClosedFloatingPointRange<Float>> = mutableStateOf(0F..256.0F)
     var hue by mutableStateOf(0f)
     var saturation by mutableStateOf(1f)
     var lightness by mutableStateOf(1f)
-    var medianBlur by mutableStateOf(0u)
-    var bilateralBlur by mutableStateOf(0u)
+    var medianBlur by mutableStateOf(0L)
+    var bilateralBlur by mutableStateOf(0L)
 }
 
-
-class ImageSpecificStates(tempSharedBuffer: SharedBuffer, imageInterface: ZilImageInterface) {
+/**
+ * Image group details
+ *
+ * This contains the image itself ,filter values, history, zoom state etc
+ * */
+class ImageContext(image: ZilBitmap) {
     var filterValues by mutableStateOf(FilterValues())
     var history by mutableStateOf(HistoryOperations())
-    var image by mutableStateOf(ZilBitmap(tempSharedBuffer, imageInterface))
+
+    private var image by mutableStateOf(image)
+    var operationsMutex: Mutex = Mutex()
     var imageIsLoaded by mutableStateOf(false)
     var zoomState by mutableStateOf(ScalableState())
 
+    /**
+     * Current image
+     *
+     * @param response: If response is the filter is the same as the previous, we pop the last item
+     * NOTE: It is only read and manipulate this only after locking the
+     * operations mutex, otherwise bad things will happen (race conditions + native code)
+     * */
+    fun currentImage(response: HistoryResponse): ZilBitmap {
+        // peek into history to see if we need to create a new image, add it to the stack and return it or
+        // if the operation has a trivial undo, just let it be
+        // we are assured that history just pushed this operation since we require HistoryResponse
+        // as a parameter
 
-    constructor(image: ZilBitmap, tempSharedBuffer: SharedBuffer,imageInterface: ZilImageInterface) : this(tempSharedBuffer,imageInterface) {
-        this.image = image;
+        return image
+    }
+    fun imageToDisplay(): ZilBitmap {
+        return image
     }
 
     fun resetStates(newImage: ZilBitmap) {
@@ -98,7 +155,7 @@ class AppContext {
      * Contains each image specific states, each image can be seen as a file+ info about it
      * and the information includes the image filter states, image history, image details etc
      * */
-    private var imageSpecificStates: LinkedHashMap<File, ImageSpecificStates> = LinkedHashMap()
+    private var imageSpecificStates: LinkedHashMap<File, ImageContext> = LinkedHashMap()
 
     /**
      * Contains information on which tab the user is currently on
@@ -136,23 +193,24 @@ class AppContext {
      *
      *  So it's here to facilitate that.
      *
-     *  When an image wants to display it's output it's gonna lock this shared buffer, write to skia and finally
+     *  When an image wants to display it's output it's going to lock this shared buffer, write to skia and finally
      *  unlock, skia will read its pointer, allocate what it needs and do it's internal shenanigans
      *
      * */
     var sharedBuffer: SharedBuffer = SharedBuffer()
 
 
-
     /**
-     * Contains history of currently executed image operaions
+     * Initialize image details
+     *
+     * If the image was already loaded, we preserve some details such as zoom state
      * */
-    fun initializeImageSpecificStates(image: ZilBitmap,imageInterface: ZilImageInterface) {
+    fun initializeImageSpecificStates(image: ZilBitmap) {
         if (imageSpecificStates.containsKey(imFile)) {
-            // preserve things like zoom
+            // preserve things like zoom even when reloading
             imageSpecificStates[imFile]?.resetStates(image);
         } else {
-            imageSpecificStates[imFile] = ImageSpecificStates(image, sharedBuffer,imageInterface)
+            imageSpecificStates[imFile] = ImageContext(image)
         }
 
         // move the tab index to the newly loaded tab
@@ -161,7 +219,7 @@ class AppContext {
                 tabIndex = idx
             }
         }
-        recomposeWidgets.rerunImageSpecificStates = recomposeWidgets.rerunImageSpecificStates
+        broadcastImageChange()
     }
 
 
@@ -198,13 +256,9 @@ class AppContext {
         imageSpecificStates[imFile]!!.imageIsLoaded = yes
     }
 
-    fun setHistory(history: HistoryOperations) {
-        imageSpecificStates[imFile]?.history = history;
-    }
+    fun appendToHistory(newValue: HistoryOperationsEnum, value: Any? = null): HistoryResponse {
 
-    fun appendToHistory(newValue: HistoryOperationsEnum, value: Any? = null) {
-
-        imageSpecificStates[imFile]?.history?.addHistory(newValue, value);
+        return imageSpecificStates[imFile]!!.history.addHistory(newValue, value)
     }
 
     fun resetHistory() {
@@ -215,23 +269,26 @@ class AppContext {
         return imageSpecificStates[imFile]?.filterValues
     }
 
-    fun imageStates(): LinkedHashMap<File, ImageSpecificStates> {
+    fun imageStates(): LinkedHashMap<File, ImageContext> {
         return imageSpecificStates
     }
 
-    fun currentImageState(): ImageSpecificStates {
-        return imageSpecificStates[imFile]!!
+    /**
+     * Return the context of the currently displayed image
+     * */
+    fun currentImageContext(): ImageContext? {
+        return imageSpecificStates[imFile]
     }
-
-    fun getImage(): ZilBitmap {
-
-        // if this is null it means the initializer didn't initialize the image
-        return imageSpecificStates[imFile]!!.image
+    fun operationIsOngoing(): Boolean {
+        return showStates.showTopLinearIndicator
     }
-
-//    fun isImageOperationRunning(): Boolean {
-//        return this.showStates.showTopLinearIndicator;
+//
+//    fun getImage(): ZilBitmap {
+//
+//        // if this is null it means the initializer didn't initialize the image
+//        return imageSpecificStates[imFile]!!.currentImage()
 //    }
+
 }
 
 

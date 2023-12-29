@@ -15,74 +15,76 @@ import java.text.DecimalFormat
 @Composable
 fun ImageInformationComponent(appCtx: AppContext) {
     val file = appCtx.imFile
-    val innerImage = appCtx.getImage().inner;
+    val innerImage = appCtx.currentImageContext()?.imageToDisplay()?.inner;
+
+    if (innerImage != null) {
 
 
-    Column(modifier = Modifier.padding(vertical = 10.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Width", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            )
-            Text(
-                innerImage.width().toString() + " px", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            );
+        Column(modifier = Modifier.padding(vertical = 10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Width", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                )
+                Text(
+                    innerImage.width().toString() + " px", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                );
+            }
+            Divider()
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Height", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                )
+                Text(
+                    innerImage.height().toString() + " px", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                );
+            }
+
+            Divider()
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Size in Disk",
+                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                )
+                Text(
+                    formatSize(file.length()),
+                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                );
+            }
+            Divider()
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Size in Memory",
+                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                )
+                Text(
+                    formatSize(
+                        (innerImage.height()
+                                * innerImage.width()
+                                * innerImage.colorspace().components().toUInt()
+                                * innerImage.depth().sizeOf().toUInt()
+                                ).toLong()
+                    ),
+                    style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
+                );
+            }
+
+
         }
-        Divider()
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Height", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            )
-            Text(
-                innerImage.height().toString() + " px", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            );
-        }
-
-        Divider()
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Size in Disk",
-                style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            )
-            Text(
-                formatSize(file.length()),
-                style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            );
-        }
-        Divider()
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Size in Memory",
-                style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            )
-            Text(
-                formatSize(
-                    (innerImage.height()
-                            * innerImage.width()
-                            * innerImage.colorspace().components().toUInt()
-                            * innerImage.depth().sizeOf().toUInt()
-                            ).toLong()
-                ),
-                style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-            );
-        }
-
 
     }
-
-
 }
 
 

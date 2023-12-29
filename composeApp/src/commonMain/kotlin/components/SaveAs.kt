@@ -115,7 +115,7 @@ fun SaveAsDialog(ctx: AppContext) {
                 Box(modifier = Modifier.fillMaxWidth()) {
                     val scope = rememberCoroutineScope();
                     Button(onClick = {
-                        ctx.getImage().save(filePath, selectedFormat, ctx, scope)
+                        ctx.currentImageContext()?.imageToDisplay()?.save(filePath, selectedFormat, ctx, scope)
 
 
                     }, modifier = Modifier.fillMaxWidth()) {

@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,9 +29,11 @@ import events.ExternalImageViewerEvent
 import events.handleKeyEvents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import modifiers.thenIf
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
+import java.awt.Cursor
 import java.io.File
 import java.text.DecimalFormat
 import kotlin.system.measureTimeMillis
@@ -59,7 +63,7 @@ actual fun loadImage(appCtx: AppContext, forceReload: Boolean) {
         val time = measureTimeMillis {
             val c = ZilJvmImage(appCtx.imFile.path);
             val image = ZilBitmap(appCtx.imFile.path, appCtx.sharedBuffer, c);
-            appCtx.initializeImageSpecificStates(image, c)
+            appCtx.initializeImageSpecificStates(image)
         }
         appCtx.bottomStatus = "Loaded ${appCtx.imFile.name} in $time ms"
 
@@ -104,7 +108,10 @@ fun App(appCtx: AppContext) {
     ) {
 
 
-        Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
+        Scaffold(modifier = Modifier.fillMaxSize()
+//            .thenIf(Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.WAIT_CURSOR)))
+//            ) { appCtx.operationIsOngoing() },
+            ,topBar = {
         }) { it ->
             Column(Modifier.padding(it).fillMaxSize()) {
 
@@ -209,7 +216,7 @@ fun App(appCtx: AppContext) {
 
                                 IconButton(onClick = {
                                     if (appCtx.imageIsLoaded()) {
-                                      appCtx.imageSpaceLayout=  when(appCtx.imageSpaceLayout){
+                                        appCtx.imageSpaceLayout = when (appCtx.imageSpaceLayout) {
                                             ImageSpaceLayout.SingleLayout -> ImageSpaceLayout.PanedLayout
                                             ImageSpaceLayout.PanedLayout -> ImageSpaceLayout.SingleLayout
                                         }
@@ -443,7 +450,7 @@ fun App(appCtx: AppContext) {
                     ) {
                         if (appCtx.imageIsLoaded()) {
                             Text(
-                                "${formatter.format(appCtx.currentImageState().zoomState.zoom * 100F)} %",
+                                "${formatter.format(appCtx.currentImageContext()!!.zoomState.zoom * 100F)} %",
                                 style = TextStyle(fontSize = TextUnit(12F, TextUnitType.Sp)),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1

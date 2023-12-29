@@ -1,7 +1,6 @@
 package components
 
 import AppContext
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -12,14 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import history.HistoryOperationsEnum
-import kotlinx.coroutines.CoroutineScope
-import modifyOnChange
+import extensions.launchOnIoThread
+import imageops.*
 
 
 @Composable
 fun LightFiltersComponent(appContext: AppContext) {
-    val image = appContext.getImage()
 
     Box(modifier = Modifier.padding(vertical = 10.dp)) {
         val scope = rememberCoroutineScope();
@@ -40,8 +37,10 @@ fun LightFiltersComponent(appContext: AppContext) {
                             decimalPattern = "##0",
                             //enabled = !appContext.isImageOperationRunning()
                         ) {
+                            scope.launchOnIoThread {
+                                appContext.imageBrighten(it)
+                            }
 
-                            image.brighten(appContext, scope, it)
                         }
                     }
                 }
@@ -54,11 +53,13 @@ fun LightFiltersComponent(appContext: AppContext) {
                             it.contrast,
                             valueRange = -100F..100F,
                             decimalPattern = "#0",
-                          //  enabled = !appContext.isImageOperationRunning()
+                            //  enabled = !appContext.isImageOperationRunning()
 
                         ) {
 
-                            image.contrast(appContext, scope, it)
+                            scope.launchOnIoThread {
+                                appContext.imageContrast(it)
+                            }
                         }
                     }
                 }
@@ -76,7 +77,9 @@ fun LightFiltersComponent(appContext: AppContext) {
 
                         ) {
 
-                            image.exposure(appContext, scope, it)
+                            scope.launchOnIoThread {
+                                appContext.imageExposure(it)
+                            }
                         }
                     }
                 }
@@ -106,7 +109,9 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         IconButton(
                             onClick = {
 
-                                appContext.getImage().verticalFlip(appContext, scope)
+                                scope.launchOnIoThread {
+                                    appContext.imageVerticalFlip()
+                                }
                             },
                             //enabled = !appContext.isImageOperationRunning()
                         ) {
@@ -121,9 +126,10 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         IconButton(
                             onClick = {
 
-                                if (appContext.imageIsLoaded()) {
-                                    appContext.getImage().flop(appContext, scope)
+                                scope.launchOnIoThread {
+                                    appContext.imageHorizontalFlip()
                                 }
+
                             },
                             //enabled = !appContext.isImageOperationRunning()
                         ) {
@@ -137,7 +143,9 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         IconButton(
                             onClick = {
                                 // add to history
-                                appContext.getImage().transpose(appContext, scope)
+                                scope.launchOnIoThread {
+                                    appContext.imageTranspose()
+                                }
                             },
                             //enabled = !appContext.isImageOperationRunning()
                         ) {
@@ -176,8 +184,9 @@ fun LevelsFiltersComponent(appContext: AppContext) {
                         //enabled = !appContext.isImageOperationRunning()
 
                     ) { value ->
-
-                        appContext.getImage().stretchContrast(appContext, scope, value)
+                        scope.launchOnIoThread {
+                            appContext.imageStretchContrast(value)
+                        }
                     }
                 }
             }
@@ -196,58 +205,74 @@ fun BlurFiltersComponent(appContext: AppContext) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Box Blur",
-                        appContext.currentImageState().filterValues.boxBlur.toFloat(),
-                        valueRange = 0F..255F,
-                        decimalPattern = "##0",
-                        //enabled = !appContext.isImageOperationRunning()
+                    appContext.currentImageContext()?.filterValues?.boxBlur?.toFloat()?.let {
+                        SliderTextComponent(
+                            "Box Blur",
+                            it,
+                            valueRange = 0F..255F,
+                            decimalPattern = "##0",
+                            //enabled = !appContext.isImageOperationRunning()
 
-                    ) {
-                        appContext.getImage().boxBlur(appContext, scope, it.toLong())
+                        ) {
+                            scope.launchOnIoThread {
+                                appContext.imageBoxBlur(it.toLong())
+                            }
+                        }
                     }
                 }
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Gaussian Blur",
-                        appContext.currentImageState().filterValues.gaussianBlur.toFloat(),
-                        valueRange = 0F..255F,
-                        decimalPattern = "#0",
-                        //enabled = !appContext.isImageOperationRunning()
+                    appContext.currentImageContext()?.filterValues?.gaussianBlur?.toFloat()?.let {
+                        SliderTextComponent(
+                            "Gaussian Blur",
+                            it,
+                            valueRange = 0F..255F,
+                            decimalPattern = "#0",
+                            //enabled = !appContext.isImageOperationRunning()
 
-                    ) {
-                        appContext.getImage().gaussianBlur(appContext, scope, it.toLong())
+                        ) {
+                            scope.launchOnIoThread {
+                                appContext.imageGaussianBlur(it.toLong())
+                            }
+                        }
                     }
                 }
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Median Blur",
-                        appContext.currentImageState().filterValues.medianBlur.toFloat(),
-                        valueRange = 0F..255F,
-                        decimalPattern = "#0",
-                        //enabled = !appContext.isImageOperationRunning()
+                    appContext.currentImageContext()?.filterValues?.medianBlur?.toFloat()?.let {
+                        SliderTextComponent(
+                            "Median Blur",
+                            it,
+                            valueRange = 0F..255F,
+                            decimalPattern = "#0",
+                            //enabled = !appContext.isImageOperationRunning()
 
-                    ) {
-                        appContext.getImage().medianBlur(appContext, scope, it.toLong())
+                        ) {
+                            scope.launchOnIoThread {
+                                appContext.imageMedianBlur(it.toLong())
+                            }
+                        }
                     }
                 }
 
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Bilateral Blur",
-                        appContext.currentImageState().filterValues.bilateralBlur.toFloat(),
-                        valueRange = 0F..255F,
-                        decimalPattern = "#0",
-                        //enabled = !appContext.isImageOperationRunning()
+                    appContext.currentImageContext()?.filterValues?.bilateralBlur?.toFloat()?.let {
+                        SliderTextComponent(
+                            "Bilateral Blur",
+                            it,
+                            valueRange = 0F..255F,
+                            decimalPattern = "#0",
+                            //enabled = !appContext.isImageOperationRunning()
 
-                    ) {
-                        appContext.getImage().bilateralBlur(appContext, scope, it.toLong())
+                        ) {
+                            scope.launchOnIoThread {
+                                appContext.imageBilateralBlur(it.toLong())
+                            }
+                        }
                     }
                 }
             }
@@ -267,64 +292,63 @@ fun HslFiltersComponent(appContext: AppContext) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Hue",
-                        appContext.currentImageState().filterValues.hue,
-                        valueRange = -360F..360F,
-                        decimalPattern = "##0",
-                        //enabled = !appContext.isImageOperationRunning()
-
-                    ) {
-                        appContext.getImage().hslAdjust(
-                            appContext,
-                            scope,
+                    appContext.currentImageContext()?.filterValues?.hue?.let {
+                        SliderTextComponent(
+                            "Hue",
                             it,
-                            appContext.currentImageState().filterValues.saturation,
-                            appContext.currentImageState().filterValues.lightness
-                        )
+                            valueRange = -360F..360F,
+                            decimalPattern = "##0",
+                            //enabled = !appContext.isImageOperationRunning()
+
+                        ) {
+                            scope.launchOnIoThread {
+                                appContext.imageHslAdjust(
+                                    hue = it
+                                )
+                            }
+                        }
                     }
                 }
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Saturation",
-                        appContext.currentImageState().filterValues.saturation,
-                        valueRange = -2f..4f,
-                        scrollValueChangeBy = 0.5f,
-                        decimalPattern = "#0.##",
-                       // enabled = !appContext.isImageOperationRunning()
-
-                    ) {
-                        appContext.getImage().hslAdjust(
-                            appContext,
-                            scope,
-                            appContext.currentImageState().filterValues.hue,
+                    appContext.currentImageContext()?.filterValues?.saturation?.let {
+                        SliderTextComponent(
+                            "Saturation",
                             it,
-                            appContext.currentImageState().filterValues.lightness
-                        )
+                            valueRange = -2f..4f,
+                            scrollValueChangeBy = 0.5f,
+                            decimalPattern = "#0.##",
+                            // enabled = !appContext.isImageOperationRunning()
+
+                        ) {
+                            scope.launchOnIoThread {
+                                appContext.imageHslAdjust(
+                                    saturation = it
+                                )
+                            }
+                        }
                     }
                 }
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
-                    SliderTextComponent(
-                        "Lightness",
-                        appContext.currentImageState().filterValues.lightness,
-                        valueRange = 0f..2f,
-                        scrollValueChangeBy = 0.5f,
-                        decimalPattern = "#0.##",
-                      //  enabled = !appContext.isImageOperationRunning()
+                    appContext.currentImageContext()?.filterValues?.lightness?.let {
+                        SliderTextComponent(
+                            "Lightness",
+                            it,
+                            valueRange = 0f..2f,
+                            scrollValueChangeBy = 0.5f,
+                            decimalPattern = "#0.##",
+                            //  enabled = !appContext.isImageOperationRunning()
 
-                    ) {
-
-                        appContext.getImage().hslAdjust(
-                            appContext,
-                            scope,
-                            appContext.currentImageState().filterValues.hue,
-                            appContext.currentImageState().filterValues.saturation,
-                            it
-                        )
+                        ) {
+                            scope.launchOnIoThread {
+                                appContext.imageHslAdjust(
+                                    lightness = it
+                                )
+                            }
+                        }
                     }
                 }
             }

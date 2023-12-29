@@ -8,7 +8,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.DropdownMenuState
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Text
 import androidx.compose.material.contextMenuOpenDetector
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -26,14 +25,8 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.graphicsLayer
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.min
 
@@ -208,90 +201,94 @@ private const val SLIGHTLY_INCREASED_ZOOM = 1.5f
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ScalableImage(appContext: AppContext, isModified: Boolean, modifier: Modifier = Modifier) {
-    BoxWithConstraints {
-        var areaSize = areaSize
+    val ctx = appContext.currentImageContext()
+
+    if (ctx != null) {
+        BoxWithConstraints {
+            var areaSize = areaSize
 
 
-        val interactionSource = remember { MutableInteractionSource() };
+            val interactionSource = remember { MutableInteractionSource() };
 
-        val image = appContext.getImage().canvas()
-        val imageSize = image.size
-        val menu = remember { DropdownMenuState(initialStatus = DropdownMenuState.Status.Closed) }
+            val image = ctx.imageToDisplay().canvas()
+            val imageSize = image.size
+            val menu = remember { DropdownMenuState(initialStatus = DropdownMenuState.Status.Closed) }
 
-        val imageCenter = Offset(image.width / 2f, image.height / 2f)
-        val areaCenter = Offset(areaSize.width / 2f, areaSize.height / 2f)
-
-        Box(
-            modifier = Modifier.contextMenuOpenDetector(menu).fillMaxSize(),
-
-            ) {
+            val imageCenter = Offset(image.width / 2f, image.height / 2f)
+            val areaCenter = Offset(areaSize.width / 2f, areaSize.height / 2f)
 
             Box(
-                modifier
-                    .fillMaxSize()
-                    .clickable(interactionSource = interactionSource, indication = null) {
-                        // https://stackoverflow.com/questions/66703448/how-to-disable-ripple-effect-when-clicking-in-jetpack-compose
-                        appContext.showStates.showPopups = !appContext.showStates.showPopups
-                    }
-                    .drawWithContent {
-                        drawIntoCanvas {
-                            it.withSave {
-                                it.translate(areaCenter.x, areaCenter.y)
-                                it.translate(
-                                    appContext.currentImageState().zoomState.transformation.offset.x,
-                                    appContext.currentImageState().zoomState.transformation.offset.y
-                                )
-                                it.scale(
-                                    appContext.currentImageState().zoomState.transformation.scale,
-                                    appContext.currentImageState().zoomState.transformation.scale
-                                )
-                                it.translate(-imageCenter.x, -imageCenter.y)
-                                runBlocking {
-                                    val im = appContext.getImage()
-                                    im.protectSkiaMutex.withLock {
-                                        drawImage(im.canvas())
-                                    }
+                modifier = Modifier.contextMenuOpenDetector(menu).fillMaxSize(),
 
+                ) {
+
+                Box(
+                    modifier
+                        .fillMaxSize()
+                        .clickable(interactionSource = interactionSource, indication = null) {
+                            // https://stackoverflow.com/questions/66703448/how-to-disable-ripple-effect-when-clicking-in-jetpack-compose
+                            appContext.showStates.showPopups = !appContext.showStates.showPopups
+                        }
+                        .drawWithContent {
+                            drawIntoCanvas {
+                                it.withSave {
+                                    it.translate(areaCenter.x, areaCenter.y)
+                                    it.translate(
+                                        ctx.zoomState.transformation.offset.x,
+                                        ctx.zoomState.transformation.offset.y
+                                    )
+                                    it.scale(
+                                       ctx.zoomState.transformation.scale,
+                                        ctx.zoomState.transformation.scale
+                                    )
+                                    it.translate(-imageCenter.x, -imageCenter.y)
+                                    runBlocking {
+                                        val im = ctx.imageToDisplay()
+                                        im.protectSkiaMutex.withLock {
+                                            drawImage(im.canvas())
+                                        }
+
+                                    }
                                 }
                             }
                         }
-                    }
-                    .clipToBounds()
-                    //.transformable(state)
-                    .pointerInput(Unit) {
+                        .clipToBounds()
+                        //.transformable(state)
+                        .pointerInput(Unit) {
 
-                        detectTransformGestures { centroid, pan, zoom, _ ->
-                            appContext.currentImageState().zoomState.addPan(pan)
-                            appContext.currentImageState().zoomState.addZoom(zoom, centroid - areaCenter)
+                            detectTransformGestures { centroid, pan, zoom, _ ->
+                                ctx.zoomState.addPan(pan)
+                                ctx.zoomState.addZoom(zoom, centroid - areaCenter)
+                            }
                         }
-                    }
-                    .onPointerEvent(PointerEventType.Scroll) {
-                        val centroid = it.changes[0].position
-                        val delta = it.changes[0].scrollDelta
-                        val zoom = 1.2f.pow(-delta.y)
-                        appContext.currentImageState().zoomState.addZoom(zoom, centroid - areaCenter)
-                    }
+                        .onPointerEvent(PointerEventType.Scroll) {
+                            val centroid = it.changes[0].position
+                            val delta = it.changes[0].scrollDelta
+                            val zoom = 1.2f.pow(-delta.y)
+                            ctx.zoomState.addZoom(zoom, centroid - areaCenter)
+                        }
 
-                    .pointerInput(Unit) {
-                        detectTapGestures(onDoubleTap = { position ->
-                            // If a user zoomed significantly, the zoom should be the restored on double tap,
-                            // otherwise the zoom should be increased
-                            appContext.currentImageState().zoomState.setZoom(
-                                if (appContext.currentImageState().zoomState.zoom > SLIGHTLY_INCREASED_ZOOM) {
-                                    INITIAL_ZOOM
-                                } else {
-                                    appContext.currentImageState().zoomState.defaultClickLimit
-                                },
-                                position - areaCenter
-                            )
-                        })
-                    },
-            )
+                        .pointerInput(Unit) {
+                            detectTapGestures(onDoubleTap = { position ->
+                                // If a user zoomed significantly, the zoom should be the restored on double tap,
+                                // otherwise the zoom should be increased
+                                ctx.zoomState.setZoom(
+                                    if (ctx.zoomState.zoom > SLIGHTLY_INCREASED_ZOOM) {
+                                        INITIAL_ZOOM
+                                    } else {
+                                        ctx.zoomState.defaultClickLimit
+                                    },
+                                    position - areaCenter
+                                )
+                            })
+                        },
+                )
 
-        }
+            }
 
-        SideEffect {
-            appContext.currentImageState().zoomState.limitTargetInsideArea(areaSize, imageSize)
+            SideEffect {
+                ctx.zoomState.limitTargetInsideArea(areaSize, imageSize)
+            }
         }
     }
 }

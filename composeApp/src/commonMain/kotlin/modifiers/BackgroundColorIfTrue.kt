@@ -19,3 +19,12 @@ fun Modifier.backgroundColorIfCondition(color: Color, condition: () -> Boolean):
         this
     }
 }
+
+fun Modifier.thenIf(other: Modifier, condition: () -> Boolean): Modifier {
+    return if (condition()) {
+        this.then(other)
+    } else {
+        this
+    }
+
+}
