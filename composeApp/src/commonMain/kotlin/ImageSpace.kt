@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import components.ScalableImage
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
@@ -25,7 +27,11 @@ fun ImageSpace(context: AppContext) {
         ImageSpaceLayout.SingleLayout -> {
             // showing only one image
             Box(modifier = Modifier.fillMaxSize()) {
-                context.currentImageContext()?.imageToDisplay()?.image(context)
+                val imageContext = context.currentImageContext();
+
+                key(imageContext?.imageToDisplay()?.isModified) {
+                    ScalableImage(imageContext!!)
+                }
             }
         }
 
@@ -49,7 +55,11 @@ fun TwoPanedImageSpace(context: AppContext) {
             ) {
                 // For some weird reason, prevents clipping
                 Surface {
-                    context.currentImageContext()?.imageToDisplay()?.image(context)
+                    val imageContext = context.currentImageContext();
+
+                    key(imageContext?.imageToDisplay()?.isModified) {
+                        ScalableImage(imageContext!!)
+                    }
                 }
 
 
@@ -64,7 +74,11 @@ fun TwoPanedImageSpace(context: AppContext) {
 
                 // For some weird reason, prevents clipping
                 Surface {
-                    context.currentImageContext()?.imageToDisplay()?.image(context)
+                    val imageContext = context.currentImageContext();
+
+                    key(imageContext?.imageToDisplay()?.isModified) {
+                        ScalableImage(imageContext!!)
+                    }
                 }
                 //Image(context.getImage().canvas(), contentDescription = null)
             }

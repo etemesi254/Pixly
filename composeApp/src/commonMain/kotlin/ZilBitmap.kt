@@ -47,7 +47,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     private var file: String = ""
 
     // a boolean to see if we have modified stuff
-    private var isModified by mutableStateOf(true)
+    var isModified by mutableStateOf(true)
 
 
     constructor(file: String, tempSharedBuffer: SharedBuffer, image: ZilImageInterface) : this(
@@ -151,31 +151,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         }
     }
 
-    @Composable
-    fun image(appContext: AppContext) {
-        key(isModified) {
-
-            /*
-            * Let's talk about getting compose to redraw.
-            *
-            * So we need it to redraw the image for real time effects viewing
-            *
-            * but we don't have a way to tell compose, hey, redraw me
-            * So we make it think that the modifier has been modified, forcing a redraw
-            *
-            *
-            * All image filters modify the isModified parameter, which acts as a signal
-            * telling compose to redraw the image
-            *
-            * */
-            ScalableImage(
-                appContext,
-                isModified,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-    }
 
     fun canvas(): ImageBitmap {
         return canvasBitmap.asComposeImageBitmap()
