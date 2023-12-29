@@ -56,13 +56,47 @@ enum class LeftPaneOpened {
     DirectoryViewer
 
 }
+
 /**
  * Layout for the image pane
  * can either be single or two paned
  * where two paned shows original/edited image
  * and single pane just shows currently edited images
  * */
-enum class ImageSpaceLayout{
+enum class ImageSpaceLayout {
+    /**
+     * Only use a single layout shows one image
+     * */
     SingleLayout,
+
+    /**
+     * Use a two paned layout that shows the initial
+     * image and editing step
+     * */
     PanedLayout,
 }
+
+/**
+ * Represents multiple canvas endpoints.
+ *
+ * ### Use case
+ *  When rendering images, we may want to use different bitmaps
+ *  for rendering, but we don't want to use an array to hold bitmaps
+ *  since we may lose count of what each index represents
+ *
+ *  this is used to keep track, if you have a key ,you can get the canvas for that type
+ *
+ * */
+enum class ImageContextBitmaps {
+    /**
+     * The current image used for most drawing
+     * */
+    CurrentCanvasImage,
+
+    /**
+     * The first canvas used for two paned layout for the original drawing,
+     * this is usually the left pane
+     * */
+    FirstCanvasImage
+}
+

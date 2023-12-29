@@ -30,7 +30,7 @@ suspend fun AppContext.undoSingleHistory() {
                 if (lastOperation.requiresValue()) {
                     restorePreviousValue(lastOperation)
                 }
-                ctx.imageToDisplay().writeToCanvas(ctx.canvasBitmap, ctx.protectSkiaMutex)
+                ctx.imageToDisplay().writeToCanvas(ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
 
                 ctx.imageModified = !ctx.imageModified
                 broadcastImageChange()

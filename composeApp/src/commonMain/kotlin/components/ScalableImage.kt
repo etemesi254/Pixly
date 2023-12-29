@@ -3,6 +3,7 @@ package components
 
 import AppContext
 import ImageContext
+import ImageContextBitmaps
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -202,7 +203,11 @@ private const val SLIGHTLY_INCREASED_ZOOM = 1.5f
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ScalableImage(ctx: ImageContext, modifier: Modifier = Modifier) {
+fun ScalableImage(
+    ctx: ImageContext,
+    modifier: Modifier = Modifier,
+    imageContextBitmaps: ImageContextBitmaps = ImageContextBitmaps.CurrentCanvasImage
+) {
 
     BoxWithConstraints(modifier) {
         var areaSize = areaSize
@@ -210,7 +215,7 @@ fun ScalableImage(ctx: ImageContext, modifier: Modifier = Modifier) {
 
         val interactionSource = remember { MutableInteractionSource() };
 
-        val image = ctx.canvasBitmap.asComposeImageBitmap()
+        val image = ctx.canvasBitmaps[imageContextBitmaps]!!.bitmap.asComposeImageBitmap()
         val imageSize = image.size
         val menu = remember { DropdownMenuState(initialStatus = DropdownMenuState.Status.Closed) }
 
@@ -243,9 +248,10 @@ fun ScalableImage(ctx: ImageContext, modifier: Modifier = Modifier) {
                                 )
                                 it.translate(-imageCenter.x, -imageCenter.y)
                                 runBlocking {
-                                    val im = ctx.imageToDisplay()
-                                    ctx.protectSkiaMutex.withLock {
-                                        drawImage(ctx.canvasBitmap.asComposeImageBitmap())
+                                    val im = ctx.canvasBitmaps[imageContextBitmaps]!!;
+
+                                    im.mutex.withLock {
+                                        drawImage(im.bitmap.asComposeImageBitmap())
                                     }
 
                                 }

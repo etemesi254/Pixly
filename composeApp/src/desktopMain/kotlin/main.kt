@@ -353,7 +353,9 @@ fun App(appCtx: AppContext) {
                                             }
 
                                         }
+                                        Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
                                     }
+
 
                                     Box(
 

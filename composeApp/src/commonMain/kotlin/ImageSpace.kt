@@ -5,6 +5,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,11 +57,19 @@ fun TwoPanedImageSpace(context: AppContext) {
                 contentAlignment = Alignment.Center
             ) {
                 // For some weird reason, prevents clipping
-                Surface {
+                Surface(modifier = Modifier.backgroundForScalable(context)) {
                     val imageContext = context.currentImageContext();
 
+                    remember {
+
+                        imageContext?.canvasBitmaps?.get(ImageContextBitmaps.FirstCanvasImage)?.let {
+                            imageContext.firstImage()?.writeToCanvas(
+                                it
+                            )
+                        };
+                    }
                     key(imageContext?.imageModified) {
-                        ScalableImage(imageContext!!)
+                        ScalableImage(imageContext!!, imageContextBitmaps = ImageContextBitmaps.FirstCanvasImage)
                     }
                 }
             }
@@ -73,14 +82,13 @@ fun TwoPanedImageSpace(context: AppContext) {
 
 
                 // For some weird reason, prevents clipping
-                Surface {
+                Surface(modifier = Modifier.backgroundForScalable(context)) {
                     val imageContext = context.currentImageContext();
 
                     key(imageContext!!.imageModified) {
                         ScalableImage(imageContext)
                     }
                 }
-                //Image(context.getImage().canvas(), contentDescription = null)
             }
 
         }
@@ -92,7 +100,7 @@ fun TwoPanedImageSpace(context: AppContext) {
                     Modifier
                         .markAsHandle()
                         .cursorForHorizontalResize(true)
-                        .width(7.dp)
+                        .width(3.dp)
                         .fillMaxHeight()
                         .background(MaterialTheme.colors.onSurface.copy(alpha = 0.1F))
                 )
@@ -100,7 +108,7 @@ fun TwoPanedImageSpace(context: AppContext) {
             visiblePart {
                 Box(
                     Modifier
-                        .width(5.dp)
+                        .width(3.dp)
                         .fillMaxHeight()
                         .background(Color.Transparent)
                 )

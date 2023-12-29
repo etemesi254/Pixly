@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.skia.Bitmap
 import java.io.File
 import java.nio.ByteBuffer
+import java.util.HashMap
 
 /**
  * A buffer used by native methods to write pixels to
@@ -68,6 +69,14 @@ class FilterValues {
     var bilateralBlur by mutableStateOf(0L)
 }
 
+
+class ProtectedBitmap {
+    var mutex = Mutex()
+
+    /**Canvas for which we use for drawing operations */
+    var bitmap = Bitmap()
+}
+
 /**
  * Image group details
  *
@@ -77,8 +86,8 @@ class ImageContext(image: ZilBitmap) {
     var filterValues by mutableStateOf(FilterValues())
     var history by mutableStateOf(HistoryOperations())
 
-    /**Canvas for which we use for drawing operations */
-    var canvasBitmap = Bitmap()
+//    /**Canvas for which we use for drawing operations */
+//    var canvasBitmap = Bitmap()
 
 
     var image = mutableListOf(image)
@@ -87,26 +96,14 @@ class ImageContext(image: ZilBitmap) {
     var zoomState by mutableStateOf(ScalableState())
     var imageModified by mutableStateOf(false)
 
+    var canvasBitmaps = HashMap<ImageContextBitmaps, ProtectedBitmap>();
 
-    // the lock is an interesting one
-    // we may get image  buffer when we acquire but then another thread
-    // invalidates it, e.g. think a very fast operation that ends up calling
-    //  allocPixels while we are drawing the image to screen , this would inadvertently end up seg-faulting
-    // with the error J 3394  org.jetbrains.skia.ImageKt._nMakeFromBitmap(J)J (0 bytes) @ 0x00007fa518e19061 [0x00007fa518e19020+0x0000000000000041]
-    //
-    // or if caught early cause a null pointer
-    //
-    // The solution is to protect skia operations with a mutex, to force a synchronization,
-    // in that no two skia operations can be said to run concurrently
-    // that's the work of the mutex
-    //
-    // This is separate from the operations mutex because were we to use that, we can't do zooming and panning when
-    // an operation is underway
-    //
-    val protectSkiaMutex = Mutex();
 
     init {
-        image.prepareNewFile(canvasBitmap)
+        canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage] = ProtectedBitmap()
+        canvasBitmaps[ImageContextBitmaps.FirstCanvasImage] = ProtectedBitmap()
+
+        image.prepareNewFile(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
     }
 
     /**
@@ -130,6 +127,10 @@ class ImageContext(image: ZilBitmap) {
         return image.last()
     }
 
+    fun firstImage(): ZilBitmap? {
+        return image.firstOrNull()
+    }
+
     fun imageToDisplay(): ZilBitmap {
         return image.last()
     }
@@ -138,7 +139,7 @@ class ImageContext(image: ZilBitmap) {
         filterValues = FilterValues()
         history = HistoryOperations()
         image = mutableListOf(newImage)
-        image[0].writeToCanvas(canvasBitmap, protectSkiaMutex)
+        image[0].writeToCanvas(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
         imageModified = !imageModified
         imageIsLoaded = false
     }
