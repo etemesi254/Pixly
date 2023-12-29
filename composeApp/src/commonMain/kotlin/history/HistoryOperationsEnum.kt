@@ -7,10 +7,16 @@ enum class HistoryResponse {
      * I.e. two similar brightness operations were carried out, for such we have a different
      * history layout*/
     SameAsLastOperation,
+
     /**
      * A new operation different from the last type
      * */
     NewOperation,
+
+    /**
+     * Used when we indicate we don't care,
+     * */
+    DummyOperation
 }
 
 interface HistoryOperationsInterface {
@@ -121,13 +127,13 @@ enum class HistoryOperationsEnum(historyType: HistoryType) : HistoryOperationsIn
 const val TIME_THRESHOLD = 400L
 
 class HistoryOperations {
-    private val history: MutableList<HistoryOperationsEnum> = mutableListOf()
-    private val values: MutableList<Any> = mutableListOf()
+    private var history: MutableList<HistoryOperationsEnum> = mutableListOf()
+    private var values: MutableList<Any> = mutableListOf()
 
     // records the last time something was added
     private var lastTimeAdded = 0L
 
-    fun addHistory(historyEnum: HistoryOperationsEnum, passedValue: Any?):HistoryResponse {
+    fun addHistory(historyEnum: HistoryOperationsEnum, passedValue: Any?): HistoryResponse {
         if (historyEnum.requiresValue() && passedValue == null) {
             throw Exception("History operation $historyEnum requires value");
         }
@@ -153,6 +159,11 @@ class HistoryOperations {
 
     fun getHistory(): MutableList<HistoryOperationsEnum> {
         return history
+    }
+
+    fun pop() {
+        history = history.dropLast(1).toMutableList()
+        values = values.dropLast(1).toMutableList()
     }
 
     fun getValue(): MutableList<Any> {

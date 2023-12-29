@@ -2,6 +2,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.res.painterResource
 import components.ScalableImage
 import history.HistoryOperationsEnum
@@ -17,32 +18,8 @@ val EPSILON = 0.003F;
 class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInterface) {
     var inner: ZilImageInterface = image;
 
-    // it may happen that this may be called from multiple coroutines
-    // so we keep it single threaded since we do a lot of memory sharing
-    // otherwise we will crash.
-    //
-    // NB: All calls that can be called from separate coroutines should use this
-    private val operationsMutex = Mutex();
-
-    // the lock is an interesting one
-    // we may get image  buffer when we acquire but then another thread
-    // invalidates it, e.g. think a very fast operation that ends up calling
-    //  allocPixels while we are drawing the image to screen , this would inadvertently end up seg-faulting
-    // with the error J 3394  org.jetbrains.skia.ImageKt._nMakeFromBitmap(J)J (0 bytes) @ 0x00007fa518e19061 [0x00007fa518e19020+0x0000000000000041]
-    //
-    // or if caught early cause a null pointer
-    //
-    // The solution is to protect skia operations with a mutex, to force a synchronization,
-    // in that no two skia operations can be said to run concurrently
-    // that's the work of the mutex
-    //
-    // This is separate from the operations mutex because were we to use that, we can't do zooming and panning when
-    // an operation is underway
-    //
-    val protectSkiaMutex = Mutex();
 
     // USE CAREFULLY
-    private var canvasBitmap = Bitmap()
     private var info: ImageInfo = ImageInfo.makeUnknown(0, 0)
     private var file: String = ""
 
@@ -56,11 +33,10 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     ) {
 
         this.file = file
-        prepareNewFile()
     }
 
 
-    private fun prepareNewFile() {
+    fun prepareNewFile(bitmap: Bitmap) {
         // convert depth to u8
         inner.convertDepth(ZilDepth.U8);
 
@@ -104,32 +80,33 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         * */
         inner.convertColorspace(ZilColorspace.BGRA)
         // set up canvas
-        allocBuffer()
-        installPixels()
+        allocBuffer(bitmap)
+        installPixels(bitmap)
 
     }
 
 
-    private fun allocBuffer() {
+    private fun allocBuffer(bitmap: Bitmap) {
 
         // check if buffer would fit the new type
         // i.e do not pre-allocate
         val infoSize = info.height * info.width
         val imageSize = inner.height().toInt() * inner.width().toInt();
-        info = ImageInfo.makeN32(inner.width().toInt(), inner.height().toInt(), ColorAlphaType.UNPREMUL);
+        info =
+            ImageInfo.makeN32(inner.width().toInt(), inner.height().toInt(), ColorAlphaType.UNPREMUL, ColorSpace.sRGB)
 
-        canvasBitmap.setImageInfo(info)
+        bitmap.setImageInfo(info)
 
         if (infoSize != imageSize) {
             // TODO change color type to be pre-multiplied once its exposed from native
-            assert(canvasBitmap.allocPixels(info))
+            assert(bitmap.allocPixels(info))
         }
 
         // ensure we can store it
-        assert(canvasBitmap.computeByteSize() == info.computeByteSize(info.minRowBytes))
+        assert(bitmap.computeByteSize() == info.computeByteSize(info.minRowBytes))
     }
 
-    private fun installPixels() {
+    private fun installPixels(bitmap: Bitmap) {
         runBlocking {
             tempSharedBuffer.mutex.withLock {
                 // resize if small
@@ -145,27 +122,27 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
                 val wrappedBuffer = ByteBuffer.wrap(tempSharedBuffer.sharedBuffer)
 
                 val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
-                assert(canvasBitmap.installPixels(slice.array()))
+                assert(bitmap.installPixels(slice.array()))
 
             }
         }
     }
 
 
-    fun canvas(): ImageBitmap {
-        return canvasBitmap.asComposeImageBitmap()
-    }
+//    fun canvas(): ImageBitmap {
+//        return canvasBitmap.asComposeImageBitmap()
+//    }
 
-    fun contrast(value: Float) {
+    fun contrast(value: Float, bitmap: Bitmap, mutex: Mutex) {
 
         inner.contrast(value)
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
 
     }
 
-    fun exposure(value: Float, blackPoint: Float = 0.0F) {
+    fun exposure(value: Float, blackPoint: Float = 0.0F, bitmap: Bitmap, mutex: Mutex) {
         inner.exposure(value, blackPoint)
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
     }
 
     /**
@@ -173,62 +150,62 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
      *
      * @param value: New value for image, between -1 and 1
      * */
-    fun brighten(value: Float) {
+    fun brighten(value: Float, bitmap: Bitmap, mutex: Mutex) {
         // clamp here
         inner.brightness(value.coerceIn(-1F..1F))
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
     }
 
 
     fun stretchContrast(
-        value: ClosedFloatingPointRange<Float>
+        value: ClosedFloatingPointRange<Float>, bitmap: Bitmap, mutex: Mutex
     ) {
         inner.stretchContrast(value.start, value.endInclusive)
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
     }
 
-    fun gaussianBlur(radius: Long) {
+    fun gaussianBlur(radius: Long, bitmap: Bitmap, mutex: Mutex) {
         inner.gaussianBlur(radius)
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
     }
 
-    fun medianBlur(radius: Long) {
+    fun medianBlur(radius: Long, bitmap: Bitmap, mutex: Mutex) {
         // median filter is god slow
         inner.medianBlur(radius)
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
     }
 
-    fun bilateralBlur(radius: Long) {
+    fun bilateralBlur(radius: Long, bitmap: Bitmap, mutex: Mutex) {
         inner.bilateralFilter(radius.toInt(), radius.toFloat(), radius.toFloat())
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
 
     }
 
-    fun boxBlur(radius: Long) {
+    fun boxBlur(radius: Long, bitmap: Bitmap, mutex: Mutex) {
         inner.boxBlur(radius)
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
 
     }
 
-    fun flip() {
+    fun flip(bitmap: Bitmap, mutex: Mutex) {
         inner.flip()
-        postProcessAlloc()
+        postProcessAlloc(bitmap, mutex)
     }
 
-    fun verticalFlip() {
+    fun verticalFlip(bitmap: Bitmap, mutex: Mutex) {
         inner.verticalFlip()
-        postProcessAlloc()
+        postProcessAlloc(bitmap, mutex)
 
     }
 
-    fun horizontalFlip() {
+    fun horizontalFlip(bitmap: Bitmap, mutex: Mutex) {
         inner.flop()
-        postProcessAlloc()
+        postProcessAlloc(bitmap, mutex)
     }
 
-    fun transpose() {
+    fun transpose(bitmap: Bitmap, mutex: Mutex) {
         inner.transpose()
-        postProcessAlloc()
+        postProcessAlloc(bitmap, mutex)
     }
 
 //    fun save(file: String) {
@@ -246,30 +223,35 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         }
     }
 
-    private fun postProcessAlloc() {
+    private fun postProcessAlloc(bitmap: Bitmap, skiaMutex: Mutex) {
         runBlocking {
-            protectSkiaMutex.withLock {
-                allocBuffer()
-                installPixels()
+            skiaMutex.withLock {
+                allocBuffer(bitmap)
+                installPixels(bitmap)
                 isModified = !isModified
             }
         }
     }
 
 
-    private fun postProcessPixelsManipulated() {
+    private fun postProcessPixelsManipulated(bitmap: Bitmap, skiaMutex: Mutex) {
         runBlocking {
-            protectSkiaMutex.withLock {
-                installPixels()
+            skiaMutex.withLock {
+                installPixels(bitmap)
                 isModified = !isModified
             }
         }
     }
 
-    fun hslAdjust(hue: Float, saturation: Float, lightness: Float) {
+    fun hslAdjust(hue: Float, saturation: Float, lightness: Float, bitmap: Bitmap, mutex: Mutex) {
         inner.hslAdjust(hue, saturation, lightness)
-        postProcessPixelsManipulated()
+        postProcessPixelsManipulated(bitmap, mutex)
 
+    }
+
+    fun writeToCanvas(bitmap: Bitmap, skiaMutex: Mutex) {
+        inner.convertColorspace(ZilColorspace.BGRA)
+        postProcessAlloc(bitmap, skiaMutex)
     }
 
     fun clone(): ZilBitmap {

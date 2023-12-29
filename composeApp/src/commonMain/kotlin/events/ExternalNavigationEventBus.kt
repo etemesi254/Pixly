@@ -1,6 +1,7 @@
 package events
 
 import AppContext
+import history.undoSingleHistory
 import isImage
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -11,7 +12,8 @@ enum class ExternalImageViewerEvent {
     Next,
     Previous,
     OpenImage,
-    ReloadImage
+    ReloadImage,
+    UndoHistory,
 }
 
 class ExternalNavigationEventBus {
@@ -32,6 +34,9 @@ suspend fun handleKeyEvents(appCtx: AppContext) {
 
         if (it == ExternalImageViewerEvent.OpenImage) {
             appCtx.showStates.showFilePicker = true;
+        }
+        if (it==ExternalImageViewerEvent.UndoHistory && appCtx.imageIsLoaded()){
+            appCtx.undoSingleHistory()
         }
         if (it == ExternalImageViewerEvent.ReloadImage && appCtx.imageIsLoaded() && appCtx.imFile.exists() && appCtx.imFile.isFile) {
 

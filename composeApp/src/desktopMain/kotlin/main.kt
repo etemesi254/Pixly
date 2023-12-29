@@ -318,13 +318,16 @@ fun App(appCtx: AppContext) {
                                                             Text(it.key.name)
 
                                                             IconButton(onClick = {
-                                                                appCtx.imageStates().remove(appCtx.imFile)
+
+                                                                // remove the clicked tab
+                                                                appCtx.imageStates().remove(it.key)
 
                                                                 val value = appCtx.tabIndex - 1;
                                                                 appCtx.tabIndex = value.coerceIn(
                                                                     minimumValue = 0,
                                                                     maximumValue = null
                                                                 )
+
                                                                 // set the new imFile
                                                                 appCtx.imageStates().asSequence()
                                                                     .forEachIndexed { idx, it ->
@@ -509,6 +512,12 @@ fun main() = application {
                 // open
                 appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.OpenImage)
             }
+
+            if (it.isCtrlPressed && it.key == Key.Z){
+                // undo
+                appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.UndoHistory)
+            }
+
             when (it.key) {
                 Key.DirectionLeft -> appContext.externalNavigationEventBus.produceEvent(
                     ExternalImageViewerEvent.Previous

@@ -26,6 +26,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.asComposeImageBitmap
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
@@ -203,13 +204,13 @@ private const val SLIGHTLY_INCREASED_ZOOM = 1.5f
 @Composable
 fun ScalableImage(ctx: ImageContext, modifier: Modifier = Modifier) {
 
-    BoxWithConstraints {
+    BoxWithConstraints(modifier) {
         var areaSize = areaSize
 
 
         val interactionSource = remember { MutableInteractionSource() };
 
-        val image = ctx.imageToDisplay().canvas()
+        val image = ctx.canvasBitmap.asComposeImageBitmap()
         val imageSize = image.size
         val menu = remember { DropdownMenuState(initialStatus = DropdownMenuState.Status.Closed) }
 
@@ -243,8 +244,8 @@ fun ScalableImage(ctx: ImageContext, modifier: Modifier = Modifier) {
                                 it.translate(-imageCenter.x, -imageCenter.y)
                                 runBlocking {
                                     val im = ctx.imageToDisplay()
-                                    im.protectSkiaMutex.withLock {
-                                        drawImage(im.canvas())
+                                    ctx.protectSkiaMutex.withLock {
+                                        drawImage(ctx.canvasBitmap.asComposeImageBitmap())
                                     }
 
                                 }

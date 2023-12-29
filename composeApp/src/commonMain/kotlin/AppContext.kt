@@ -5,6 +5,7 @@ import history.HistoryOperations
 import history.HistoryOperationsEnum
 import history.HistoryResponse
 import kotlinx.coroutines.sync.Mutex
+import org.jetbrains.skia.Bitmap
 import java.io.File
 import java.nio.ByteBuffer
 
@@ -76,10 +77,37 @@ class ImageContext(image: ZilBitmap) {
     var filterValues by mutableStateOf(FilterValues())
     var history by mutableStateOf(HistoryOperations())
 
-    private var image by mutableStateOf(image)
+    /**Canvas for which we use for drawing operations */
+    var canvasBitmap = Bitmap()
+
+
+    var image = mutableListOf(image)
     var operationsMutex: Mutex = Mutex()
     var imageIsLoaded by mutableStateOf(false)
     var zoomState by mutableStateOf(ScalableState())
+    var imageModified by mutableStateOf(false)
+
+
+    // the lock is an interesting one
+    // we may get image  buffer when we acquire but then another thread
+    // invalidates it, e.g. think a very fast operation that ends up calling
+    //  allocPixels while we are drawing the image to screen , this would inadvertently end up seg-faulting
+    // with the error J 3394  org.jetbrains.skia.ImageKt._nMakeFromBitmap(J)J (0 bytes) @ 0x00007fa518e19061 [0x00007fa518e19020+0x0000000000000041]
+    //
+    // or if caught early cause a null pointer
+    //
+    // The solution is to protect skia operations with a mutex, to force a synchronization,
+    // in that no two skia operations can be said to run concurrently
+    // that's the work of the mutex
+    //
+    // This is separate from the operations mutex because were we to use that, we can't do zooming and panning when
+    // an operation is underway
+    //
+    val protectSkiaMutex = Mutex();
+
+    init {
+        image.prepareNewFile(canvasBitmap)
+    }
 
     /**
      * Current image
@@ -93,17 +121,25 @@ class ImageContext(image: ZilBitmap) {
         // if the operation has a trivial undo, just let it be
         // we are assured that history just pushed this operation since we require HistoryResponse
         // as a parameter
+        if (!history.getHistory().last().trivialUndo() && response != HistoryResponse.DummyOperation) {
+            // not simple to undo, so back up what we have
+            val lastImage = image.last().clone()
+            image.add(lastImage)
+        }
 
-        return image
+        return image.last()
     }
+
     fun imageToDisplay(): ZilBitmap {
-        return image
+        return image.last()
     }
 
     fun resetStates(newImage: ZilBitmap) {
         filterValues = FilterValues()
         history = HistoryOperations()
-        image = newImage
+        image = mutableListOf(newImage)
+        image[0].writeToCanvas(canvasBitmap, protectSkiaMutex)
+        imageModified = !imageModified
         imageIsLoaded = false
     }
 }
@@ -279,6 +315,7 @@ class AppContext {
     fun currentImageContext(): ImageContext? {
         return imageSpecificStates[imFile]
     }
+
     fun operationIsOngoing(): Boolean {
         return showStates.showTopLinearIndicator
     }

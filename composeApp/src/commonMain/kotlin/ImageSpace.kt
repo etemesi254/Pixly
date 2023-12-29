@@ -29,8 +29,10 @@ fun ImageSpace(context: AppContext) {
             Box(modifier = Modifier.fillMaxSize()) {
                 val imageContext = context.currentImageContext();
 
-                key(imageContext?.imageToDisplay()?.isModified) {
-                    ScalableImage(imageContext!!)
+                key(imageContext!!.imageModified) {
+                    ScalableImage(
+                        imageContext,
+                    )
                 }
             }
         }
@@ -57,12 +59,10 @@ fun TwoPanedImageSpace(context: AppContext) {
                 Surface {
                     val imageContext = context.currentImageContext();
 
-                    key(imageContext?.imageToDisplay()?.isModified) {
+                    key(imageContext?.imageModified) {
                         ScalableImage(imageContext!!)
                     }
                 }
-
-
             }
         }
         second {
@@ -76,8 +76,8 @@ fun TwoPanedImageSpace(context: AppContext) {
                 Surface {
                     val imageContext = context.currentImageContext();
 
-                    key(imageContext?.imageToDisplay()?.isModified) {
-                        ScalableImage(imageContext!!)
+                    key(imageContext!!.imageModified) {
+                        ScalableImage(imageContext)
                     }
                 }
                 //Image(context.getImage().canvas(), contentDescription = null)
