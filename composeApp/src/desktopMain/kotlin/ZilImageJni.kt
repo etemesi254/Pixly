@@ -83,6 +83,10 @@ internal class ZilImageJni : Cleaner.Cleanable {
 
     private external fun medianBlurNative(imagePtr: Long, radius: Long)
 
+    private external fun colorMatrixNative(imagePtr: Long, matrix: FloatArray)
+
+    private external fun resizeImageNative(imagePtr: Long, newWidth: Long, newHeight: Long)
+
     //private native void rotate90Native(long imagePtr);
     /**
      * Write to native buffer allocated via bytebuffer direct
@@ -252,6 +256,16 @@ internal class ZilImageJni : Cleaner.Cleanable {
         medianBlurNative(imagePtr, radius)
     }
 
+    fun colorMatrix(array: FloatArray) {
+        if (array.size != 20) {
+            throw Exception("Array size should be 20")
+        }
+        colorMatrixNative(imagePtr, array)
+    }
+
+    fun resize(newWidth: Long, newHeight: Long) {
+        resizeImageNative(imagePtr, newWidth, newHeight)
+    }
 
     companion object {
         init {

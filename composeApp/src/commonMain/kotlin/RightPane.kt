@@ -1,16 +1,15 @@
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeImageBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import components.*
+import extensions.launchOnIoThread
 import history.HistoryWidget
 import modifiers.backgroundColorIfCondition
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -54,8 +54,9 @@ fun RightPanel(appCtx: AppContext) {
                 when (appCtx.openedRightPane) {
                     RightPaneOpened.None -> Box {}
                     RightPaneOpened.InformationPanel -> InformationPanel(appCtx)
-                    RightPaneOpened.FiltersPanel -> ImageFiltersPane(appCtx)
+                    RightPaneOpened.FineTunePanel -> ImageFineTunePane(appCtx)
                     RightPaneOpened.HistoryPanel -> HistoryWidget(appCtx)
+                    RightPaneOpened.ImageFilters -> FiltersPanel(appCtx)
                 }
             }
         }
@@ -66,7 +67,7 @@ fun RightPanel(appCtx: AppContext) {
 
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
-            Column {
+            Column(modifier = Modifier.fillMaxHeight()) {
                 PixlyToolTip(
                     title = "Show Image Information",
                     helpfulMessage = "This will show both general image information, (width, height) and Exif information if present "
@@ -95,43 +96,68 @@ fun RightPanel(appCtx: AppContext) {
                 PixlyToolTip(title = "Show the edits panel") {
                     IconButton(
                         {
-                            if (appCtx.openedRightPane == RightPaneOpened.FiltersPanel) {
+                            if (appCtx.openedRightPane == RightPaneOpened.FineTunePanel) {
                                 appCtx.openedRightPane = RightPaneOpened.None
                             } else {
-                                appCtx.openedRightPane = RightPaneOpened.FiltersPanel
+                                appCtx.openedRightPane = RightPaneOpened.FineTunePanel
                             }
 
                         },
                         enabled = appCtx.imageIsLoaded(),
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
-                            appCtx.openedRightPane == RightPaneOpened.FiltersPanel
+                            appCtx.openedRightPane == RightPaneOpened.FineTunePanel
                         }
                     ) {
                         Icon(
-                            painter = painterResource("image-edit-svgrepo-com.svg"),
+                            painter = painterResource("filters-2-svgrepo-com.svg"),
                             contentDescription = null,
                             modifier = Modifier.size(30.dp)
                         )
                     }
                 }
-                IconButton(
-                    {
-                        if (appCtx.openedRightPane == RightPaneOpened.HistoryPanel) {
-                            appCtx.openedRightPane = RightPaneOpened.None
-                        } else {
-                            appCtx.openedRightPane = RightPaneOpened.HistoryPanel
+                PixlyToolTip(title = "Show filters panel") {
+                    IconButton(
+                        {
+                            if (appCtx.openedRightPane == RightPaneOpened.ImageFilters) {
+                                appCtx.openedRightPane = RightPaneOpened.None
+                            } else {
+                                appCtx.openedRightPane = RightPaneOpened.ImageFilters
+                            }
+
+                        },
+                        enabled = appCtx.imageIsLoaded(),
+                        modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                            appCtx.openedRightPane == RightPaneOpened.ImageFilters
                         }
-                    },
-                    enabled = appCtx.imageIsLoaded(),
-                    modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
-                        appCtx.openedRightPane == RightPaneOpened.HistoryPanel
+                    ) {
+                        Icon(
+                            painter = painterResource("colorfilter-svgrepo-com.svg"),
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp)
+                        )
                     }
-                ) {
-                    Icon(
-                        painter = painterResource("history-svgrepo-com.svg"),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
+                }
+                Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.Bottom) {
+
+                    IconButton(
+                        {
+                            if (appCtx.openedRightPane == RightPaneOpened.HistoryPanel) {
+                                appCtx.openedRightPane = RightPaneOpened.None
+                            } else {
+                                appCtx.openedRightPane = RightPaneOpened.HistoryPanel
+                            }
+                        },
+                        enabled = appCtx.imageIsLoaded(),
+                        modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                            appCtx.openedRightPane == RightPaneOpened.HistoryPanel
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource("history-svgrepo-com.svg"),
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
                 }
             }
         }
@@ -184,20 +210,15 @@ fun ExifMetadataPane(appCtx: AppContext) {
 
 @Composable
 fun InformationPanel(appCtx: AppContext) {
-    val scrollState = rememberLazyListState()
+    val scrollState = rememberScrollState()
 
-    Box(modifier = Modifier.fillMaxHeight().padding(horizontal = 10.dp)) {
-        LazyColumn(state = scrollState) {
-            item {
-                histogramPane(appCtx)
-            }
-            item {
-                ImageInformationComponent(appCtx)
-            }
-            item {
-                ExifMetadataPane(appCtx)
-            }
-
+    Box(modifier = Modifier.fillMaxHeight().padding(end = 15.dp)) {
+        Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
+        // not using lazy column as the scrollbar is finicky with content
+        Column(modifier = Modifier.verticalScroll(scrollState).padding(start = 3.dp, end = 10.dp)) {
+            histogramPane(appCtx)
+            ImageInformationComponent(appCtx)
+            ExifMetadataPane(appCtx)
         }
 
         VerticalScrollbar(
@@ -210,7 +231,7 @@ fun InformationPanel(appCtx: AppContext) {
 }
 
 @Composable
-fun ImageFiltersPane(appCtx: AppContext) {
+fun ImageFineTunePane(appCtx: AppContext) {
     val density = LocalDensity.current;
 
     // We want to have items to reorder in the panels/pane. but then we can't have compose return
@@ -239,71 +260,222 @@ fun ImageFiltersPane(appCtx: AppContext) {
         }
     })
 
-    AnimatedVisibility(
-        visible = appCtx.openedRightPane == RightPaneOpened.FiltersPanel,
-        enter = slideInHorizontally { with(density) { +40.dp.roundToPx() } },
-        exit = slideOutHorizontally { with(density) { +400.dp.roundToPx() } },
-        modifier = Modifier.fillMaxHeight()
-    ) {
+    Box() {
+        Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
-        Surface(
-            modifier = Modifier.modifyOnChange(orderChanged)
-                .fillMaxHeight().padding(horizontal = 5.dp)
+        AnimatedVisibility(
+            visible = appCtx.openedRightPane == RightPaneOpened.FineTunePanel,
+            enter = slideInHorizontally { with(density) { +40.dp.roundToPx() } },
+            exit = slideOutHorizontally { with(density) { +400.dp.roundToPx() } },
+            modifier = Modifier.fillMaxHeight().padding(start = 3.dp)
         ) {
-            // provides a scrollbar
 
-            LazyColumn(
-                modifier = Modifier.padding(10.dp)
-                    .reorderable(state)
-                    .detectReorderAfterLongPress(state)
-                    .fillMaxHeight(),
-                state = state.listState,
+            Surface(
+                modifier = Modifier.modifyOnChange(orderChanged)
+                    .fillMaxHeight().padding(horizontal = 5.dp)
+            ) {
+                // provides a scrollbar
 
-                ) {
+                LazyColumn(
+                    modifier = Modifier.padding(10.dp)
+                        .reorderable(state)
+                        .detectReorderAfterLongPress(state)
+                        .fillMaxHeight(),
+                    state = state.listState,
 
-                items(enumOrdering.size) {
-                    when (val item = enumOrdering[it]) {
+                    ) {
 
-                        FiltersPaneOrdering.LightFilters -> {
-                            ReorderableItem(state, key = item, index = it) {
-                                LightFiltersComponent(appCtx)
-                            }
-                        }
+                    items(enumOrdering.size) {
+                        when (val item = enumOrdering[it]) {
 
-                        FiltersPaneOrdering.OrientationFilters -> {
-                            ReorderableItem(
-                                state,
-                                key = item,
-                                index = it
-                            ) { OrientationFiltersComponent(appCtx) }
-                        }
-
-
-                        FiltersPaneOrdering.HSLFilters -> {
-                            ReorderableItem(
-                                state,
-                                key = item,
-                                index = it
-                            ) {
-                                HslFiltersComponent(appCtx)
+                            FiltersPaneOrdering.LightFilters -> {
+                                ReorderableItem(state, key = item, index = it) {
+                                    LightFiltersComponent(appCtx)
+                                }
                             }
 
-                        }
-
-                        FiltersPaneOrdering.Levels -> {
-                            ReorderableItem(state, key = item, index = it) {
-                                LevelsFiltersComponent(appCtx)
+                            FiltersPaneOrdering.OrientationFilters -> {
+                                ReorderableItem(
+                                    state,
+                                    key = item,
+                                    index = it
+                                ) { OrientationFiltersComponent(appCtx) }
                             }
-                        }
 
-                        FiltersPaneOrdering.BlurFilters -> {
-                            ReorderableItem(state, key = item, index = it) {
-                                BlurFiltersComponent(appCtx)
+
+                            FiltersPaneOrdering.HSLFilters -> {
+                                ReorderableItem(
+                                    state,
+                                    key = item,
+                                    index = it
+                                ) {
+                                    HslFiltersComponent(appCtx)
+                                }
+
+                            }
+
+                            FiltersPaneOrdering.Levels -> {
+                                ReorderableItem(state, key = item, index = it) {
+                                    LevelsFiltersComponent(appCtx)
+                                }
+                            }
+
+                            FiltersPaneOrdering.BlurFilters -> {
+                                ReorderableItem(state, key = item, index = it) {
+                                    BlurFiltersComponent(appCtx)
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+
+data class FilterMatrixComponent(val name: String, val colorMatrix: FloatArray) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FilterMatrixComponent
+
+        if (name != other.name) return false
+        if (!colorMatrix.contentEquals(other.colorMatrix)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + colorMatrix.contentHashCode()
+        return result
+    }
+};
+
+
+fun colorMatricesPane(): List<FilterMatrixComponent> {
+    // convert to grayscale
+    return listOf(
+        FilterMatrixComponent(
+            "Grayscale", listOf(
+                0.2F, 0.3F, 0.5F, 0.0F, 0.0F,
+                0.2F, 0.3F, 0.5F, 0.0F, 0.0F,
+                0.2F, 0.3F, 0.5F, 0.0F, 0.0F,
+                0.0F, 0.0F, 0.0F, 1.0F, 0.0F
+            ).toFloatArray()
+        ),
+        //https://learn.microsoft.com/en-us/archive/msdn-magazine/2005/january/net-matters-sepia-tone-stringlogicalcomparer-and-more
+        FilterMatrixComponent(
+            "Sepia", listOf(
+                0.393F, 0.769F, 0.189F, 0.0F, 0.0F,
+                0.349F, 0.686F, 0.686F, 0.0F, 0.0F,
+                0.272F, 0.534F, 0.534F, 0.0F, 0.0F,
+                0.0F, 0.0F, 0.0F, 1.0F, 0.0F
+            ).toFloatArray()
+        ),
+
+        FilterMatrixComponent(
+            "Vivid", listOf(
+                +1.2F, -0.1F, -0.1F, 0.0F, 0.0F,
+                -0.1F, +1.2F, -0.1F, 0.0F, 0.0F,
+                -0.1F, -0.1F, +1.2F, 0.0F, 0.0F,
+                +0.0F, +0.0F, +0.0F, 1.0F, 0.0F
+            ).toFloatArray()
+        ),
+        FilterMatrixComponent(
+            "Polaroid", listOf(
+                +1.438F, -0.122F, -0.016F, 0.0F, -0.03F,
+                -0.062F, +1.378F, -0.016F, 0.0F, +0.00F,
+                -0.062F, -0.122F, +1.483F, 0.0F, -0.02F,
+                +0.0F, +0.0F, +0.0F, 1.0F, 0.0F
+            ).toFloatArray()
+        )
+    )
+}
+
+@Composable
+fun SingleFilterPanel(image: ZilBitmap, component: FilterMatrixComponent) {
+
+    val bitmap = remember { ProtectedBitmap() }
+    var isDone by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+
+        this.launchOnIoThread {
+            if (!isDone) {
+                val image = image.clone()
+                image.colorMatrix(component.colorMatrix, bitmap)
+                isDone = true
+            }
+        }
+    }
+    Column(modifier = Modifier.fillMaxWidth().height(300.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+
+        if (isDone) {
+            Image(bitmap.bitmap.asComposeImageBitmap(), null, modifier = Modifier.fillMaxWidth().height(250.dp))
+        } else {
+            CircularProgressIndicator()
+        }
+
+        Text(component.name)
+    }
+}
+
+fun calcResize(image: ZilBitmap, newW: Long, newH: Long): List<Long> {
+    val oldW = image.inner.width().toFloat()
+    val oldH = image.inner.height().toFloat()
+
+    val ratioW = oldW / newW.toFloat()
+    val ratioH = oldH / newH.toFloat()
+
+    val percent = if (ratioH < ratioW) {
+        ratioW
+    } else {
+        ratioH
+    };
+    val t = (oldW / percent).toLong()
+    val u = (oldH / percent).toLong()
+    return listOf(t, u)
+
+}
+
+@Composable
+fun FiltersPanel(appCtx: AppContext) {
+
+    val scrollState = rememberScrollState()
+
+    val filters = colorMatricesPane()
+
+    val ctx = appCtx.currentImageContext();
+    if (ctx != null) {
+        val image = remember(ctx.image.size) {
+            val c = ctx.imageToDisplay().clone()
+            val ratios = calcResize(c, 400, 300)
+            c.inner.resize(ratios[0], ratios[1])
+            println("${c.inner.width()} ${c.inner.height()}")
+            c
+        };
+
+        Box(modifier = Modifier.fillMaxHeight().padding(end = 10.dp)) {
+            Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
+
+            // Lazy columns would be better but, they have some annoying rebuilding
+            // when scrolling up
+            Column(modifier = Modifier.fillMaxHeight().verticalScroll(scrollState).padding(horizontal = 15.dp)) {
+                filters.forEach {
+                    SingleFilterPanel(image, it)
+                }
+
+            }
+
+            VerticalScrollbar(
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                adapter = rememberScrollbarAdapter(
+                    scrollState = scrollState
+                )
+            )
         }
     }
 }

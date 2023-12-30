@@ -58,7 +58,6 @@ kotlin {
 
         }
         desktopMain.dependencies {
-            implementation("zil:pixly-image:0.4.0")
             implementation("com.godaddy.android.colorpicker:compose-color-picker-jvm:0.7.0")
             implementation(compose.desktop.currentOs)
         }

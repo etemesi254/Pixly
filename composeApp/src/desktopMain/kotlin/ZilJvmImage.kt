@@ -145,6 +145,14 @@ class ZilJvmImage() : ZilImageInterface {
         jni.medianBlur(radius)
     }
 
+    override fun colorMatrix(floatArray: FloatArray) {
+        jni.colorMatrix(array = floatArray)
+    }
+    override fun resize(newWidth: Long,newHeight: Long){
+        jni.resize(newWidth, newHeight)
+
+    }
+
 }
 
 

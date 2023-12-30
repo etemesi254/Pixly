@@ -283,7 +283,11 @@ interface ZilImageInterface {
      * Each output pixel is the median of the pixels in a (2 * radius + 1) * (2 * radius + 1)
      * kernel of pixels in the input image.
      * */
-    fun medianBlur(radius:Long);
+    fun medianBlur(radius: Long);
+
+    fun colorMatrix(floatArray: FloatArray)
+
+    fun resize(newWidth: Long, newHeight: Long)
 
 
 }

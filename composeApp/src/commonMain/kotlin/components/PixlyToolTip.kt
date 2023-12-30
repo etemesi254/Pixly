@@ -35,7 +35,7 @@ fun PixlyToolTip(title: String, helpfulMessage: String = "", content: @Composabl
                         text = title,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
-                        fontSize = TextUnit(16.0F, TextUnitType.Sp)
+                        fontSize = TextUnit(15.0F, TextUnitType.Sp)
                     )
 
                     if (helpfulMessage !== "") {

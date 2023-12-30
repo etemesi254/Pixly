@@ -3,6 +3,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.res.painterResource
 import components.ScalableImage
 import history.HistoryOperationsEnum
@@ -209,6 +210,10 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
     fun transpose(bitmap: ProtectedBitmap) {
         inner.transpose()
+        postProcessAlloc(bitmap.bitmap,bitmap.mutex)
+    }
+    fun colorMatrix(matrix: FloatArray,bitmap: ProtectedBitmap){
+        inner.colorMatrix(matrix)
         postProcessAlloc(bitmap.bitmap,bitmap.mutex)
     }
 

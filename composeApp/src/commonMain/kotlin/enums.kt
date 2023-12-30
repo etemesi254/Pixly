@@ -30,13 +30,18 @@ enum class RightPaneOpened {
      * The filters panel which contains the image filters
      * like levels and such is opened
      * */
-    FiltersPanel,
+    FineTunePanel,
+    /**
+     * Shows pre-configured image filters
+     * */
+    ImageFilters,
 
     /**
      * History panel ,contains previous commands performed
      * by operations that can be undone
      * */
     HistoryPanel
+
 }
 
 /**
@@ -97,6 +102,11 @@ enum class ImageContextBitmaps {
      * The first canvas used for two paned layout for the original drawing,
      * this is usually the left pane
      * */
-    FirstCanvasImage
+    FirstCanvasImage,
+
+    /**
+     * The filters displayed in the canvas
+     * */
+    FiltersCanvasImage
 }
 

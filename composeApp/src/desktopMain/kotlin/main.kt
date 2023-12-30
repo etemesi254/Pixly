@@ -285,7 +285,7 @@ fun App(appCtx: AppContext) {
                     splitPaneState = topHorizontalSplitterState
                 ) {
 
-                    first(if (appCtx.openedLeftPane != LeftPaneOpened.None) 250.dp else 54.dp) {
+                    first(if (appCtx.openedLeftPane != LeftPaneOpened.None) 250.dp else 50.dp) {
                         LeftPane(appCtx)
                     }
 
@@ -425,7 +425,7 @@ fun App(appCtx: AppContext) {
                                 }
 
                             }
-                            second(if (appCtx.imageIsLoaded() && appCtx.openedRightPane != RightPaneOpened.None) 400.dp else 54.dp) {
+                            second(if (appCtx.imageIsLoaded() && appCtx.openedRightPane != RightPaneOpened.None) 400.dp else 50.dp) {
                                 RightPanel(appCtx)
                             }
                         }
