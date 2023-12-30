@@ -1,6 +1,6 @@
 use std::alloc::{dealloc, Layout};
 use std::ffi::c_void;
-use jni::objects::{JByteArray, JByteBuffer, JClass, JIntArray, JObject, JString};
+use jni::objects::{JByteArray, JByteBuffer, JClass, JFloatArray, JIntArray, JObject, JString};
 use jni::JNIEnv;
 use jni::sys::{jfloat, jint, jlong};
 use zune_core::colorspace::ColorSpace;
@@ -14,6 +14,7 @@ use zune_image::traits::OperationsTrait;
 use zune_imageprocs::bilateral_filter::BilateralFilter;
 use zune_imageprocs::box_blur::BoxBlur;
 use zune_imageprocs::brighten::Brighten;
+use zune_imageprocs::color_matrix::ColorMatrix;
 use zune_imageprocs::contrast::Contrast;
 use zune_imageprocs::crop::Crop;
 use zune_imageprocs::exposure::Exposure;
@@ -24,6 +25,7 @@ use zune_imageprocs::gaussian_blur::GaussianBlur;
 use zune_imageprocs::histogram::ChannelHistogram;
 use zune_imageprocs::hsv_adjust::HsvAdjust;
 use zune_imageprocs::median::Median;
+use zune_imageprocs::resize::{Resize, ResizeMethod};
 use zune_imageprocs::rotate::Rotate;
 use zune_imageprocs::scharr::Scharr;
 use zune_imageprocs::sobel::Sobel;
@@ -539,4 +541,25 @@ extern "system" fn Java_ZilImageJni_hslAdjustNative(mut env: JNIEnv, _class: JCl
 #[no_mangle]
 extern "system" fn Java_ZilImageJni_medianBlurNative(mut env: JNIEnv, _class: JClass, image_ptr: jlong, radius: jlong) {
     exec_imgproc(&mut env, image_ptr, Median::new(radius as _))
+}
+
+#[no_mangle]
+extern "system" fn Java_ZilImageJni_colorMatrixNative(mut env: JNIEnv, _class: JClass, image_ptr: jlong, array: JFloatArray) {
+    let mut out_array = [0.0f32; 20];
+    // write array to out array
+    if let Err(e) = env.get_float_array_region(array, 0, &mut out_array) {
+        env.throw(e.to_string()).expect("Cannot throw exception");
+    };
+    let filter = ColorMatrix::try_from_slice(&out_array).expect("Shouldn't happen");
+    exec_imgproc(&mut env, image_ptr, filter);
+}
+
+
+#[no_mangle]
+extern "system" fn Java_ZilImageJni_resizeImageNative(mut env: JNIEnv, _class: JClass, image_ptr: jlong, new_width: jlong, new_height: jlong) {
+    exec_imgproc(&mut env, image_ptr,
+                 Resize::new(new_width.clamp(0, 100000) as _,
+                             new_height.clamp(0, 1000000) as _,
+                             ResizeMethod::Bilinear),
+    )
 }
