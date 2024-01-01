@@ -12,8 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,13 +25,13 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import components.*
 import events.ExternalImageViewerEvent
 import events.handleKeyEvents
+import extensions.launchOnIoThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import modifiers.thenIf
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
+import org.jetbrains.compose.splitpane.VerticalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
-import java.awt.Cursor
 import java.io.File
 import java.text.DecimalFormat
 import kotlin.system.measureTimeMillis
@@ -111,8 +109,8 @@ fun App(appCtx: AppContext) {
         Scaffold(modifier = Modifier.fillMaxSize()
 //            .thenIf(Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.WAIT_CURSOR)))
 //            ) { appCtx.operationIsOngoing() },
-            ,topBar = {
-        }) { it ->
+            , topBar = {
+            }) { it ->
             Column(Modifier.padding(it).fillMaxSize()) {
 
                 Row(
@@ -122,6 +120,7 @@ fun App(appCtx: AppContext) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // top area with buttons
+                    val coroutineScope = rememberCoroutineScope()
 
                     Row(
                         horizontalArrangement = Arrangement.Start,
@@ -130,7 +129,6 @@ fun App(appCtx: AppContext) {
 
                         // open file
                         Box(modifier = Modifier.padding(horizontal = 5.dp)) {
-                            val coroutineScope = rememberCoroutineScope()
 
                             PixlyToolTip(
                                 "Open a file",
@@ -162,6 +160,17 @@ fun App(appCtx: AppContext) {
 
                                     coroutineScope.launch(Dispatchers.IO) {
                                         loadImage(appCtx, false)
+                                    }
+                                    // fill p
+                                    val loadedDir = File(appCtx.rootDirectory)
+
+                                    if (loadedDir.isDirectory) {
+                                        val files = loadedDir.walk().maxDepth(1).toList();
+
+                                        coroutineScope.launchOnIoThread {
+
+                                            fillPaths(appCtx, files)
+                                        }
                                     }
 
                                     // do something with the file
@@ -195,6 +204,17 @@ fun App(appCtx: AppContext) {
                                     // do something with the directory
                                     if (dir != null) {
                                         appCtx.rootDirectory = dir
+                                    }
+
+                                    val loadedDir = File(appCtx.rootDirectory)
+
+                                    if (loadedDir.isDirectory) {
+                                        val files = loadedDir.walk().maxDepth(1).toList();
+
+                                        coroutineScope.launchOnIoThread {
+
+                                            fillPaths(appCtx, files)
+                                        }
                                     }
                                 }
                             }
@@ -296,132 +316,142 @@ fun App(appCtx: AppContext) {
                         ) {
                             first(0.dp) {
                                 var changeOnDelete by remember { mutableStateOf(false) }
-                                Column(modifier = Modifier.fillMaxSize()) {
+                                VerticalSplitPane(splitPaneState = rememberSplitPaneState(1.0F)) {
 
-                                    if (appCtx.imageStates().isNotEmpty()) {
-                                        ScrollableTabRow(
-                                            selectedTabIndex = appCtx.tabIndex,
-                                            modifier = Modifier.fillMaxWidth().modifyOnChange(changeOnDelete),
-                                            edgePadding = 0.dp
-                                        ) {
-                                            // convert to a sequence to iterate
-                                            // the benefits is that linkedHashMap preserves insertion order
-                                            appCtx.imageStates().asSequence().forEachIndexed { idx, it ->
-                                                Tab(it.key == appCtx.imFile,
-                                                    onClick = {
-                                                        appCtx.tabIndex = idx
-                                                        // now update tab to be this idx
-                                                        appCtx.imFile = it.key
-                                                        appCtx.broadcastImageChange()
-                                                    }, text = {
-                                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                                            Text(it.key.name)
+                                    first {
+                                        Column(modifier = Modifier.fillMaxSize()) {
 
-                                                            IconButton(onClick = {
-
-                                                                // remove the clicked tab
-                                                                appCtx.imageStates().remove(it.key)
-
-                                                                val value = appCtx.tabIndex - 1;
-                                                                appCtx.tabIndex = value.coerceIn(
-                                                                    minimumValue = 0,
-                                                                    maximumValue = null
-                                                                )
-
-                                                                // set the new imFile
-                                                                appCtx.imageStates().asSequence()
-                                                                    .forEachIndexed { idx, it ->
-
-                                                                        if (idx == appCtx.tabIndex) {
-                                                                            appCtx.imFile = it.key
-                                                                        }
-                                                                    }
-
-                                                                changeOnDelete = !changeOnDelete
-                                                                appCtx.broadcastImageChange()
-
-                                                            }) {
-                                                                Icon(
-                                                                    Icons.Default.Close,
-                                                                    contentDescription = null,
-                                                                    modifier = Modifier.size(15.dp)
-                                                                )
-
-                                                            }
-                                                        }
-                                                    })
-                                            }
-
-                                        }
-                                        Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                                    }
-
-
-                                    Box(
-
-                                        Modifier.background(imBackgroundColor).fillMaxSize()
-                                            .padding(horizontal = 0.dp)
-                                            .clickable(enabled = !appCtx.imageIsLoaded() && !appCtx.showStates.showTopLinearIndicator) {
-                                                appCtx.showStates.showPopups = !appCtx.showStates.showPopups;
-                                                if (!appCtx.imageIsLoaded()) {
-                                                    appCtx.showStates.showFilePicker = true;
-                                                }
-                                            }) {
-                                        // We depend on boxes having kind of a stacked layout
-                                        // so we can have multiple things that take max size and the layout still works
-                                        // we exploit that here by having a column + row which both request .fillMaxSize
-                                        // depending on order, the row is overlayed on top of the column,
-                                        // but the column only contains text, so we don't need anything from it
-                                        // which kinda works out
-                                        if (!appCtx.imageIsLoaded()) {
-
-                                            Column(
-                                                verticalArrangement = Arrangement.Center,
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                                modifier = Modifier.fillMaxSize()
-                                            ) {
-
-                                                if (appCtx.showStates.showTopLinearIndicator) {
-
-                                                    // An image is loading or something
-                                                    CircularProgressIndicator()
-                                                    Spacer(modifier = Modifier.height(30.dp))
-
-                                                    Text("Loading")
-                                                } else {
-                                                    Icon(
-                                                        painter = painterResource("add-circle.svg"),
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(100.dp),
-
-                                                        )
-                                                    Spacer(modifier = Modifier.height(30.dp))
-                                                    Text("Drag an image here\nUse the directory picker to start \nOr click me to open an image")
-                                                }
-                                            }
-                                        } else {
-
-                                            Surface(
-                                                color = if (appCtx.showStates.showLightTheme)
-                                                    Color(
-                                                        245,
-                                                        245,
-                                                        245
-                                                    ) else Color(25, 25, 25)
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentAlignment = Alignment.Center
+                                            if (appCtx.imageStates().isNotEmpty()) {
+                                                ScrollableTabRow(
+                                                    selectedTabIndex = appCtx.tabIndex,
+                                                    modifier = Modifier.fillMaxWidth().modifyOnChange(changeOnDelete),
+                                                    edgePadding = 0.dp
                                                 ) {
-                                                    ImageSpace(appCtx)
+                                                    // convert to a sequence to iterate
+                                                    // the benefits is that linkedHashMap preserves insertion order
+                                                    appCtx.imageStates().asSequence().forEachIndexed { idx, it ->
+                                                        Tab(it.key == appCtx.imFile,
+                                                            onClick = {
+                                                                appCtx.tabIndex = idx
+                                                                // now update tab to be this idx
+                                                                appCtx.imFile = it.key
+                                                                appCtx.broadcastImageChange()
+                                                            }, text = {
+                                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                    Text(it.key.name)
+
+                                                                    IconButton(onClick = {
+
+                                                                        // remove the clicked tab
+                                                                        appCtx.imageStates().remove(it.key)
+
+                                                                        val value = appCtx.tabIndex - 1;
+                                                                        appCtx.tabIndex = value.coerceIn(
+                                                                            minimumValue = 0,
+                                                                            maximumValue = null
+                                                                        )
+
+                                                                        // set the new imFile
+                                                                        appCtx.imageStates().asSequence()
+                                                                            .forEachIndexed { idx, it ->
+
+                                                                                if (idx == appCtx.tabIndex) {
+                                                                                    appCtx.imFile = it.key
+                                                                                }
+                                                                            }
+
+                                                                        changeOnDelete = !changeOnDelete
+                                                                        appCtx.broadcastImageChange()
+
+                                                                    }) {
+                                                                        Icon(
+                                                                            Icons.Default.Close,
+                                                                            contentDescription = null,
+                                                                            modifier = Modifier.size(15.dp)
+                                                                        )
+
+                                                                    }
+                                                                }
+                                                            })
+                                                    }
+
                                                 }
+                                                Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+                                            }
+
+
+                                            Box(
+
+                                                Modifier.background(imBackgroundColor).fillMaxSize()
+                                                    .padding(horizontal = 0.dp)
+                                                    .clickable(enabled = !appCtx.imageIsLoaded() && !appCtx.showStates.showTopLinearIndicator) {
+                                                        appCtx.showStates.showPopups = !appCtx.showStates.showPopups;
+                                                        if (!appCtx.imageIsLoaded()) {
+                                                            appCtx.showStates.showFilePicker = true;
+                                                        }
+                                                    }) {
+                                                // We depend on boxes having kind of a stacked layout
+                                                // so we can have multiple things that take max size and the layout still works
+                                                // we exploit that here by having a column + row which both request .fillMaxSize
+                                                // depending on order, the row is overlayed on top of the column,
+                                                // but the column only contains text, so we don't need anything from it
+                                                // which kinda works out
+                                                if (!appCtx.imageIsLoaded()) {
+
+                                                    Column(
+                                                        verticalArrangement = Arrangement.Center,
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        modifier = Modifier.fillMaxSize()
+                                                    ) {
+
+                                                        if (appCtx.showStates.showTopLinearIndicator) {
+
+                                                            // An image is loading or something
+                                                            CircularProgressIndicator()
+                                                            Spacer(modifier = Modifier.height(30.dp))
+
+                                                            Text("Loading")
+                                                        } else {
+                                                            Icon(
+                                                                painter = painterResource("add-circle.svg"),
+                                                                contentDescription = null,
+                                                                modifier = Modifier.size(100.dp),
+
+                                                                )
+                                                            Spacer(modifier = Modifier.height(30.dp))
+                                                            Text("Drag an image here\nUse the directory picker to start \nOr click me to open an image")
+                                                        }
+                                                    }
+                                                } else {
+
+                                                    Surface(
+                                                        color = if (appCtx.showStates.showLightTheme)
+                                                            Color(
+                                                                245,
+                                                                245,
+                                                                245
+                                                            ) else Color(25, 25, 25)
+                                                    ) {
+                                                        Box(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            ImageSpace(appCtx)
+                                                        }
+                                                    }
+
+                                                }
+
+                                                TopHoveringIcons(appCtx)
                                             }
 
                                         }
-
-                                        TopHoveringIcons(appCtx)
                                     }
-
+                                    second(if (appCtx.paths.isNotEmpty() && appCtx.showStates.showThumbnail) 200.dp else 0.dp) {
+                                        Surface(modifier = Modifier.fillMaxSize()) {
+                                            ThumbnailGenerator(appCtx)
+                                        }
+                                    }
                                 }
 
                             }
@@ -515,7 +545,7 @@ fun main() = application {
                 appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.OpenImage)
             }
 
-            if (it.isCtrlPressed && it.key == Key.Z){
+            if (it.isCtrlPressed && it.key == Key.Z) {
                 // undo
                 appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.UndoHistory)
             }

@@ -37,7 +37,7 @@ fun DirectoryViewerEntry(appCtx: AppContext) {
                     appCtx.initializeImageChange()
 
                     scope.launch(Dispatchers.IO) {
-                        loadImage(appCtx,false)
+                        loadImage(appCtx, false)
                     }
                 }
             }
@@ -72,7 +72,7 @@ fun LeftPane(appCtx: AppContext) {
         }
         Row(modifier = Modifier.fillMaxHeight()) {
 
-            Column(modifier = Modifier.fillMaxHeight()) {
+            Column() {
                 PixlyToolTip(
                     title = "Show the directory navigator",
                     helpfulMessage = "This is a simple navigator for viewing other files in the current directory containing a loaded image "
@@ -92,6 +92,22 @@ fun LeftPane(appCtx: AppContext) {
                         }) {
                         Icon(
                             painter = painterResource("folder-svgrepo-com.svg"),
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                }
+                Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.Bottom) {
+                    IconButton(
+                        {
+                            appCtx.showStates.showThumbnail = !appCtx.showStates.showThumbnail
+                        },
+                        enabled = appCtx.paths.isNotEmpty(),
+                        modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                            appCtx.showStates.showThumbnail
+                        }) {
+                        Icon(
+                            painter = painterResource("thumbnail-1-svgrepo-com.png"),
                             contentDescription = null,
                             modifier = Modifier.size(30.dp)
                         )

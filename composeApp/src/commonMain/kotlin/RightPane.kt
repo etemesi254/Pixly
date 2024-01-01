@@ -103,7 +103,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled = appCtx.imageIsLoaded(),
+//                        enabled = appCtx.imageIsLoaded(),
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.FineTunePanel
                         }
@@ -391,7 +391,16 @@ fun colorMatricesPane(): List<FilterMatrixComponent> {
                 -0.062F, -0.122F, +1.483F, 0.0F, -0.02F,
                 +0.0F, +0.0F, +0.0F, 1.0F, 0.0F
             ).toFloatArray()
-        )
+        ),
+        FilterMatrixComponent(
+            "Lilac", listOf(
+                1.2F, 0.00F, 0.00F, 0.0F,  0.00F,
+                0.0F,   0.8F, 0.00F, 0.0F,  0.00F,
+                0.0F,   0.00F, 1.2F, 0.0F,  0.00F,
+                0.0F,    +0.0F,  +0.0F, 1.0F,  0.0F
+            ).toFloatArray()
+        ),
+
     )
 }
 
@@ -423,23 +432,6 @@ fun SingleFilterPanel(image: ZilBitmap, component: FilterMatrixComponent) {
     }
 }
 
-fun calcResize(image: ZilBitmap, newW: Long, newH: Long): List<Long> {
-    val oldW = image.inner.width().toFloat()
-    val oldH = image.inner.height().toFloat()
-
-    val ratioW = oldW / newW.toFloat()
-    val ratioH = oldH / newH.toFloat()
-
-    val percent = if (ratioH < ratioW) {
-        ratioW
-    } else {
-        ratioH
-    };
-    val t = (oldW / percent).toLong()
-    val u = (oldH / percent).toLong()
-    return listOf(t, u)
-
-}
 
 @Composable
 fun FiltersPanel(appCtx: AppContext) {
@@ -454,7 +446,6 @@ fun FiltersPanel(appCtx: AppContext) {
             val c = ctx.imageToDisplay().clone()
             val ratios = calcResize(c, 400, 300)
             c.inner.resize(ratios[0], ratios[1])
-            println("${c.inner.width()} ${c.inner.height()}")
             c
         };
 

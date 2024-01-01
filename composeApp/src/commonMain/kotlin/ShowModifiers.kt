@@ -17,6 +17,6 @@ class ShowModifiers {
     var showSaveDialog by mutableStateOf(false)
     var showHistogram by mutableStateOf(true)
     var showLevels by mutableStateOf(true)
-
+    var showThumbnail by mutableStateOf(false)
 
 }
