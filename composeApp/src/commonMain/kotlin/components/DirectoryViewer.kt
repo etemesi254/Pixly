@@ -19,11 +19,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import extensions.launchOnIoThread
+import fillPaths
 import isImage
 import kotlinx.coroutines.launch
 import java.nio.file.Files
 import java.nio.file.Paths
-
 
 
 @Composable
@@ -109,24 +110,11 @@ fun DirectoryViewer(appCtx: AppContext, onFileClicked: (file: File) -> Unit) {
     if (file.exists() && file.isDirectory) {
         val files = file.walk().maxDepth(1).filter(filterFiles).toList();
 
-        rememberCoroutineScope().launch {
+        LaunchedEffect(appCtx.rootDirectory) {
+            this.launchOnIoThread {
 
-            // clear the paths first
-            appCtx.paths.clear();
-
-            var i = 0;
-            files.forEach {
-                val path = Paths.get(it.toURI())
-                if (it.isFile && Files.isReadable(path) && isImage(it)) {
-                    appCtx.paths.add(it)
-                }
-                // now make left and right switch work
-                if (appCtx.imFile == it) {
-                    appCtx.pathPosition = i
-                }
-                i += 1
+                fillPaths(appCtx, files)
             }
-
         }
 
         Column(modifier = Modifier.padding(horizontal = 2.dp)) {

@@ -1,5 +1,10 @@
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.loadImageBitmap
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun isImage(file: File): Boolean {
@@ -12,7 +17,7 @@ fun isImage(file: File): Boolean {
         if (bytesRead > 0) {
             // match whatever zune does because I'm too lazy
             // to make this a native call
-            if (imageFormat(byteArray.asUByteArray()) != ZilImageFormat.UnknownFormat){
+            if (imageFormat(byteArray.asUByteArray()) != ZilImageFormat.UnknownFormat) {
                 return true;
             }
 
@@ -57,10 +62,46 @@ fun imageFormat(byteArray: UByteArray): ZilImageFormat {
         ).toList()
     ) {
         return ZilImageFormat.JPEG_XL
-    }
-    else if (byteArray.slice(0..1)== ubyteArrayOf(0xFFu,0x0Au).toList()){
+    } else if (byteArray.slice(0..1) == ubyteArrayOf(0xFFu, 0x0Au).toList()) {
         return ZilImageFormat.JPEG_XL
     }
 
     return ZilImageFormat.UnknownFormat;
+}
+
+fun calcResize(image: ZilBitmap, newW: Long, newH: Long): List<Long> {
+    val oldW = image.inner.width().toFloat()
+    val oldH = image.inner.height().toFloat()
+
+    val ratioW = oldW / newW.toFloat()
+    val ratioH = oldH / newH.toFloat()
+
+    val percent = if (ratioH < ratioW) {
+        ratioW
+    } else {
+        ratioH
+    };
+    val t = (oldW / percent).toLong()
+    val u = (oldH / percent).toLong()
+    return listOf(t, u)
+
+}
+
+fun fillPaths(appContext: AppContext, files: List<File>) {
+
+    // clear the paths first
+    appContext.paths.clear();
+
+    var i = 0;
+    files.forEach {
+        val path = Paths.get(it.toURI())
+        if (it.isFile && Files.isReadable(path) && isImage(it)) {
+            appContext.paths.add(it)
+        }
+        // now make left and right switch work
+        if (appContext.imFile == it) {
+            appContext.pathPosition = i
+        }
+        i += 1
+    }
 }
