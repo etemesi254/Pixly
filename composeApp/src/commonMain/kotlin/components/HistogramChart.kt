@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import modifyOnChange
+import modifiers.modifyOnChange
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun _calculateHistogram(input: UByteArray): MutableMap<String, FloatArray> {
@@ -52,15 +52,15 @@ fun HistogramChart(ctx: AppContext) {
     var array: Map<String, LongArray>? =
         remember(ctx.recomposeWidgets.rerunHistogram) {
 
-            if (ctx.imageIsLoaded()) ctx.currentImageContext()?.imageToDisplay()?.inner?.histogram() else {
+            if (ctx.imageIsLoaded()) ctx.currentImageContext()?.imageToDisplay()?.innerInterface()?.histogram() else {
                 mutableMapOf()
             }
         }
 
     if (array != null) {
 
-        val width = ctx.currentImageContext()!!.imageToDisplay().inner.width();
-        val height = ctx.currentImageContext()!!.imageToDisplay().inner.height();
+        val width = ctx.currentImageContext()!!.imageToDisplay().width();
+        val height = ctx.currentImageContext()!!.imageToDisplay().height();
 
         // array type is BGRA, but histogram returns 1,2,3,4
         // 0->B,1->R, 2->G

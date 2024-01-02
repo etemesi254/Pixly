@@ -1,22 +1,14 @@
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.res.painterResource
-import components.ScalableImage
-import history.HistoryOperationsEnum
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.skia.*
 import java.nio.ByteBuffer
-import kotlin.math.absoluteValue
 
 val EPSILON = 0.003F;
 
-class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInterface) {
+
+class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInterface) :
+    ZilBitmapInterface {
     var inner: ZilImageInterface = image;
 
 
@@ -37,7 +29,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     }
 
 
-    fun prepareNewFile(bitmap: ProtectedBitmap) {
+    override fun prepareNewFile(bitmap: ProtectedBitmapInterface) {
         // convert depth to u8
         inner.convertDepth(ZilDepth.U8);
 
@@ -82,9 +74,11 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         inner.convertColorspace(ZilColorspace.BGRA)
         // set up canvas
         runBlocking {
-            bitmap.mutex.withLock {
-                allocBuffer(bitmap.bitmap)
-                installPixels(bitmap.bitmap)
+            if (bitmap is ProtectedBitmap) {
+                bitmap.mutex.withLock {
+                    allocBuffer(bitmap.image)
+                    installPixels(bitmap.image)
+                }
             }
         }
 
@@ -98,7 +92,12 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         val infoSize = info.height * info.width
         val imageSize = inner.height().toInt() * inner.width().toInt();
         info =
-            ImageInfo.makeN32(inner.width().toInt(), inner.height().toInt(), ColorAlphaType.UNPREMUL, ColorSpace.sRGB)
+            ImageInfo.makeN32(
+                inner.width().toInt(),
+                inner.height().toInt(),
+                ColorAlphaType.UNPREMUL,
+                ColorSpace.sRGB
+            )
 
         bitmap.setImageInfo(info)
 
@@ -119,7 +118,8 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
                     tempSharedBuffer.sharedBuffer = ByteArray(inner.outputBufferSize().toInt())
                 }
                 if (tempSharedBuffer.nativeBuffer.capacity() < inner.outputBufferSize()) {
-                    tempSharedBuffer.nativeBuffer = ByteBuffer.allocateDirect(inner.outputBufferSize().toInt())
+                    tempSharedBuffer.nativeBuffer =
+                        ByteBuffer.allocateDirect(inner.outputBufferSize().toInt())
                 }
                 // wrap in a bytebuffer to ensure slice fits
 
@@ -138,14 +138,14 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 //        return canvasBitmap.asComposeImageBitmap()
 //    }
 
-    fun contrast(value: Float, bitmap: ProtectedBitmap) {
+    override fun contrast(value: Float, bitmap: ProtectedBitmapInterface) {
 
         inner.contrast(value)
         postProcessPixelsManipulated(bitmap)
 
     }
 
-    fun exposure(value: Float, blackPoint: Float = 0.0F, bitmap: ProtectedBitmap) {
+    override fun exposure(value: Float, blackPoint: Float, bitmap: ProtectedBitmapInterface) {
         inner.exposure(value, blackPoint)
         postProcessPixelsManipulated(bitmap)
     }
@@ -155,115 +155,134 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
      *
      * @param value: New value for image, between -1 and 1
      * */
-    fun brighten(value: Float, bitmap: ProtectedBitmap) {
+    override fun brighten(value: Float, bitmap: ProtectedBitmapInterface) {
         // clamp here
         inner.brightness(value.coerceIn(-1F..1F))
         postProcessPixelsManipulated(bitmap)
     }
 
 
-    fun stretchContrast(
-        value: ClosedFloatingPointRange<Float>, bitmap: ProtectedBitmap
+    override fun stretchContrast(
+        value: ClosedFloatingPointRange<Float>, bitmap: ProtectedBitmapInterface
     ) {
         inner.stretchContrast(value.start, value.endInclusive)
         postProcessPixelsManipulated(bitmap)
     }
 
-    fun gaussianBlur(radius: Long, bitmap: ProtectedBitmap) {
+    override fun gaussianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         inner.gaussianBlur(radius)
         postProcessPixelsManipulated(bitmap)
     }
 
-    fun medianBlur(radius: Long, bitmap: ProtectedBitmap) {
+    override fun medianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         // median filter is god slow
         inner.medianBlur(radius)
         postProcessPixelsManipulated(bitmap)
     }
 
-    fun bilateralBlur(radius: Long, bitmap: ProtectedBitmap) {
+    override fun bilateralBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         inner.bilateralFilter(radius.toInt(), radius.toFloat(), radius.toFloat())
         postProcessPixelsManipulated(bitmap)
 
     }
 
-    fun boxBlur(radius: Long, bitmap: ProtectedBitmap) {
+    override fun boxBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         inner.boxBlur(radius)
         postProcessPixelsManipulated(bitmap)
 
     }
 
-    fun flip(bitmap:ProtectedBitmap) {
+    override fun flip(bitmap: ProtectedBitmapInterface) {
         inner.flip()
-        postProcessAlloc(bitmap.bitmap, bitmap.mutex)
+        postProcessAlloc(bitmap)
     }
 
-    fun verticalFlip(bitmap: ProtectedBitmap) {
+    override fun verticalFlip(bitmap: ProtectedBitmapInterface) {
         inner.verticalFlip()
-        postProcessAlloc(bitmap.bitmap, bitmap.mutex)
+        postProcessAlloc(bitmap)
 
     }
 
-    fun horizontalFlip(bitmap: ProtectedBitmap) {
+    override fun horizontalFlip(bitmap: ProtectedBitmapInterface) {
         inner.flop()
-        postProcessAlloc(bitmap.bitmap, bitmap.mutex)
+        postProcessAlloc(bitmap)
     }
 
-    fun transpose(bitmap: ProtectedBitmap) {
+    override fun transpose(bitmap: ProtectedBitmapInterface) {
         inner.transpose()
-        postProcessAlloc(bitmap.bitmap,bitmap.mutex)
+        postProcessAlloc(bitmap)
     }
-    fun colorMatrix(matrix: FloatArray,bitmap: ProtectedBitmap){
+
+    override fun colorMatrix(matrix: FloatArray, bitmap: ProtectedBitmapInterface) {
         inner.colorMatrix(matrix)
-        postProcessAlloc(bitmap.bitmap,bitmap.mutex)
+        postProcessAlloc(bitmap)
+    }
+
+    override fun width(): UInt {
+        return inner.width()
+    }
+
+    override fun height(): UInt {
+        return inner.height()
+    }
+
+    override fun innerInterface(): ZilImageInterface {
+        return inner;
     }
 
 //    fun save(file: String) {
 //        inner.save(file)
 //    }
 
-    fun save(file: String, format: ZilImageFormat, appContext: AppContext, coroutineScope: CoroutineScope) {
-        coroutineScope.launch(Dispatchers.IO) {
-            appContext.initializeImageChange()
-            inner.save(file, format)
-
-            appContext.broadcastImageChange()
-            appContext.bottomStatus = "Saved ${file.substringAfterLast("/")} to ${file.substringBeforeLast("/")}"
-            appContext.showStates.showSaveDialog = false
-        }
+    override fun save(
+        name: String,
+        format: ZilImageFormat,
+    ) {
+        inner.save(name, format)
     }
 
-    private fun postProcessAlloc(bitmap: Bitmap, skiaMutex: Mutex) {
+
+    private fun postProcessAlloc(bitmap: ProtectedBitmapInterface) {
         runBlocking {
-            skiaMutex.withLock {
-                allocBuffer(bitmap)
-                installPixels(bitmap)
-                isModified = !isModified
+            if (bitmap is ProtectedBitmap) {
+                bitmap.mutex.withLock {
+                    allocBuffer(bitmap.image)
+                    installPixels(bitmap.image)
+                    isModified = !isModified
+                }
             }
         }
     }
 
 
-    private fun postProcessPixelsManipulated(bitmap: ProtectedBitmap) {
+    private fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
         runBlocking {
-            bitmap.mutex.withLock {
-                installPixels(bitmap.bitmap)
-                isModified = !isModified
+            bitmap.mutex().withLock {
+                if (bitmap is ProtectedBitmap) {
+                    installPixels(bitmap.image)
+                    isModified = !isModified
+                }
             }
         }
     }
 
-    fun hslAdjust(hue: Float, saturation: Float, lightness: Float, bitmap: ProtectedBitmap) {
+    override fun hslAdjust(
+        hue: Float,
+        saturation: Float,
+        lightness: Float,
+        bitmap: ProtectedBitmapInterface
+    ) {
         inner.hslAdjust(hue, saturation, lightness)
         postProcessPixelsManipulated(bitmap)
 
     }
 
-    fun writeToCanvas(bitmap: ProtectedBitmap) {
+    override fun writeToCanvas(bitmap: ProtectedBitmapInterface) {
         inner.convertColorspace(ZilColorspace.BGRA)
-        postProcessAlloc(bitmap.bitmap, bitmap.mutex)
+        postProcessAlloc(bitmap)
     }
 
-    fun clone(): ZilBitmap {
+    override fun clone(): ZilBitmap {
         return ZilBitmap(this.tempSharedBuffer, this.inner.clone())
     }
 }
@@ -327,9 +346,4 @@ const val BPP = 4
 //    return ZilBitmap(this.toBuffer().asByteArray(), height = this.height().toInt(), width = this.width().toInt())
 //}
 
-/** A stub modifier that can be used to tell compose to
- * rebuild a widget
- * */
-fun Modifier.modifyOnChange(modified: Boolean): Modifier {
-    return this
-}
+

@@ -22,12 +22,16 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.darkrockstudios.libraries.mpfilepicker.DirectoryPicker
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
-import components.*
+import desktopComponents.PixlyToolTip
+import desktopComponents.SaveAsDialog
+import desktopComponents.TopHoveringIcons
 import events.ExternalImageViewerEvent
 import events.handleKeyEvents
 import extensions.launchOnIoThread
+import history.undoSingleHistory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import modifiers.modifyOnChange
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.VerticalSplitPane
@@ -36,6 +40,7 @@ import java.io.File
 import java.text.DecimalFormat
 import kotlin.system.measureTimeMillis
 
+const val APP_TITLE = "Pixly"
 
 /**
  * Load the image specified by appCtx.imFile
@@ -62,6 +67,10 @@ actual fun loadImage(appCtx: AppContext, forceReload: Boolean) {
             val c = ZilJvmImage(appCtx.imFile.path);
             val image = ZilBitmap(appCtx.imFile.path, appCtx.sharedBuffer, c);
             appCtx.initializeImageSpecificStates(image)
+
+            // generate c
+            val ctx = appCtx.currentImageContext();
+            ctx?.initCurrentCanvas(ProtectedBitmap())
         }
         appCtx.bottomStatus = "Loaded ${appCtx.imFile.name} in $time ms"
 
@@ -106,11 +115,8 @@ fun App(appCtx: AppContext) {
     ) {
 
 
-        Scaffold(modifier = Modifier.fillMaxSize()
-//            .thenIf(Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.WAIT_CURSOR)))
-//            ) { appCtx.operationIsOngoing() },
-            , topBar = {
-            }) { it ->
+        Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
+        }) { it ->
             Column(Modifier.padding(it).fillMaxSize()) {
 
                 Row(
@@ -225,6 +231,7 @@ fun App(appCtx: AppContext) {
                                 horizontal = 0.dp
                             ), horizontalArrangement = Arrangement.End
                         ) {
+                            val scope = rememberCoroutineScope()
 
 
                             // File picker doesn't support saving file dialogs
@@ -234,16 +241,19 @@ fun App(appCtx: AppContext) {
 
                             Box(modifier = Modifier.padding(horizontal = 5.dp)) {
 
-                                IconButton(onClick = {
-                                    if (appCtx.imageIsLoaded()) {
-                                        appCtx.imageSpaceLayout = when (appCtx.imageSpaceLayout) {
-                                            ImageSpaceLayout.SingleLayout -> ImageSpaceLayout.PanedLayout
-                                            ImageSpaceLayout.PanedLayout -> ImageSpaceLayout.SingleLayout
+                                IconButton(
+                                    onClick = {
+                                        scope.launchOnIoThread {
+                                            appCtx.undoSingleHistory()
                                         }
+                                    }, enabled = if (appCtx.getHistory() == null) {
+                                        false
+                                    } else {
+                                        appCtx.getHistory()!!.getHistory().isNotEmpty()
                                     }
-                                }, enabled = appCtx.imageIsLoaded()) {
+                                ) {
                                     Icon(
-                                        painter = painterResource("half-v-svgrepo-com.svg"),
+                                        painter = painterResource("undo-svgrepo.svg"),
                                         contentDescription = null,
                                         modifier = Modifier.size(26.dp),
                                     )
@@ -391,7 +401,7 @@ fun App(appCtx: AppContext) {
                                                         }
                                                     }) {
                                                 // We depend on boxes having kind of a stacked layout
-                                                // so we can have multiple things that take max size and the layout still works
+                                                // meaning we can have multiple things that take max size and the layout still works
                                                 // we exploit that here by having a column + row which both request .fillMaxSize
                                                 // depending on order, the row is overlayed on top of the column,
                                                 // but the column only contains text, so we don't need anything from it
@@ -508,10 +518,31 @@ fun App(appCtx: AppContext) {
 
                     Box(
                         contentAlignment = Alignment.CenterEnd,
-                        modifier = Modifier.fillMaxWidth().padding(end = 50.dp)
+                        modifier = Modifier.fillMaxWidth().padding(end = 40.dp)
                     ) {
-                        if (appCtx.showStates.showTopLinearIndicator) {
-                            LinearProgressIndicator()
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (appCtx.showStates.showTopLinearIndicator) {
+                                LinearProgressIndicator()
+                            }
+                            Box(modifier = Modifier) {
+
+                                IconButton(onClick = {
+                                    if (appCtx.imageIsLoaded()) {
+                                        appCtx.imageSpaceLayout = when (appCtx.imageSpaceLayout) {
+                                            ImageSpaceLayout.SingleLayout -> ImageSpaceLayout.PanedLayout
+                                            ImageSpaceLayout.PanedLayout -> ImageSpaceLayout.SingleLayout
+                                        }
+                                    }
+                                }, enabled = appCtx.imageIsLoaded()) {
+                                    Icon(
+                                        painter = painterResource("half-v-svgrepo-com.svg"),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
+
+                            }
+
                         }
                     }
                 }

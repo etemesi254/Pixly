@@ -1,4 +1,4 @@
-package components
+package desktopComponents
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -14,6 +15,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
 import java.text.DecimalFormat
 
@@ -46,6 +48,7 @@ import java.text.DecimalFormat
  * @param scrollValueChangeBy: The delta amount a scroll event should change the filter by
  *
  * */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SliderTextComponent(
     label: String,

@@ -1,11 +1,9 @@
 import androidx.compose.runtime.*
-import components.ScalableState
 import events.ExternalNavigationEventBus
 import history.HistoryOperations
 import history.HistoryOperationsEnum
 import history.HistoryResponse
 import kotlinx.coroutines.sync.Mutex
-import org.jetbrains.skia.Bitmap
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.HashMap
@@ -70,19 +68,12 @@ class FilterValues {
 }
 
 
-class ProtectedBitmap {
-    var mutex = Mutex()
-
-    /**Canvas for which we use for drawing operations */
-    var bitmap = Bitmap()
-}
-
 /**
  * Image group details
  *
  * This contains the image itself ,filter values, history, zoom state etc
  * */
-class ImageContext(image: ZilBitmap) {
+class ImageContext(image: ZilBitmapInterface) {
     var filterValues by mutableStateOf(FilterValues())
     var history by mutableStateOf(HistoryOperations())
 
@@ -90,20 +81,20 @@ class ImageContext(image: ZilBitmap) {
 //    var canvasBitmap = Bitmap()
 
 
-    var image = mutableListOf(image)
+    var images = mutableListOf(image)
     var operationsMutex: Mutex = Mutex()
     var imageIsLoaded by mutableStateOf(false)
     var zoomState by mutableStateOf(ScalableState())
     var imageModified by mutableStateOf(false)
 
-    var canvasBitmaps = HashMap<ImageContextBitmaps, ProtectedBitmap>();
+    var canvasBitmaps = HashMap<ImageContextBitmaps, ProtectedBitmapInterface>();
 
 
-    init {
-        canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage] = ProtectedBitmap()
-        canvasBitmaps[ImageContextBitmaps.FirstCanvasImage] = ProtectedBitmap()
 
-        image.prepareNewFile(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+    fun initCurrentCanvas(bitmapInterface: ProtectedBitmapInterface) {
+        canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage] = bitmapInterface;
+
+        images[0].prepareNewFile(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
     }
 
     /**
@@ -113,33 +104,33 @@ class ImageContext(image: ZilBitmap) {
      * NOTE: It is only read and manipulate this only after locking the
      * operations mutex, otherwise bad things will happen (race conditions + native code)
      * */
-    fun currentImage(response: HistoryResponse): ZilBitmap {
+    fun currentImage(response: HistoryResponse): ZilBitmapInterface {
         // peek into history to see if we need to create a new image, add it to the stack and return it or
         // if the operation has a trivial undo, just let it be
         // we are assured that history just pushed this operation since we require HistoryResponse
         // as a parameter
         if (!history.getHistory().last().trivialUndo() && response != HistoryResponse.DummyOperation) {
             // not simple to undo, so back up what we have
-            val lastImage = image.last().clone()
-            image.add(lastImage)
+            val lastImage = images.last().clone()
+            images.add(lastImage)
         }
 
-        return image.last()
+        return images.last()
     }
 
-    fun firstImage(): ZilBitmap? {
-        return image.firstOrNull()
+    fun firstImage(): ZilBitmapInterface? {
+        return images.firstOrNull()
     }
 
-    fun imageToDisplay(): ZilBitmap {
-        return image.last()
+    fun imageToDisplay(): ZilBitmapInterface {
+        return images.last()
     }
 
-    fun resetStates(newImage: ZilBitmap) {
+    fun resetStates(newImage: ZilBitmapInterface) {
         filterValues = FilterValues()
         history = HistoryOperations()
-        image = mutableListOf(newImage)
-        image[0].writeToCanvas(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        images = mutableListOf(newImage)
+        images[0].writeToCanvas(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
         imageModified = !imageModified
         imageIsLoaded = false
     }
@@ -222,9 +213,9 @@ class AppContext {
     /**
      *  Contains a shared buffer used by images when we want to write
      *
-     *  The image layout is usually ZilBitmap->Skia, but since I can't hand
+     *  The image layout is usually ZilBitmapInterface->Skia, but since I can't hand
      *  skia a native memory pointer, we need an intermediate buffer
-     *  ZilBitmap->ByteBuffer->Skia, skia will set of to write its own native
+     *  ZilBitmapInterface->ByteBuffer->Skia, skia will set of to write its own native
      *  memory which it will then use, ignoring our buffer,
      *  this means the buffer can be reused multiple times by separate image threads
      *
@@ -242,7 +233,7 @@ class AppContext {
      *
      * If the image was already loaded, we preserve some details such as zoom state
      * */
-    fun initializeImageSpecificStates(image: ZilBitmap) {
+    fun initializeImageSpecificStates(image: ZilBitmapInterface) {
         if (imageSpecificStates.containsKey(imFile)) {
             // preserve things like zoom even when reloading
             imageSpecificStates[imFile]?.resetStates(image);
@@ -321,7 +312,7 @@ class AppContext {
         return showStates.showTopLinearIndicator
     }
 //
-//    fun getImage(): ZilBitmap {
+//    fun getImage(): ZilBitmapInterface {
 //
 //        // if this is null it means the initializer didn't initialize the image
 //        return imageSpecificStates[imFile]!!.currentImage()

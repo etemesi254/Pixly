@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
-import components.ScalableImage
+import desktopComponents.ScalableImage
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
@@ -49,6 +49,9 @@ fun ImageSpace(context: AppContext) {
 @Composable
 fun TwoPanedImageSpace(context: AppContext) {
     val pane = rememberSplitPaneState(0.5f)
+
+    // ensure we have a bitmap for first canvas
+    context.currentImageContext()?.canvasBitmaps?.putIfAbsent(ImageContextBitmaps.FirstCanvasImage, ProtectedBitmap())
 
     HorizontalSplitPane(modifier = Modifier.fillMaxSize(), splitPaneState = pane) {
         first {

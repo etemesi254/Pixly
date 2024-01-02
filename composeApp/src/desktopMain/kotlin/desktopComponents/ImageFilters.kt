@@ -1,4 +1,4 @@
-package components
+package desktopComponents
 
 import AppContext
 import androidx.compose.foundation.layout.*
@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import components.CollapsibleBox
 import extensions.launchOnIoThread
 import imageops.*
 
@@ -284,7 +285,7 @@ fun BlurFiltersComponent(appContext: AppContext) {
 @Composable
 fun HslFiltersComponent(appContext: AppContext) {
     Box(modifier = Modifier.padding(vertical = 10.dp)) {
-        CollapsibleBox("Hue, Saturation, Lightness", appContext.showStates.showHslFilters, {
+        CollapsibleBox("HSL Filters", appContext.showStates.showHslFilters, {
             appContext.showStates.showHslFilters = !appContext.showStates.showHslFilters
         }) {
             val scope = rememberCoroutineScope()

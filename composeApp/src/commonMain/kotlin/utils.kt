@@ -1,7 +1,3 @@
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
-import androidx.compose.ui.res.loadImageBitmap
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -69,23 +65,6 @@ fun imageFormat(byteArray: UByteArray): ZilImageFormat {
     return ZilImageFormat.UnknownFormat;
 }
 
-fun calcResize(image: ZilBitmap, newW: Long, newH: Long): List<Long> {
-    val oldW = image.inner.width().toFloat()
-    val oldH = image.inner.height().toFloat()
-
-    val ratioW = oldW / newW.toFloat()
-    val ratioH = oldH / newH.toFloat()
-
-    val percent = if (ratioH < ratioW) {
-        ratioW
-    } else {
-        ratioH
-    };
-    val t = (oldW / percent).toLong()
-    val u = (oldH / percent).toLong()
-    return listOf(t, u)
-
-}
 
 fun fillPaths(appContext: AppContext, files: List<File>) {
 

@@ -30,13 +30,16 @@ kotlin {
     sourceSets {
         val commonMain by getting;
         val desktopMain by getting{
-            dependsOn(commonMain)
+//            dependsOn(commonMain)
 
         }
         
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+            implementation("androidx.activity:activity-compose:1.8.2")
+
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)

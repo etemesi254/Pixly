@@ -1,4 +1,4 @@
-package components
+package desktopComponents
 
 import AppContext
 import androidx.compose.foundation.*
@@ -21,10 +21,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import extensions.launchOnIoThread
 import fillPaths
-import isImage
-import kotlinx.coroutines.launch
-import java.nio.file.Files
-import java.nio.file.Paths
 
 
 @Composable

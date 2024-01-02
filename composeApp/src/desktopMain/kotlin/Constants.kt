@@ -6,7 +6,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
 
-const val APP_TITLE = "Pixly"
 
 
 enum class ImageExtensions {

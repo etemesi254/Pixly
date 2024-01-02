@@ -9,7 +9,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asComposeImageBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -18,9 +17,11 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import components.*
+import desktopComponents.*
 import extensions.launchOnIoThread
 import history.HistoryWidget
 import modifiers.backgroundColorIfCondition
+import modifiers.modifyOnChange
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
@@ -42,6 +43,11 @@ fun histogramPane(appCtx: AppContext) {
 @Composable
 fun RightPanel(appCtx: AppContext) {
 
+    var isEnabled by remember {  mutableStateOf(false)}
+
+    LaunchedEffect(appCtx.imageIsLoaded()) {
+        isEnabled = appCtx.imageIsLoaded()
+    }
     Box(
         contentAlignment = Alignment.CenterEnd,
         modifier = Modifier.fillMaxSize().defaultMinSize(80.dp)
@@ -81,7 +87,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled = appCtx.imageIsLoaded(),
+                       enabled = isEnabled ,
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.InformationPanel
                         }) {
@@ -104,6 +110,8 @@ fun RightPanel(appCtx: AppContext) {
 
                         },
 //                        enabled = appCtx.imageIsLoaded(),
+                        enabled = isEnabled ,
+
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.FineTunePanel
                         }
@@ -125,7 +133,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled = appCtx.imageIsLoaded(),
+                        enabled = isEnabled ,
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.ImageFilters
                         }
@@ -147,7 +155,8 @@ fun RightPanel(appCtx: AppContext) {
                                 appCtx.openedRightPane = RightPaneOpened.HistoryPanel
                             }
                         },
-                        enabled = appCtx.imageIsLoaded(),
+                        enabled = isEnabled ,
+
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.HistoryPanel
                         }
@@ -168,7 +177,7 @@ fun RightPanel(appCtx: AppContext) {
 @Composable
 fun ExifMetadataPane(appCtx: AppContext) {
 
-    val exif: Map<String, String>? = appCtx.currentImageContext()?.imageToDisplay()?.inner?.exifMetadata()
+    val exif: Map<String, String>? = appCtx.currentImageContext()?.imageToDisplay()?.innerInterface()?.exifMetadata()
 
     if (exif != null) {
 
@@ -394,18 +403,18 @@ fun colorMatricesPane(): List<FilterMatrixComponent> {
         ),
         FilterMatrixComponent(
             "Lilac", listOf(
-                1.2F, 0.00F, 0.00F, 0.0F,  0.00F,
-                0.0F,   0.8F, 0.00F, 0.0F,  0.00F,
-                0.0F,   0.00F, 1.2F, 0.0F,  0.00F,
-                0.0F,    +0.0F,  +0.0F, 1.0F,  0.0F
+                1.2F, 0.00F, 0.00F, 0.0F, 0.00F,
+                0.0F, 0.8F, 0.00F, 0.0F, 0.00F,
+                0.0F, 0.00F, 1.2F, 0.0F, 0.00F,
+                0.0F, +0.0F, +0.0F, 1.0F, 0.0F
             ).toFloatArray()
         ),
 
-    )
+        )
 }
 
 @Composable
-fun SingleFilterPanel(image: ZilBitmap, component: FilterMatrixComponent) {
+fun SingleFilterPanel(image: ZilBitmapInterface, component: FilterMatrixComponent) {
 
     val bitmap = remember { ProtectedBitmap() }
     var isDone by remember { mutableStateOf(false) }
@@ -423,7 +432,7 @@ fun SingleFilterPanel(image: ZilBitmap, component: FilterMatrixComponent) {
     Column(modifier = Modifier.fillMaxWidth().height(300.dp), horizontalAlignment = Alignment.CenterHorizontally) {
 
         if (isDone) {
-            Image(bitmap.bitmap.asComposeImageBitmap(), null, modifier = Modifier.fillMaxWidth().height(250.dp))
+            Image(bitmap.asImageBitmap(), null, modifier = Modifier.fillMaxWidth().height(250.dp))
         } else {
             CircularProgressIndicator()
         }
@@ -442,10 +451,10 @@ fun FiltersPanel(appCtx: AppContext) {
 
     val ctx = appCtx.currentImageContext();
     if (ctx != null) {
-        val image = remember(ctx.image.size) {
+        val image = remember(ctx.images.size) {
             val c = ctx.imageToDisplay().clone()
             val ratios = calcResize(c, 400, 300)
-            c.inner.resize(ratios[0], ratios[1])
+            c.innerInterface().resize(ratios[0], ratios[1])
             c
         };
 

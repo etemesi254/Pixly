@@ -8,12 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import components.DirectoryViewer
-import components.PixlyToolTip
+import desktopComponents.DirectoryViewer
+import desktopComponents.PixlyToolTip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import modifiers.backgroundColorIfCondition

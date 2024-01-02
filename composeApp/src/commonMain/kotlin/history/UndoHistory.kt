@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import imageops.imageHorizontalFlip
 import imageops.imageTranspose
 import imageops.imageVerticalFlip
-import kotlinx.coroutines.sync.withLock
 
 suspend fun AppContext.undoSingleHistory() {
     val ctx = currentImageContext();
@@ -25,7 +24,7 @@ suspend fun AppContext.undoSingleHistory() {
                 ctx.history.pop()
             } else {
                 // remove it from history
-                ctx.image = ctx.image.dropLast(1).toMutableList()
+                ctx.images = ctx.images.dropLast(1).toMutableList()
                 ctx.history.pop()
                 if (lastOperation.requiresValue()) {
                     restorePreviousValue(lastOperation)

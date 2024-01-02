@@ -1,4 +1,4 @@
-package components
+package desktopComponents
 
 import AppContext
 import ZilImageFormat
@@ -24,8 +24,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import hasEncoder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -68,7 +66,6 @@ fun SaveAsDialog(ctx: AppContext) {
                                 textFieldSize = coordinates.size
                             }.onClick {
                                 expanded = expanded.xor(true)
-
                             },
                         label = { Text("Image format") },
                         trailingIcon = {
@@ -115,7 +112,8 @@ fun SaveAsDialog(ctx: AppContext) {
                 Box(modifier = Modifier.fillMaxWidth()) {
                     val scope = rememberCoroutineScope();
                     Button(onClick = {
-                        ctx.currentImageContext()?.imageToDisplay()?.save(filePath, selectedFormat, ctx, scope)
+
+                        ctx.currentImageContext()?.imageToDisplay()?.save(filePath, selectedFormat)
 
 
                     }, modifier = Modifier.fillMaxWidth()) {

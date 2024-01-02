@@ -15,7 +15,7 @@ import java.text.DecimalFormat
 @Composable
 fun ImageInformationComponent(appCtx: AppContext) {
     val file = appCtx.imFile
-    val innerImage = appCtx.currentImageContext()?.imageToDisplay()?.inner;
+    val innerImage = appCtx.currentImageContext()?.imageToDisplay()?.innerInterface();
 
     if (innerImage != null) {
 

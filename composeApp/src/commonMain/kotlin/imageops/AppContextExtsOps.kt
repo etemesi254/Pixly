@@ -155,7 +155,7 @@ suspend fun AppContext.imageBoxBlur(radius: Long) {
     }
 }
 
-suspend fun AppContext.imageRotate180(radius: Long) {
+suspend fun AppContext.imageRotate180(_radius: Long) {
     val ctx = currentImageContext()
     ctx?.operationsMutex?.withLock {
         initializeImageChange()

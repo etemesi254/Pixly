@@ -49,7 +49,7 @@ fun SingleThumbnail(appContext: AppContext, file: File) {
 
         if (isLoaded) {
             Image(
-                bitmap.bitmap.asComposeImageBitmap(),
+                bitmap.asImageBitmap(),
                 null,
                 modifier = Modifier.fillMaxWidth().height(200.dp).padding(10.dp),
                 contentScale = ContentScale.FillHeight
