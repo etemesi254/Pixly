@@ -77,7 +77,7 @@ fun SingleDirectoryView(path: File, ctx: AppContext, onDirectoryClicked: (File) 
 }
 
 @Composable
-fun DirectoryViewer(appCtx: AppContext, onFileClicked: (file: File) -> Unit) {
+fun DirectoryViewer(appCtx: AppContext,modifier: Modifier= Modifier, onFileClicked: (file: File) -> Unit) {
 
     var showHidden by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf("") }
@@ -113,7 +113,7 @@ fun DirectoryViewer(appCtx: AppContext, onFileClicked: (file: File) -> Unit) {
             }
         }
 
-        Column(modifier = Modifier.padding(horizontal = 2.dp)) {
+        Column(modifier = modifier.padding(horizontal = 2.dp)) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -170,7 +170,6 @@ fun DirectoryViewer(appCtx: AppContext, onFileClicked: (file: File) -> Unit) {
 
                     )
             }
-
 
             Divider()
             Box() {

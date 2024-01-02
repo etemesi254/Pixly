@@ -26,7 +26,7 @@ fun DirectoryViewerEntry(appCtx: AppContext) {
         visible = appCtx.showStates.showDirectoryViewer,
         enter = slideInHorizontally { with(density) { -40.dp.roundToPx() } },
         exit = slideOutHorizontally { with(density) { -400.dp.roundToPx() } }) {
-        Row {
+        Box (modifier = Modifier.fillMaxSize()){
             val scope = rememberCoroutineScope();
 
             DirectoryViewer(appCtx) {
@@ -41,9 +41,9 @@ fun DirectoryViewerEntry(appCtx: AppContext) {
                 }
             }
             Divider(
-
                 modifier = Modifier
-                    .fillMaxHeight()  //fill the max height
+                    .fillMaxHeight()
+                    .align(alignment = Alignment.CenterEnd)
                     .width(1.dp)
             )
         }
