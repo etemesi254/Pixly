@@ -84,6 +84,12 @@ fun HistogramChart(ctx: AppContext) {
         // force a redraw when we carried out an action
         var forceRedraw by remember { mutableStateOf(false) };
 
+        val blendMode = if (ctx.showStates.showLightTheme) {
+            // TODO: A better blend mode on light theme
+            BlendMode.Src
+        } else {
+            BlendMode.Plus
+        }
         Column(modifier = Modifier.modifyOnChange(forceRedraw)) {
             Box(
                 Modifier.fillMaxWidth().height(200.dp).drawWithCache {
@@ -112,7 +118,7 @@ fun HistogramChart(ctx: AppContext) {
                                         topLeft = Offset(singleRange * i, height - heightOffset),
                                         size = Size(singleRange, heightOffset),
                                         alpha = 1.0F,
-                                        blendMode = BlendMode.Plus
+                                        blendMode = blendMode
                                     )
 
                                 }
