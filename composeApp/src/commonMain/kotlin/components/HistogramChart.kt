@@ -59,8 +59,8 @@ fun HistogramChart(ctx: AppContext) {
 
     if (array != null) {
 
-        val width = ctx.currentImageContext()!!.imageToDisplay().width();
-        val height = ctx.currentImageContext()!!.imageToDisplay().height();
+//        val width = ctx.currentImageContext()!!.imageToDisplay().width();
+//        val height = ctx.currentImageContext()!!.imageToDisplay().height();
 
         // array type is BGRA, but histogram returns 1,2,3,4
         // 0->B,1->R, 2->G
