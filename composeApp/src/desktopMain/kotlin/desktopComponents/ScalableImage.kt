@@ -107,10 +107,8 @@ fun ScalableImage(
                                     )
                                     it.translate(-imageCenter.x, -imageCenter.y)
                                     runBlocking {
-                                        val im = ctx.canvasBitmaps[imageContextBitmaps]!!;
-
-                                        im.mutex().withLock {
-                                            drawImage(im.asImageBitmap())
+                                        canvasBitmap.mutex().withLock {
+                                            drawImage(canvasBitmap.asImageBitmap())
                                         }
 
                                     }
@@ -148,8 +146,6 @@ fun ScalableImage(
                             })
                         },
                 )
-
-
 
                 SideEffect {
                     ctx.zoomState.limitTargetInsideArea(areaSize, imageSize)

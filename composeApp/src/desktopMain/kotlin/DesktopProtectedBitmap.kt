@@ -3,7 +3,7 @@ import androidx.compose.ui.graphics.asComposeImageBitmap
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.skia.Bitmap
 
-class ProtectedBitmap : ProtectedBitmapInterface {
+class DesktopProtectedBitmap : ProtectedBitmapInterface {
     var mutex = Mutex()
     var image = Bitmap()
     override fun asImageBitmap(): ImageBitmap {

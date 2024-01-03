@@ -70,7 +70,7 @@ actual fun loadImage(appCtx: AppContext, forceReload: Boolean) {
 
             // generate c
             val ctx = appCtx.currentImageContext();
-            ctx?.initCurrentCanvas(ProtectedBitmap())
+            ctx?.initCurrentCanvas(DesktopProtectedBitmap())
         }
         appCtx.bottomStatus = "Loaded ${appCtx.imFile.name} in $time ms"
 
@@ -234,10 +234,6 @@ fun App(appCtx: AppContext) {
                             val scope = rememberCoroutineScope()
 
 
-                            // File picker doesn't support saving file dialogs
-                            //
-                            // See:  https://github.com/Wavesonics/compose-multiplatform-file-picker/issues/8
-
 
                             Box(modifier = Modifier.padding(horizontal = 5.dp)) {
 
@@ -258,7 +254,6 @@ fun App(appCtx: AppContext) {
                                         modifier = Modifier.size(26.dp),
                                     )
                                 }
-
                             }
                             Box(modifier = Modifier.padding(horizontal = 5.dp)) {
 
@@ -273,7 +268,6 @@ fun App(appCtx: AppContext) {
                                         modifier = Modifier.size(26.dp),
                                     )
                                 }
-
                             }
 
                             if (appCtx.showStates.showSaveDialog && appCtx.imageIsLoaded()) {

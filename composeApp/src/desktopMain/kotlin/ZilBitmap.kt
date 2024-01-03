@@ -74,7 +74,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         inner.convertColorspace(ZilColorspace.BGRA)
         // set up canvas
         runBlocking {
-            if (bitmap is ProtectedBitmap) {
+            if (bitmap is DesktopProtectedBitmap) {
                 bitmap.mutex.withLock {
                     allocBuffer(bitmap.image)
                     installPixels(bitmap.image)
@@ -91,6 +91,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         // i.e do not pre-allocate
         val infoSize = info.height * info.width
         val imageSize = inner.height().toInt() * inner.width().toInt();
+
         info =
             ImageInfo.makeN32(
                 inner.width().toInt(),
@@ -230,10 +231,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         return inner;
     }
 
-//    fun save(file: String) {
-//        inner.save(file)
-//    }
-
     override fun save(
         name: String,
         format: ZilImageFormat,
@@ -244,7 +241,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
     private fun postProcessAlloc(bitmap: ProtectedBitmapInterface) {
         runBlocking {
-            if (bitmap is ProtectedBitmap) {
+            if (bitmap is DesktopProtectedBitmap) {
                 bitmap.mutex.withLock {
                     allocBuffer(bitmap.image)
                     installPixels(bitmap.image)
@@ -258,7 +255,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     private fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
         runBlocking {
             bitmap.mutex().withLock {
-                if (bitmap is ProtectedBitmap) {
+                if (bitmap is DesktopProtectedBitmap) {
                     installPixels(bitmap.image)
                     isModified = !isModified
                 }

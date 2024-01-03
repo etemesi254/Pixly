@@ -109,7 +109,6 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-//                        enabled = appCtx.imageIsLoaded(),
                         enabled = isEnabled ,
 
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
@@ -416,7 +415,7 @@ fun colorMatricesPane(): List<FilterMatrixComponent> {
 @Composable
 fun SingleFilterPanel(image: ZilBitmapInterface, component: FilterMatrixComponent) {
 
-    val bitmap = remember { ProtectedBitmap() }
+    val bitmap = remember { DesktopProtectedBitmap() }
     var isDone by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {

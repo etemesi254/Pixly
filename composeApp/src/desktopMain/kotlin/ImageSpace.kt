@@ -1,4 +1,3 @@
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
@@ -51,7 +50,7 @@ fun TwoPanedImageSpace(context: AppContext) {
     val pane = rememberSplitPaneState(0.5f)
 
     // ensure we have a bitmap for first canvas
-    context.currentImageContext()?.canvasBitmaps?.putIfAbsent(ImageContextBitmaps.FirstCanvasImage, ProtectedBitmap())
+    context.currentImageContext()?.canvasBitmaps?.putIfAbsent(ImageContextBitmaps.FirstCanvasImage, DesktopProtectedBitmap())
 
     HorizontalSplitPane(modifier = Modifier.fillMaxSize(), splitPaneState = pane) {
         first {
