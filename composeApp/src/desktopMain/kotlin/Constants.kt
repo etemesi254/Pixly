@@ -8,24 +8,6 @@ import androidx.compose.ui.unit.sp
 
 
 
-enum class ImageExtensions {
-    PNG,
-    JPEG,
-    JXL,
-    PPM,
-
-}
-
-fun ImageExtensions.extensions(): List<String> {
-    return when (this) {
-        ImageExtensions.PNG -> listOf("png")
-        ImageExtensions.JPEG -> listOf("jpeg", "jpg")
-        ImageExtensions.JXL -> listOf("jxl")
-        ImageExtensions.PPM -> listOf("ppm", "pam", "pbm", "pfm")
-    }
-}
-
-val SUPPORTED_EXTENSIONS: List<String> = ImageExtensions.values().flatMap { it.extensions() }
 
 val poppinsFamily = FontFamily(
     Font(resource = "fonts/Poppins/Poppins-Light.ttf", weight = FontWeight.Light),
