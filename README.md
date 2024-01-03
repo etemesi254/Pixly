@@ -1,14 +1,20 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Desktop.
 
-* `/composeApp` is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - `commonMain` is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    `iosMain` would be the right folder for such calls.
+## Building
 
-* `/iosApp` contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform, 
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+You will need the following tools for building, the tools vary from host to host 
+
+- A rust compiler for the target architecture you are running
 
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+### Android
+- You will need the Android NDK tools for building the rust library
+
+### Desktop
+#### Windows
+- A rust compiler, version `1.70` and above recommended
+- Visual Studio C/C++ Development kit
+- Rust `x86_64-pc-windows-gnu` target,  the `x86_64-pc-windows-msvc` was causing linker problems during testing
+
+- #### Linux
+- A rust compiler, version `1.70` and above recommended.
+- Java/JVM toolkit for running
