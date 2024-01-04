@@ -7,6 +7,10 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[profile.release]
+strip = true
+
+
 [dependencies]
 jni = "0.21.1"
 zune-image = { version = "0.4", path = "/home/caleb/Documents/rust/zune-image/crates/zune-image" }
