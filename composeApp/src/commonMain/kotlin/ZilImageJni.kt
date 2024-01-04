@@ -226,14 +226,14 @@ internal class ZilImageJni : Cleaner.Cleanable {
     }
 
     @Throws(Exception::class)
-    fun writeToBuffer(buf: ByteBuffer, output: ByteArray) {
+    fun writeToBuffer(buf: ByteBuffer, output: ByteArray,writeToOutput:Boolean) {
         if (!buf.isDirect) {
             throw Exception("Native buffer should be direct")
         }
         if (buf.capacity() < outBufferSize) {
             throw Exception("The buffer capacity will not fit the array")
         }
-        if (outBufferSize > output.size) {
+        if (outBufferSize > output.size && writeToOutput) {
             throw Exception("The output size will not fit the array")
         }
 
@@ -241,7 +241,10 @@ internal class ZilImageJni : Cleaner.Cleanable {
         // transfer that now to an output
         // the bytebuffer isn't backed by an array, so we can't peek into it
         // we just write the output to an array understood by java/jvm
-        buf[0, output]
+        if (writeToOutput) {
+            buf.get(output)
+        }
+        //buf[0, output]
     }
 
     fun rotate90() {
@@ -269,10 +272,6 @@ internal class ZilImageJni : Cleaner.Cleanable {
 
     companion object {
         init {
-            val resource = Thread.currentThread().contextClassLoader!!;
-
-            val path = resource.getResource("shared_libs/linux/libzune_jni_bindings.so")!!.path;
-
             System.loadLibrary("zune_jni_bindings")
         }
     }

@@ -129,8 +129,8 @@ class ZilJvmImage() : ZilImageInterface {
         return jni.outBufferSize
     }
 
-    override fun writeToBuffer(tempBuf: ByteBuffer, output: ByteArray) {
-        jni.writeToBuffer(tempBuf, output)
+    override fun writeToBuffer(tempBuf: ByteBuffer, output: ByteArray,writeToOutput:Boolean) {
+        jni.writeToBuffer(tempBuf, output,writeToOutput)
     }
 
     override fun rotate90() {
