@@ -1,24 +1,17 @@
 package org.cae.pixly
 
 import AppContext
-import SUPPORTED_EXTENSIONS
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import extensions.launchOnIoThread
 import history.undoSingleHistory
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
-import java.io.File
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -34,14 +27,6 @@ fun TopBar(context: AppContext) {
                     modifier = Modifier.size(30.dp)
                 )
             }
-            // file picker code
-            FilePicker(show = context.showStates.showFilePicker, fileExtensions = SUPPORTED_EXTENSIONS) {
-                context.showStates.showFilePicker = false
-                if (it != null) {
-                    File(it.path)
-                }
-            }
-
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
 
