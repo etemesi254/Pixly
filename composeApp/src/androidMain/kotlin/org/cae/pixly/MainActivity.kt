@@ -44,6 +44,10 @@ fun App() {
         isFirstDraw = false;
     }
 
+    // needed to launch file reader
+    // doesn't compose anything to the screen, setting showFilePicker status modifier will launch a file picker
+    showFilePicker(appContext = context)
+
     MaterialTheme(
         colors = if (context.showStates.showLightTheme) lightColors() else darkColors()
     ) {
@@ -107,6 +111,10 @@ fun App() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
+                                val ctx = context.currentImageContext()
+                                if (ctx != null) {
+                                    AndroidScalableImage(ctx)
+                                }
                                 //ImageSpace(appCtx)
                             }
                         }

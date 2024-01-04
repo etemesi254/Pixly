@@ -1,3 +1,7 @@
+import org.cae.pixly.AndroidProtectedBitmap
+import org.cae.pixly.ZilAndroidBitmap
+import kotlin.system.measureTimeMillis
+
 /**
  * Load the image specified by appCtx.imFile
  *
@@ -9,4 +13,14 @@
  * */
 actual fun loadImage(appCtx: AppContext, forceReload: Boolean) {
 
+    val time = measureTimeMillis {
+        val c = ZilJvmImage(appCtx.imFile.path);
+        val image = ZilAndroidBitmap(c, appCtx.sharedBuffer);
+        appCtx.initializeImageSpecificStates(image)
+        // generate c
+        val ctx = appCtx.currentImageContext();
+        ctx?.initCurrentCanvas(AndroidProtectedBitmap())
+        appCtx.setImageIsLoaded(true)
+
+    }
 }
