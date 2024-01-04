@@ -37,6 +37,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.accompanist.permissions)
         }
 
         commonMain.dependencies {
@@ -48,18 +49,18 @@ kotlin {
             implementation(compose.components.resources)
 
             // file picking
-            implementation("com.darkrockstudios:mpfilepicker:2.1.0")
+            implementation(libs.mpfilepicker)
             // panes
 
             // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
-            implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.5.0")
+            implementation(libs.components.splitpane.desktop)
 
             // reorderable components
-            implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+            implementation(libs.reorderable)
 
         }
         desktopMain.dependencies {
-            implementation("com.godaddy.android.colorpicker:compose-color-picker-jvm:0.7.0")
+            implementation(libs.compose.color.picker.jvm)
             implementation(compose.desktop.currentOs)
         }
 
