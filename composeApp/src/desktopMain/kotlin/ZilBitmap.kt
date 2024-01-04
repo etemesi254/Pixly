@@ -16,8 +16,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     private var info: ImageInfo = ImageInfo.makeUnknown(0, 0)
     private var file: String = ""
 
-    // a boolean to see if we have modified stuff
-    var isModified by mutableStateOf(true)
 
 
     constructor(file: String, tempSharedBuffer: SharedBuffer, image: ZilImageInterface) : this(
@@ -245,7 +243,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
                 bitmap.mutex.withLock {
                     allocBuffer(bitmap.image)
                     installPixels(bitmap.image)
-                    isModified = !isModified
                 }
             }
         }
@@ -257,7 +254,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
             bitmap.mutex().withLock {
                 if (bitmap is DesktopProtectedBitmap) {
                     installPixels(bitmap.image)
-                    isModified = !isModified
                 }
             }
         }
