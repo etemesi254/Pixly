@@ -1,7 +1,8 @@
 [versions]
+accompanistPermissions = "0.33.2-alpha"
 agp = "8.1.4"
 android-compileSdk = "34"
-android-minSdk = "24"
+android-minSdk = "33"
 android-targetSdk = "34"
 androidx-activityCompose = "1.8.2"
 androidx-appcompat = "1.6.1"
@@ -10,13 +11,20 @@ androidx-core-ktx = "1.12.0"
 androidx-espresso-core = "3.5.1"
 androidx-material = "1.10.0"
 androidx-test-junit = "1.1.5"
+componentsSplitpaneDesktop = "1.5.0"
 compose = "1.5.4"
 compose-compiler = "1.5.6"
 compose-plugin = "1.5.11"
+composeColorPickerJvm = "0.7.0"
 junit = "4.13.2"
 kotlin = "1.9.21"
+mpfilepicker = "2.1.0"
+reorderable = "0.9.6"
 
 [libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
+components-splitpane-desktop = { module = "org.jetbrains.compose.components:components-splitpane-desktop", version.ref = "componentsSplitpaneDesktop" }
+compose-color-picker-jvm = { module = "com.godaddy.android.colorpicker:compose-color-picker-jvm", version.ref = "composeColorPickerJvm" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -32,6 +40,8 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = 
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
 compose-material = { module = "androidx.compose.material:material", version.ref = "compose" }
+mpfilepicker = { module = "com.darkrockstudios:mpfilepicker", version.ref = "mpfilepicker" }
+reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
