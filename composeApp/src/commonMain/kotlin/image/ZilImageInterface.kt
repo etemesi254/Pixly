@@ -257,7 +257,7 @@ interface ZilImageInterface {
      * @param output: A ByteArray with enough size for storing the current image pixels
      * this will not try to resize it, it's the work of the caller to handle resizing
      * */
-    fun writeToBuffer(tempBuf: ByteBuffer, output: ByteArray)
+    fun writeToBuffer(tempBuf: ByteBuffer, output: ByteArray, writeToOutput: Boolean = true)
 
     /**
      * Rotate an image by 90 degrees
