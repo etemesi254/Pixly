@@ -52,8 +52,6 @@ kotlin {
             implementation(libs.mpfilepicker)
             // panes
 
-            // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
-            implementation(libs.components.splitpane.desktop)
 
             // reorderable components
             implementation(libs.reorderable)
@@ -61,6 +59,8 @@ kotlin {
         }
         desktopMain.dependencies {
             implementation(libs.compose.color.picker.jvm)
+            // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
+            implementation(libs.components.splitpane.desktop)
             implementation(compose.desktop.currentOs)
         }
 
