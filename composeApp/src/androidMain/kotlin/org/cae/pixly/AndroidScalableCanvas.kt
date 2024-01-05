@@ -89,7 +89,6 @@ fun AndroidScalableImage(
                             }
                         }
                         .clipToBounds()
-                        //.transformable(state)
                         .pointerInput(Unit) {
 
                             detectTransformGestures { centroid, pan, zoom, _ ->
@@ -97,6 +96,20 @@ fun AndroidScalableImage(
                                 ctx.zoomState.addZoom(zoom, centroid - areaCenter)
                             }
                         }
+                        .pointerInput(Unit) {
+                            detectTapGestures(onDoubleTap = { position ->
+                                // If a user zoomed significantly, the zoom should be the restored on double tap,
+                                // otherwise the zoom should be increased
+                                ctx.zoomState.setZoom(
+                                    if (ctx.zoomState.zoom > SLIGHTLY_INCREASED_ZOOM) {
+                                        ctx.zoomState.scaleFor100PercentZoom
+                                    } else {
+                                        ctx.zoomState.defaultClickLimit
+                                    },
+                                    position - areaCenter
+                                )
+                            }) { }
+                        },
                 )
 
                 SideEffect {
