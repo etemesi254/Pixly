@@ -2,6 +2,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import desktopComponents.ScalableImage
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
@@ -50,7 +52,10 @@ fun TwoPanedImageSpace(context: AppContext) {
     val pane = rememberSplitPaneState(0.5f)
 
     // ensure we have a bitmap for first canvas
-    context.currentImageContext()?.canvasBitmaps?.putIfAbsent(ImageContextBitmaps.FirstCanvasImage, DesktopProtectedBitmap())
+    context.currentImageContext()?.canvasBitmaps?.putIfAbsent(
+        ImageContextBitmaps.FirstCanvasImage,
+        DesktopProtectedBitmap()
+    )
 
     HorizontalSplitPane(modifier = Modifier.fillMaxSize(), splitPaneState = pane) {
         first {
@@ -70,8 +75,11 @@ fun TwoPanedImageSpace(context: AppContext) {
                             )
                         };
                     }
-                    key(imageContext?.imageModified) {
-                        ScalableImage(imageContext!!, imageContextBitmaps = ImageContextBitmaps.FirstCanvasImage)
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Text("Original", modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp), style = MaterialTheme.typography.h6, textAlign = TextAlign.End)
+                        key(imageContext?.imageModified) {
+                            ScalableImage(imageContext!!, imageContextBitmaps = ImageContextBitmaps.FirstCanvasImage)
+                        }
                     }
                 }
             }
@@ -87,8 +95,13 @@ fun TwoPanedImageSpace(context: AppContext) {
                 Surface(modifier = Modifier.backgroundForScalable(context)) {
                     val imageContext = context.currentImageContext();
 
-                    key(imageContext!!.imageModified) {
-                        ScalableImage(imageContext)
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Text("Edited", modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp), style = MaterialTheme.typography.h6, textAlign = TextAlign.Start)
+
+                        key(imageContext!!.imageModified) {
+                            ScalableImage(imageContext)
+                        }
+
                     }
                 }
             }
