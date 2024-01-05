@@ -1,7 +1,10 @@
+import image.toNum
+import image.zilColorSpaceFromInt
+import image.zilDepthFromNum
 import java.lang.ref.Cleaner
 import java.nio.ByteBuffer
 
-internal class ZilImageJni : Cleaner.Cleanable {
+internal class ZilImageJni : Cleaner.Cleanable, ZilImageInterface {
     constructor(file: String) {
         imagePtr = createImagePtrNative()
         loadImageNative(imagePtr, file)
@@ -87,7 +90,8 @@ internal class ZilImageJni : Cleaner.Cleanable {
 
     private external fun resizeImageNative(imagePtr: Long, newWidth: Long, newHeight: Long)
 
-    //private native void rotate90Native(long imagePtr);
+    private external fun rotateNative(imagePtr: Long, angle: Float)
+
     /**
      * Write to native buffer allocated via bytebuffer direct
      */
@@ -95,138 +99,149 @@ internal class ZilImageJni : Cleaner.Cleanable {
 
 
     @Throws(Exception::class)
-    fun width(): Long {
+    override fun width(): UInt {
         if (imagePtr == 0L) {
             throw Exception("Image ptr is zero, have you loaded an image?")
         }
-        return this.getImageWidthNative(imagePtr)
+        return this.getImageWidthNative(imagePtr).toUInt()
     }
 
     @Throws(Exception::class)
-    fun height(): Long {
+    override fun height(): UInt {
         if (imagePtr == 0L) {
             throw Exception("Image ptr is zero, have you loaded an image?")
         }
-        return this.getImageHeightNative(imagePtr)
+        return this.getImageHeightNative(imagePtr).toUInt()
     }
 
+    override fun colorspace(): ZilColorspace = colorSpace
+
+
     @Throws(Exception::class)
-    fun save(filename: String) {
+    override fun save(filename: String) {
         if (imagePtr == 0L) {
             throw Exception("Image ptr is zero, have you loaded an image?")
         }
         this.saveNative(imagePtr, filename)
     }
 
-    fun contrast(contrast: Float) {
+
+    override fun contrast(contrast: Float) {
         this.contrastNative(imagePtr, contrast)
     }
 
-    fun exposure(exposure: Float, blackPoint: Float) {
+    override fun exposure(exposure: Float, blackPoint: Float) {
         this.exposureNative(imagePtr, exposure, blackPoint)
     }
 
-    fun crop(newWidth: Long, newHeight: Long, x: Long, y: Long) {
-        this.cropNative(imagePtr, newWidth, newHeight, x, y)
+    override fun crop(newWidth: UInt, newHeight: UInt, x: UInt, y: UInt) {
+        this.cropNative(imagePtr, newWidth.toLong(), newHeight.toLong(), x.toLong(), y.toLong())
     }
 
-    fun bilateralFilter(d: Int, sigmaSpace: Float, sigmaColor: Float) {
+    override fun bilateralFilter(d: Int, sigmaSpace: Float, sigmaColor: Float) {
         this.bilateralFilterNative(imagePtr, d, sigmaSpace, sigmaColor)
     }
 
-    fun gamma(gamma: Float) {
+    override fun gamma(gamma: Float) {
         this.gammaNative(imagePtr, gamma)
     }
+
 
     override fun clean() {
         this.destroyImagePtrNative(imagePtr)
     }
 
-    val outBufferSize: Long
+    private val outBufferSize: Long
         get() = this.getImageOutBufferSizeNative(imagePtr)
 
 
-    val depth: Long
-        get() = getDepthNative(imagePtr)
+    private val depth: ZilDepth
+        get() = zilDepthFromNum(getDepthNative(imagePtr).toUInt())
 
-    val colorSpace: Long
-        get() = getColorSpaceNative(imagePtr)
+    private val colorSpace: ZilColorspace
+        get() = zilColorSpaceFromInt(getColorSpaceNative(imagePtr).toUInt())
 
-    fun save(filename: String, format: Long) {
-        saveToNative(imagePtr, filename, format)
+
+    override fun save(filename: String, format: ZilImageFormat) {
+        saveToNative(imagePtr, filename, format.toNum().toLong())
     }
 
-    fun convertColorspace(to: Long) {
-        convertColorSpaceNative(imagePtr, to)
+    override fun convertColorspace(to: ZilColorspace) {
+        convertColorSpaceNative(imagePtr, to.toNum().toLong())
     }
 
-    fun convertDepth(to: Long) {
-        convertDepthNative(imagePtr, to)
+    override fun convertDepth(to: ZilDepth) {
+        convertDepthNative(imagePtr, to.toNum().toLong())
     }
 
-    fun loadNewFile(file: String) {
+    override fun loadFile(file: String) {
         loadImageNative(imagePtr, file)
     }
 
-    fun clone(): ZilImageJni {
+    override fun clone(): ZilImageJni {
         val newPtr = cloneNative(imagePtr)
         return ZilImageJni(newPtr)
     }
 
-    fun brighten(by: Float) {
+    override fun depth(): ZilDepth = depth
+
+    override fun brightness(by: Float) {
         brightenNative(imagePtr, by)
     }
 
-    fun sobel() {
+    override fun sobel() {
         sobelNative(imagePtr)
     }
 
-    fun scharr() {
+    override fun scharr() {
         scharrNative(imagePtr)
     }
 
-    fun stretchContrast(lower: Float, higher: Float) {
+    override fun stretchContrast(lower: Float, higher: Float) {
         stretchContrastNative(imagePtr, lower, higher)
     }
 
-    fun flip() {
+    override fun flip() {
         flipNative(imagePtr)
     }
 
-    fun flop() {
+    override fun flop() {
         flopNative(imagePtr)
     }
 
-    fun transpose() {
+    override fun transpose() {
         transposeNative(imagePtr)
     }
 
-    fun verticalFlip() {
+    override fun verticalFlip() {
         verticalFlipNative(imagePtr)
     }
 
-    fun histogram(): Map<String, LongArray> {
+    override fun histogram(): Map<String, LongArray> {
         val map: Map<String, LongArray> = HashMap()
         histogramNative(imagePtr, map)
         return map
     }
 
-    fun exifMetadata(): Map<String, String> {
+    override fun exifMetadata(): Map<String, String> {
         val map = HashMap<String, String>()
         exifMetadataNative(imagePtr, map)
         return map
     }
 
-    fun gaussianBlur(radius: Long) {
+    override fun gaussianBlur(radius: Long) {
         gaussianBlurNative(imagePtr, radius)
     }
 
-    fun boxBlur(radius: Long) {
+    override fun boxBlur(radius: Long) {
         boxBlurNative(imagePtr, radius)
     }
 
+    override fun outputBufferSize(): Long = outBufferSize
+
+
     @Throws(Exception::class)
-    fun writeToBuffer(buf: ByteBuffer, output: ByteArray,writeToOutput:Boolean) {
+    override fun writeToBuffer(buf: ByteBuffer, output: ByteArray, writeToOutput: Boolean) {
         if (!buf.isDirect) {
             throw Exception("Native buffer should be direct")
         }
@@ -242,31 +257,32 @@ internal class ZilImageJni : Cleaner.Cleanable {
         // the bytebuffer isn't backed by an array, so we can't peek into it
         // we just write the output to an array understood by java/jvm
         if (writeToOutput) {
-            buf.get(output)
+            buf[0, output]
+            //buf.get(output)
         }
         //buf[0, output]
     }
 
-    fun rotate90() {
-        //rotate90Native(imagePtr);
+    override fun rotate(angle: Float) {
+        rotateNative(imagePtr, angle);
     }
 
-    fun hslAdjust(hue: Float, saturation: Float, lightness: Float) {
+    override fun hslAdjust(hue: Float, saturation: Float, lightness: Float) {
         hslAdjustNative(imagePtr, hue, saturation, lightness)
     }
 
-    fun medianBlur(radius: Long) {
+    override fun medianBlur(radius: Long) {
         medianBlurNative(imagePtr, radius)
     }
 
-    fun colorMatrix(array: FloatArray) {
+    override fun colorMatrix(array: FloatArray) {
         if (array.size != 20) {
             throw Exception("Array size should be 20")
         }
         colorMatrixNative(imagePtr, array)
     }
 
-    fun resize(newWidth: Long, newHeight: Long) {
+    override fun resize(newWidth: Long, newHeight: Long) {
         resizeImageNative(imagePtr, newWidth, newHeight)
     }
 
