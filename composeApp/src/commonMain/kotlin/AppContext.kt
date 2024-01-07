@@ -3,6 +3,8 @@ import events.ExternalNavigationEventBus
 import history.HistoryOperations
 import history.HistoryOperationsEnum
 import history.HistoryResponse
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import java.io.File
 import java.nio.ByteBuffer
@@ -77,18 +79,16 @@ class ImageContext(image: ZilBitmapInterface) {
     var filterValues by mutableStateOf(FilterValues())
     var history by mutableStateOf(HistoryOperations())
 
-//    /**Canvas for which we use for drawing operations */
-//    var canvasBitmap = Bitmap()
-
 
     var images = mutableListOf(image)
     var operationsMutex: Mutex = Mutex()
-    var imageIsLoaded by mutableStateOf(false)
+    var imageIsLoaded = MutableStateFlow(false)
     var zoomState by mutableStateOf(ScalableState())
     var imageModified by mutableStateOf(false)
 
+    // Use multiple bitmaps in order to reduce contention, e.g do not fight
+    // for the same bitmap in the two two paned stage
     var canvasBitmaps = HashMap<ImageContextBitmaps, ProtectedBitmapInterface>();
-
 
 
     fun initCurrentCanvas(bitmapInterface: ProtectedBitmapInterface) {
@@ -109,7 +109,9 @@ class ImageContext(image: ZilBitmapInterface) {
         // if the operation has a trivial undo, just let it be
         // we are assured that history just pushed this operation since we require HistoryResponse
         // as a parameter
-        if (!history.getHistory().last().trivialUndo() && response != HistoryResponse.DummyOperation) {
+        if (history.getHistory().isNotEmpty() && !history.getHistory().last()
+                .trivialUndo() && response != HistoryResponse.DummyOperation
+        ) {
             // not simple to undo, so back up what we have
             val lastImage = images.last().clone()
             images.add(lastImage)
@@ -132,7 +134,7 @@ class ImageContext(image: ZilBitmapInterface) {
         images = mutableListOf(newImage)
         images[0].writeToCanvas(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
         imageModified = !imageModified
-        imageIsLoaded = false
+       // imageIsLoaded = true
     }
 }
 
@@ -277,11 +279,11 @@ class AppContext {
         if (imageSpecificStates[imFile] == null) {
             return false
         }
-        return imageSpecificStates[imFile]!!.imageIsLoaded
+        return imageSpecificStates[imFile]!!.imageIsLoaded.asStateFlow().value
     }
 
     fun setImageIsLoaded(yes: Boolean) {
-        imageSpecificStates[imFile]!!.imageIsLoaded = yes
+        imageSpecificStates[imFile]!!.imageIsLoaded.value = yes
     }
 
     fun appendToHistory(newValue: HistoryOperationsEnum, value: Any? = null): HistoryResponse {
@@ -310,6 +312,28 @@ class AppContext {
 
     fun operationIsOngoing(): Boolean {
         return showStates.showTopLinearIndicator
+    }
+
+    fun removeFile(file: File) {
+        imageStates().remove(file)
+
+        val value = tabIndex - 1;
+        tabIndex = value.coerceIn(
+            minimumValue = 0,
+            maximumValue = null
+        )
+
+        // set the new imFile
+        imageStates().asSequence()
+            .forEachIndexed { idx, it ->
+
+                if (idx == tabIndex) {
+                    imFile = it.key
+                }
+            }
+
+        broadcastImageChange()
+
     }
 //
 //    fun getImage(): ZilBitmapInterface {

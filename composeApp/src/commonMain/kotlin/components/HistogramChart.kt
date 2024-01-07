@@ -48,7 +48,7 @@ fun _calculateHistogram(input: UByteArray): MutableMap<String, FloatArray> {
 
 @OptIn(ExperimentalUnsignedTypes::class)
 @Composable
-fun HistogramChart(ctx: AppContext) {
+fun HistogramChart(ctx: AppContext, showIndicators: Boolean = true, min: Int = 0, maxV: Int = 256) {
     var array: Map<String, LongArray>? =
         remember(ctx.recomposeWidgets.rerunHistogram) {
 
@@ -111,7 +111,7 @@ fun HistogramChart(ctx: AppContext) {
                             }
                             if (max != 0) {
                                 val maxRecip = 1.0F / max
-                                for (i in 0 until 256) {
+                                for (i in min until maxV) {
                                     val heightOffset: Float = (v[i] * maxRecip * height);
                                     drawRect(
                                         color2,
@@ -128,41 +128,42 @@ fun HistogramChart(ctx: AppContext) {
                 }
 
             )
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(
-                        checkedIndicator["0"] ?: false,
-                        onCheckedChange = {
-                            checkedIndicator["0"] = it
+            if (showIndicators) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checkedIndicator["0"] ?: false,
+                            onCheckedChange = {
+                                checkedIndicator["0"] = it
+                                forceRedraw = !forceRedraw
+                            },
+                            colors = CheckboxDefaults.colors(checkedColor = Color.Red)
+                        )
+                        Text("Red", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checkedIndicator["1"] ?: false,
+                            onCheckedChange = {
+                                checkedIndicator["1"] = it
+                                forceRedraw = !forceRedraw
+
+
+                            },
+                            colors = CheckboxDefaults.colors(checkedColor = Color.Green)
+                        )
+                        Text("Green", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checkedIndicator["2"] ?: false, onCheckedChange = {
+                            checkedIndicator["2"] = it
                             forceRedraw = !forceRedraw
-                        },
-                        colors = CheckboxDefaults.colors(checkedColor = Color.Red)
-                    )
-                    Text("Red", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+
+
+                        }, colors = CheckboxDefaults.colors(checkedColor = Color.Blue))
+                        Text("Blue ", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+                    }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(
-                        checkedIndicator["1"] ?: false,
-                        onCheckedChange = {
-                            checkedIndicator["1"] = it
-                            forceRedraw = !forceRedraw
-
-
-                        },
-                        colors = CheckboxDefaults.colors(checkedColor = Color.Green)
-                    )
-                    Text("Green", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checkedIndicator["2"] ?: false, onCheckedChange = {
-                        checkedIndicator["2"] = it
-                        forceRedraw = !forceRedraw
-
-
-                    }, colors = CheckboxDefaults.colors(checkedColor = Color.Blue))
-                    Text("Blue ", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
-                }
-
             }
         }
     }

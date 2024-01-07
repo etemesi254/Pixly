@@ -257,12 +257,8 @@ interface ZilImageInterface {
      * @param output: A ByteArray with enough size for storing the current image pixels
      * this will not try to resize it, it's the work of the caller to handle resizing
      * */
-    fun writeToBuffer(tempBuf: ByteBuffer, output: ByteArray, writeToOutput: Boolean = true)
+    fun writeToBuffer(tempBuf: ByteBuffer, output: ByteArray, writeToOutput: Boolean)
 
-    /**
-     * Rotate an image by 90 degrees
-     * */
-    fun rotate90()
 
     /**
      * Adjust the hue, saturation and lightness of an image
@@ -288,6 +284,8 @@ interface ZilImageInterface {
     fun colorMatrix(floatArray: FloatArray)
 
     fun resize(newWidth: Long, newHeight: Long)
+
+    fun rotate(angle: Float)
 
 
 }

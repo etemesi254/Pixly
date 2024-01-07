@@ -528,8 +528,8 @@ extern "system" fn Java_ZilImageJni_writeFourChannelToIntArrayNative(mut env: JN
 }
 
 #[no_mangle]
-extern "system" fn Java_ZilImageJni_rotate90Native(mut env: JNIEnv, _class: JClass, image_ptr: jlong) {
-    exec_imgproc(&mut env, image_ptr, Rotate::new(90f32))
+extern "system" fn Java_ZilImageJni_rotateNative(mut env: JNIEnv, _class: JClass, image_ptr: jlong, angle: f32) {
+    exec_imgproc(&mut env, image_ptr, Rotate::new(angle))
 }
 
 

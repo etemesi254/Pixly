@@ -39,5 +39,7 @@ interface ZilBitmapInterface {
 
     fun save(name: String, format: ZilImageFormat)
 
+    fun rotate(angle:Float,bitmap: ProtectedBitmapInterface)
+
 
 }

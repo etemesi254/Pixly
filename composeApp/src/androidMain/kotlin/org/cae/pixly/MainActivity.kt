@@ -4,9 +4,7 @@ import AppContext
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -15,10 +13,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import components.ImageInformationComponent
+import modifiers.modifyIf
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import themes.AppTheme
 
+val BOTTOM_SIZE = 200.dp;
+
+@Composable
+fun InformationPanel(appCtx: AppContext) {
+
+    Box(modifier = Modifier.fillMaxHeight().padding(end = 15.dp)) {
+        Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
+        // not using lazy column as the scrollbar is finicky with content
+        Column(modifier = Modifier.padding(start = 3.dp, end = 10.dp)) {
+            ImageInformationComponent(appCtx)
+           // ExifMetadataPane(appCtx)
+        }
+
+    }
+}
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,23 +69,17 @@ fun App() {
         Scaffold(modifier = Modifier.fillMaxSize(), topBar = { TopBar(context) }, bottomBar = {
             BottomBar(context)
         }) {
-            Column(modifier = Modifier.fillMaxSize().padding(it)) {
+            Column(modifier = Modifier.fillMaxSize().padding(it), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-
-                    Modifier.background(imBackgroundColor).fillMaxSize()
-                        .padding(horizontal = 0.dp)
+                    Modifier.background(imBackgroundColor)
+                    //    .fillMaxSize()
+                        .modifyIf(Modifier.fillMaxWidth().fillMaxHeight(0.8F)) { context.imageIsLoaded() && context.openedRightPane != RightPaneOpened.None }
                         .clickable(enabled = !context.imageIsLoaded() && !context.showStates.showTopLinearIndicator) {
                             context.showStates.showPopups = !context.showStates.showPopups;
                             if (!context.imageIsLoaded()) {
                                 context.showStates.showFilePicker = true;
                             }
                         }) {
-                    // We depend on boxes having kind of a stacked layout
-                    // meaning we can have multiple things that take max size and the layout still works
-                    // we exploit that here by having a column + row which both request .fillMaxSize
-                    // depending on order, the row is overlayed on top of the column,
-                    // but the column only contains text, so we don't need anything from it
-                    // which kinda works out
                     if (!context.imageIsLoaded()) {
 
                         Column(
@@ -115,10 +124,17 @@ fun App() {
                                 if (ctx != null) {
                                     AndroidScalableImage(ctx)
                                 }
-                                //ImageSpace(appCtx)
                             }
                         }
-
+                    }
+                }
+                if (context.imageIsLoaded() && context.openedRightPane != RightPaneOpened.None) {
+                    Box(modifier = Modifier.fillMaxWidth().height(BOTTOM_SIZE)) {
+                        when (context.openedRightPane) {
+                            RightPaneOpened.None -> Box {}
+                            RightPaneOpened.InformationPanel -> InformationPanel(context)
+                            else -> Box {}
+                        }
                     }
                 }
             }

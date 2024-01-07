@@ -17,7 +17,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     private var file: String = ""
 
 
-
     constructor(file: String, tempSharedBuffer: SharedBuffer, image: ZilImageInterface) : this(
         tempSharedBuffer,
         image
@@ -122,7 +121,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
                 }
                 // wrap in a bytebuffer to ensure slice fits
 
-                inner.writeToBuffer(tempSharedBuffer.nativeBuffer, tempSharedBuffer.sharedBuffer);
+                inner.writeToBuffer(tempSharedBuffer.nativeBuffer, tempSharedBuffer.sharedBuffer, true);
                 val wrappedBuffer = ByteBuffer.wrap(tempSharedBuffer.sharedBuffer)
 
                 val slice = wrappedBuffer.slice(0, inner.outputBufferSize().toInt())
@@ -234,6 +233,11 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         format: ZilImageFormat,
     ) {
         inner.save(name, format)
+    }
+
+    override fun rotate(angle: Float, bitmap: ProtectedBitmapInterface) {
+        inner.rotate(angle)
+        postProcessAlloc(bitmap)
     }
 
 

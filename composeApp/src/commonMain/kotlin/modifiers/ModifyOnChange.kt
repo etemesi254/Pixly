@@ -8,3 +8,11 @@ import androidx.compose.ui.Modifier
 fun Modifier.modifyOnChange(modified: Boolean): Modifier {
     return this
 }
+
+fun Modifier.modifyIf(modifier: Modifier, yes: () -> Boolean): Modifier {
+    return if (yes()) {
+        this.then(modifier)
+    } else {
+        this
+    }
+}

@@ -28,7 +28,7 @@ fun SingleThumbnail(appContext: AppContext, file: File) {
             if (!isLoaded) {
                 // load image
                 val sharedBuffer = SharedBuffer();
-                val im = ZilBitmap(file.path, sharedBuffer, ZilJvmImage(file = file.path))
+                val im = ZilBitmap(file.path, sharedBuffer, ZilImageJni(file = file.path))
                 val sizes = calcResize(im, 200, 200)
                 im.inner.resize(sizes[0], sizes[1])
                 im.writeToCanvas(bitmap)

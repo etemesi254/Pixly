@@ -64,7 +64,7 @@ actual fun loadImage(appCtx: AppContext, forceReload: Boolean) {
 
     } else {
         val time = measureTimeMillis {
-            val c = ZilJvmImage(appCtx.imFile.path);
+            val c = ZilImageJni(appCtx.imFile.path);
             val image = ZilBitmap(appCtx.imFile.path, appCtx.sharedBuffer, c);
             appCtx.initializeImageSpecificStates(image)
 
@@ -100,13 +100,18 @@ fun App(appCtx: AppContext) {
         isFirstDraw = false;
     }
 
+    var imageIsLoaded by remember { mutableStateOf(false) };
 
     LaunchedEffect(Unit) {
+
         this.launch(Dispatchers.IO) {
             handleKeyEvents(appCtx)
         }
-
     }
+    if (appCtx.imageIsLoaded()) {
+        imageIsLoaded = true
+    }
+
     // TODO: See if we can get smoother for themes transitions
     //  https://stackoverflow.com/questions/70942573/android-jetpack-composecomposable-change-theme-color-smoothly
     MaterialTheme(
@@ -258,7 +263,7 @@ fun App(appCtx: AppContext) {
                             Box(modifier = Modifier.padding(horizontal = 5.dp)) {
 
                                 IconButton(onClick = {
-                                    if (appCtx.imageIsLoaded()) {
+                                    if (imageIsLoaded) {
                                         appCtx.showStates.showSaveDialog = true
                                     }
                                 }, enabled = appCtx.imageIsLoaded()) {
@@ -320,6 +325,7 @@ fun App(appCtx: AppContext) {
                         ) {
                             first(0.dp) {
                                 var changeOnDelete by remember { mutableStateOf(false) }
+                                var toDeleteFile by remember { mutableStateOf(File("/")) }
                                 VerticalSplitPane(splitPaneState = rememberSplitPaneState(1.0F)) {
 
                                     first {
@@ -346,26 +352,20 @@ fun App(appCtx: AppContext) {
 
                                                                     IconButton(onClick = {
 
-                                                                        // remove the clicked tab
-                                                                        appCtx.imageStates().remove(it.key)
 
-                                                                        val value = appCtx.tabIndex - 1;
-                                                                        appCtx.tabIndex = value.coerceIn(
-                                                                            minimumValue = 0,
-                                                                            maximumValue = null
-                                                                        )
+                                                                        if (appCtx.imageStates()[it.key]!!.history.getHistory()
+                                                                                .isNotEmpty()
+                                                                        ) {
+                                                                            // a change occurred
+                                                                            appCtx.showStates.showWarningOnClose = true;
+                                                                            toDeleteFile = it.key;
 
-                                                                        // set the new imFile
-                                                                        appCtx.imageStates().asSequence()
-                                                                            .forEachIndexed { idx, it ->
+                                                                        } else {
+                                                                            appCtx.removeFile(it.key)
+                                                                            changeOnDelete = !changeOnDelete
 
-                                                                                if (idx == appCtx.tabIndex) {
-                                                                                    appCtx.imFile = it.key
-                                                                                }
-                                                                            }
+                                                                        }
 
-                                                                        changeOnDelete = !changeOnDelete
-                                                                        appCtx.broadcastImageChange()
 
                                                                     }) {
                                                                         Icon(
@@ -381,6 +381,44 @@ fun App(appCtx: AppContext) {
 
                                                 }
                                                 Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+
+                                                if (appCtx.showStates.showWarningOnClose) {
+                                                    AlertDialog(onDismissRequest = {
+                                                        appCtx.showStates.showWarningOnClose = false;
+                                                    }, buttons = {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+
+                                                            Button(
+                                                                onClick = {
+                                                                    appCtx.showStates.showWarningOnClose = false
+                                                                },
+                                                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                                            ) {
+                                                                Text("No")
+                                                            }
+                                                            Button(
+                                                                onClick = {
+                                                                    appCtx.removeFile(toDeleteFile);
+                                                                    changeOnDelete = !changeOnDelete;
+                                                                    appCtx.showStates.showWarningOnClose = false
+
+                                                                },
+                                                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                                            ) {
+                                                                Text("Yes")
+                                                            }
+                                                        }
+                                                    }, title = {
+                                                        Text("Confirm close of edited file")
+                                                    }, text = {
+                                                        Text("File ${toDeleteFile.name} has been modified, close it without saving?")
+
+                                                    })
+
+                                                }
                                             }
 
 
@@ -459,7 +497,7 @@ fun App(appCtx: AppContext) {
                                 }
 
                             }
-                            second(if (appCtx.imageIsLoaded() && appCtx.openedRightPane != RightPaneOpened.None) 400.dp else 50.dp) {
+                            second(if (appCtx.openedRightPane != RightPaneOpened.None) 400.dp else 50.dp) {
                                 RightPanel(appCtx)
                             }
                         }
@@ -527,7 +565,7 @@ fun App(appCtx: AppContext) {
                                             ImageSpaceLayout.PanedLayout -> ImageSpaceLayout.SingleLayout
                                         }
                                     }
-                                }, enabled = appCtx.imageIsLoaded()) {
+                                }, enabled = imageIsLoaded) {
                                     Icon(
                                         painter = painterResource("half-v-svgrepo-com.svg"),
                                         contentDescription = null,

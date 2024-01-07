@@ -2,16 +2,19 @@ package desktopComponents
 
 import AppContext
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import components.CollapsibleBox
+import components.HistogramChart
 import extensions.launchOnIoThread
 import imageops.*
 
@@ -159,6 +162,65 @@ fun OrientationFiltersComponent(appContext: AppContext) {
                         }
                     }
                 }
+                Divider()
+                Box(modifier = Modifier.fillMaxWidth().padding(10.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+
+                        IconButton(
+                            onClick = {
+
+                                scope.launchOnIoThread {
+                                    appContext.imageRotate(90.0F)
+                                }
+                            },
+                            //enabled = !appContext.isImageOperationRunning()
+                        ) {
+                            Icon(
+                                painter = painterResource("rotate-90.svg"),
+                                contentDescription = null,
+                                modifier = Modifier.size(30.dp).rotate(90.0F)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+
+                                scope.launchOnIoThread {
+                                    appContext.imageRotate(180.0F)
+                                }
+
+                            },
+                            //enabled = !appContext.isImageOperationRunning()
+                        ) {
+                            Icon(
+                                painter = painterResource("rotate-180.svg"),
+                                contentDescription = null,
+                                modifier = Modifier.size(30.dp).rotate(180.0F)
+
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                // add to history
+                                scope.launchOnIoThread {
+                                    appContext.imageRotate(270.0F);
+                                }
+                            },
+                            //enabled = !appContext.isImageOperationRunning()
+                        ) {
+                            Icon(
+                                painter = painterResource("rotate-270.svg"),
+                                contentDescription = null,
+                                modifier = Modifier.size(30.dp).rotate(270.0F)
+
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -173,9 +235,15 @@ fun LevelsFiltersComponent(appContext: AppContext) {
         }) {
             val scope = rememberCoroutineScope()
             Column {
-                Box(modifier = Modifier.height(100.dp))
+                Box(modifier = Modifier.height(150.dp))
                 {
-                    //HistogramChart(ctx = appContext)
+                    HistogramChart(
+                        ctx = appContext,
+                        showIndicators = false,
+                        min = appContext.imageFilterValues()!!.stretchContrastRange.value.start.toInt(),
+                        maxV = appContext.imageFilterValues()!!.stretchContrastRange.value.endInclusive.toInt()
+
+                    )
                 }
                 appContext.imageFilterValues()?.stretchContrastRange?.value?.let {
                     RangeSliderTextComponent(

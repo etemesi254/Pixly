@@ -100,7 +100,7 @@ suspend fun AppContext.imageStretchContrast(value: ClosedFloatingPointRange<Floa
         initializeImageChange()
         val resp = appendToHistory(HistoryOperationsEnum.Levels, value)
         val image = ctx.currentImage(resp)
-        image.stretchContrast(value,ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        image.stretchContrast(value, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
         ctx.filterValues.stretchContrastRange.value = value
         broadcastImageChange()
     }
@@ -155,13 +155,13 @@ suspend fun AppContext.imageBoxBlur(radius: Long) {
     }
 }
 
-suspend fun AppContext.imageRotate180(_radius: Long) {
+suspend fun AppContext.imageRotate(angle: Float) {
     val ctx = currentImageContext()
     ctx?.operationsMutex?.withLock {
         initializeImageChange()
-        val resp = appendToHistory(HistoryOperationsEnum.Rotate180)
-        val image = ctx.currentImage(resp)
-        image.flip(ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        //  val resp = appendToHistory(HistoryOperationsEnum.Rotate180)
+        val image = ctx.currentImage(HistoryResponse.DummyOperation)
+        image.rotate(angle, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
         broadcastImageChange()
     }
 }
@@ -224,7 +224,7 @@ suspend fun AppContext.imageHslAdjust(hue: Float? = null, saturation: Float? = n
         val l = (lightnessNonNull - ctx.filterValues.lightness) + 1
         val resp = appendToHistory(HistoryOperationsEnum.Hue, listOf(hueNonNull, saturationNonNull, lightnessNonNull))
         val image = ctx.currentImage(resp)
-        image.hslAdjust(h, s, l,ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        image.hslAdjust(h, s, l, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
 
         ctx.filterValues.hue = hueNonNull
         ctx.filterValues.saturation = saturationNonNull

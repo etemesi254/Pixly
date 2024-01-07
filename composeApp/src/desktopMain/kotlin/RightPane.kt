@@ -45,8 +45,10 @@ fun RightPanel(appCtx: AppContext) {
 
     var isEnabled by remember {  mutableStateOf(false)}
 
-    LaunchedEffect(appCtx.imageIsLoaded()) {
-        isEnabled = appCtx.imageIsLoaded()
+    SideEffect {
+        if (appCtx.imageIsLoaded()) {
+            isEnabled = true
+        }
     }
     Box(
         contentAlignment = Alignment.CenterEnd,

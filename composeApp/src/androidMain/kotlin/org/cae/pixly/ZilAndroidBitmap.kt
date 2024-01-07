@@ -38,6 +38,7 @@ class ZilAndroidBitmap(private val image: ZilImageInterface, private val android
     override fun writeToCanvas(bitmap: ProtectedBitmapInterface) {
         image.convertColorspace(ZilColorspace.RGBA)
     }
+
     private fun postProcessAlloc(bitmap: ProtectedBitmapInterface) {
         runBlocking {
             if (bitmap is AndroidProtectedBitmap) {
@@ -210,6 +211,11 @@ class ZilAndroidBitmap(private val image: ZilImageInterface, private val android
 
     override fun save(name: String, format: ZilImageFormat) {
         image.save(name, format)
+    }
+
+    override fun rotate(angle: Float, bitmap: ProtectedBitmapInterface) {
+        image.rotate(angle);
+        postProcessAlloc(bitmap);
     }
 
 }

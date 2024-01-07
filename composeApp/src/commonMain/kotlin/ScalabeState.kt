@@ -44,7 +44,7 @@ class ScalableState {
     /**
      * The calculated base scale for 100% zoom. Calculated so that the target fits the area.
      */
-    private val scaleFor100PercentZoom by derivedStateOf {
+     val scaleFor100PercentZoom by derivedStateOf {
         if (targetSize.isSpecified && areaSize.isSpecified) {
             max(areaSize.width / targetSize.width, areaSize.height / targetSize.height)
         } else {
@@ -55,7 +55,7 @@ class ScalableState {
     /**
      * The calculated scale for full visibilitappCtx.image.image(appCtx)y of the target.
      */
-    private val scaleForFullVisibility by derivedStateOf {
+     val scaleForFullVisibility by derivedStateOf {
         if (targetSize.isSpecified && areaSize.isSpecified) {
             min(areaSize.width / targetSize.width, areaSize.height / targetSize.height)
         } else {

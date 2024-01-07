@@ -18,5 +18,5 @@ class ShowModifiers {
     var showHistogram by mutableStateOf(true)
     var showLevels by mutableStateOf(true)
     var showThumbnail by mutableStateOf(false)
-
+    var showWarningOnClose by mutableStateOf(false)
 }
