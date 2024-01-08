@@ -257,8 +257,8 @@ internal class ZilImageJni : Cleaner.Cleanable, ZilImageInterface {
         // the bytebuffer isn't backed by an array, so we can't peek into it
         // we just write the output to an array understood by java/jvm
         if (writeToOutput) {
-            buf[0, output]
-            //buf.get(output)
+            buf.rewind()
+            buf.get(output, 0, outBufferSize.toInt())
         }
         //buf[0, output]
     }
