@@ -24,7 +24,7 @@ fun TopBar(context: AppContext) {
                 Icon(
                     painter = painterResource("xml/open_file_svgrepo_com.xml"),
                     contentDescription = "Open a file from gallery",
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
@@ -46,7 +46,7 @@ fun TopBar(context: AppContext) {
                         Icon(
                             painter = painterResource("xml/undo_svgrepo.xml"),
                             contentDescription = null,
-                            modifier = Modifier.size(26.dp),
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 }
@@ -60,7 +60,7 @@ fun TopBar(context: AppContext) {
                         Icon(
                             painter = painterResource("xml/save_svgrepo.xml"),
                             contentDescription = null,
-                            modifier = Modifier.size(26.dp),
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 }
@@ -74,7 +74,7 @@ fun TopBar(context: AppContext) {
                             painterResource("xml/sun_svgrepo_com.xml")
                         },
                         contentDescription = "Change the app theme",
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(25.dp)
                     )
                 }
             }
