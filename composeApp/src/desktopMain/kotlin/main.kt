@@ -2,8 +2,6 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +20,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.darkrockstudios.libraries.mpfilepicker.DirectoryPicker
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
+import components.TopTabBar
 import desktopComponents.PixlyToolTip
 import desktopComponents.SaveAsDialog
 import desktopComponents.TopHoveringIcons
@@ -263,7 +262,7 @@ fun App(appCtx: AppContext) {
                             Box(modifier = Modifier.padding(horizontal = 5.dp)) {
 
                                 IconButton(onClick = {
-                                    if (imageIsLoaded) {
+                                    if (appCtx.imageIsLoaded()) {
                                         appCtx.showStates.showSaveDialog = true
                                     }
                                 }, enabled = appCtx.imageIsLoaded()) {
@@ -332,99 +331,14 @@ fun App(appCtx: AppContext) {
                                         Column(modifier = Modifier.fillMaxSize()) {
 
                                             if (appCtx.imageStates().isNotEmpty()) {
-                                                ScrollableTabRow(
-                                                    selectedTabIndex = appCtx.tabIndex,
-                                                    modifier = Modifier.fillMaxWidth().modifyOnChange(changeOnDelete),
-                                                    edgePadding = 0.dp
-                                                ) {
-                                                    // convert to a sequence to iterate
-                                                    // the benefits is that linkedHashMap preserves insertion order
-                                                    appCtx.imageStates().asSequence().forEachIndexed { idx, it ->
-                                                        Tab(it.key == appCtx.imFile,
-                                                            onClick = {
-                                                                appCtx.tabIndex = idx
-                                                                // now update tab to be this idx
-                                                                appCtx.imFile = it.key
-                                                                appCtx.broadcastImageChange()
-                                                            }, text = {
-                                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                                    Text(it.key.name)
-
-                                                                    IconButton(onClick = {
-
-
-                                                                        if (appCtx.imageStates()[it.key]!!.history.getHistory()
-                                                                                .isNotEmpty()
-                                                                        ) {
-                                                                            // a change occurred
-                                                                            appCtx.showStates.showWarningOnClose = true;
-                                                                            toDeleteFile = it.key;
-
-                                                                        } else {
-                                                                            appCtx.removeFile(it.key)
-                                                                            changeOnDelete = !changeOnDelete
-
-                                                                        }
-
-
-                                                                    }) {
-                                                                        Icon(
-                                                                            Icons.Default.Close,
-                                                                            contentDescription = null,
-                                                                            modifier = Modifier.size(15.dp)
-                                                                        )
-
-                                                                    }
-                                                                }
-                                                            })
-                                                    }
-
-                                                }
+                                                TopTabBar(appCtx)
                                                 Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-
-                                                if (appCtx.showStates.showWarningOnClose) {
-                                                    AlertDialog(onDismissRequest = {
-                                                        appCtx.showStates.showWarningOnClose = false;
-                                                    }, buttons = {
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-
-                                                            Button(
-                                                                onClick = {
-                                                                    appCtx.showStates.showWarningOnClose = false
-                                                                },
-                                                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                                                            ) {
-                                                                Text("No")
-                                                            }
-                                                            Button(
-                                                                onClick = {
-                                                                    appCtx.removeFile(toDeleteFile);
-                                                                    changeOnDelete = !changeOnDelete;
-                                                                    appCtx.showStates.showWarningOnClose = false
-
-                                                                },
-                                                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                                                            ) {
-                                                                Text("Yes")
-                                                            }
-                                                        }
-                                                    }, title = {
-                                                        Text("Confirm close of edited file")
-                                                    }, text = {
-                                                        Text("File ${toDeleteFile.name} has been modified, close it without saving?")
-
-                                                    })
-
-                                                }
                                             }
-
 
                                             Box(
 
                                                 Modifier.background(imBackgroundColor).fillMaxSize()
+                                                    .modifyOnChange(appCtx.changeOnCloseTab)
                                                     .padding(horizontal = 0.dp)
                                                     .clickable(enabled = !appCtx.imageIsLoaded() && !appCtx.showStates.showTopLinearIndicator) {
                                                         appCtx.showStates.showPopups = !appCtx.showStates.showPopups;
