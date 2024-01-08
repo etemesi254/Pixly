@@ -13,27 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import components.ImageInformationComponent
-import modifiers.modifyIf
+import androidx.compose.ui.zIndex
+import components.TopTabBar
+import modifiers.modifyOnChange
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
-import themes.AppTheme
 
-val BOTTOM_SIZE = 200.dp;
 
-@Composable
-fun InformationPanel(appCtx: AppContext) {
-
-    Box(modifier = Modifier.fillMaxHeight().padding(end = 15.dp)) {
-        Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
-        // not using lazy column as the scrollbar is finicky with content
-        Column(modifier = Modifier.padding(start = 3.dp, end = 10.dp)) {
-            ImageInformationComponent(appCtx)
-           // ExifMetadataPane(appCtx)
-        }
-
-    }
-}
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,16 +58,18 @@ fun App() {
             Column(modifier = Modifier.fillMaxSize().padding(it), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     Modifier.background(imBackgroundColor)
-                    //    .fillMaxSize()
-                        .modifyIf(Modifier.fillMaxWidth().fillMaxHeight(0.8F)) { context.imageIsLoaded() && context.openedRightPane != RightPaneOpened.None }
+                        .fillMaxSize()
+                        .modifyOnChange(context.changeOnCloseTab)
                         .clickable(enabled = !context.imageIsLoaded() && !context.showStates.showTopLinearIndicator) {
                             context.showStates.showPopups = !context.showStates.showPopups;
                             if (!context.imageIsLoaded()) {
                                 context.showStates.showFilePicker = true;
                             }
                         }) {
+                    if (context.showStates.showTopLinearIndicator){
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
                     if (!context.imageIsLoaded()) {
-
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -107,7 +95,6 @@ fun App() {
                             }
                         }
                     } else {
-
                         Surface(
                             color = if (context.showStates.showLightTheme)
                                 Color(
@@ -120,20 +107,25 @@ fun App() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                val ctx = context.currentImageContext()
-                                if (ctx != null) {
-                                    AndroidScalableImage(ctx)
+                                Column(modifier = Modifier.fillMaxSize()) {
+
+                                    if (context.imageStates().isNotEmpty()) {
+                                        TopTabBar(context)
+                                    }
+
+                                    Surface(
+                                        modifier = Modifier.zIndex(-1F),
+                                        color = if (context.showStates.showLightTheme)
+                                            Color(
+                                                245,
+                                                245,
+                                                245
+                                            ) else Color(25, 25, 25)
+                                    ) {
+                                        AndroidScalableImage(context);
+                                    }
                                 }
                             }
-                        }
-                    }
-                }
-                if (context.imageIsLoaded() && context.openedRightPane != RightPaneOpened.None) {
-                    Box(modifier = Modifier.fillMaxWidth().height(BOTTOM_SIZE)) {
-                        when (context.openedRightPane) {
-                            RightPaneOpened.None -> Box {}
-                            RightPaneOpened.InformationPanel -> InformationPanel(context)
-                            else -> Box {}
                         }
                     }
                 }
