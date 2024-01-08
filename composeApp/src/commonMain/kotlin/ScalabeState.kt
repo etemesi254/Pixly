@@ -16,7 +16,7 @@ class ScalableState {
     var defaultClickLimit = 3F
 
     /// zoom until you can see the devil
-    private var zoomLimits = 0.1f..8000f
+    private var zoomLimits = 0.01f..1000f
 
     private var offset by mutableStateOf(Offset.Zero)
 
@@ -78,7 +78,7 @@ class ScalableState {
     ) {
         this.areaSize = areaSize
         this.targetSize = targetSize
-        zoomLimits = scaleForFullVisibility..zoomLimits.endInclusive
+        //zoomLimits = scaleForFullVisibility..zoomLimits.endInclusive
         applyLimits()
     }
 
