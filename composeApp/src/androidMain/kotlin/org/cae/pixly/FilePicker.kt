@@ -37,14 +37,13 @@ fun showFilePicker(appContext: AppContext) {
         appContext.showStates.showFilePicker = false
         if (it != null) {
             // check permission
-
             if (imageStorageState.status.isGranted) {
                 Log.e("File", it.path);
                 val path = getRealPathFromURI(androidContext, Uri.parse(it.path))
                 if (path != null) {
                     appContext.imFile = File(path)
+                    appContext.rootDirectory = appContext.imFile.parent;
                     loadImage(appContext,false)
-
                 }
             }
         }
