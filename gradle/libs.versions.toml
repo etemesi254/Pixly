@@ -1,6 +1,6 @@
 [versions]
 accompanistPermissions = "0.33.2-alpha"
-agp = "8.1.4"
+agp = "8.2.0"
 android-compileSdk = "34"
 android-minSdk = "33"
 android-targetSdk = "34"
