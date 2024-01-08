@@ -38,7 +38,7 @@ suspend fun AppContext.imageBrighten(value: Float) {
             val image = ctx.currentImage(resp)
 
             // brightness expects a value between -1 and 1, so scale it here
-            image.brighten(delta / 100, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+            image.brighten(value / 100, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
             ctx.filterValues.brightness = value
             broadcastImageChange()
         }
@@ -61,7 +61,7 @@ suspend fun AppContext.imageContrast(value: Float) {
             initializeImageChange()
             val resp = appendToHistory(HistoryOperationsEnum.Contrast, value.toLong().toFloat())
             val image = ctx.currentImage(resp)
-            image.contrast(delta, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+            image.contrast(value, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
             ctx.filterValues.contrast = value
             broadcastImageChange()
 
