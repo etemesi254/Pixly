@@ -1,32 +1,61 @@
 package org.cae.pixly
 
 import AppContext
+import RightPaneOpened
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import components.ImageInformationComponent
 import modifiers.backgroundColorIfCondition
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import java.text.DecimalFormat
 
+@Composable
+fun InformationPanel(appCtx: AppContext) {
+
+    val scrollState = rememberScrollState()
+
+    Surface(modifier = Modifier.fillMaxSize()) {
+        // not using lazy column as the scrollbar is finicky with content
+        Column(modifier = Modifier.fillMaxSize().padding(start = 3.dp, end = 10.dp).verticalScroll(scrollState)) {
+            ImageInformationComponent(appCtx)
+            // ExifMetadataPane(appCtx)
+        }
+    }
+}
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun BottomBar(appCtx: AppContext) {
-    var isEnabled by remember { mutableStateOf(false) }
-
-    LaunchedEffect(appCtx.imageIsLoaded()) {
-        isEnabled = appCtx.imageIsLoaded()
-    }
-    Column(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (appCtx.openedRightPane != RightPaneOpened.None) {
+            Box(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), contentAlignment = Alignment.BottomCenter) {
+                when (appCtx.openedRightPane) {
+                    RightPaneOpened.None -> Box {}
+                    RightPaneOpened.InformationPanel -> InformationPanel(appCtx)
+                    RightPaneOpened.ImageFilters -> ColorFilterPanel(appCtx)
+                    RightPaneOpened.FineTunePanel-> ImageFilters(appCtx)
+                    else -> Box {}
+                }
+            }
+        }
         Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
 
         Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.Center) {
+
             IconButton(
                 {
                     if (appCtx.openedRightPane == RightPaneOpened.InformationPanel) {
@@ -36,14 +65,14 @@ fun BottomBar(appCtx: AppContext) {
                     }
 
                 },
-                enabled = isEnabled,
+                enabled = appCtx.imageIsLoaded(),
                 modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                     appCtx.openedRightPane == RightPaneOpened.InformationPanel
                 }) {
                 Icon(
                     painter = painterResource("xml/info_svgrepo.xml"),
                     contentDescription = null,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(25.dp)
                 )
             }
             IconButton(
@@ -55,7 +84,7 @@ fun BottomBar(appCtx: AppContext) {
                     }
 
                 },
-                enabled = isEnabled ,
+                enabled = appCtx.imageIsLoaded(),
 
                 modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                     appCtx.openedRightPane == RightPaneOpened.FineTunePanel
@@ -64,7 +93,7 @@ fun BottomBar(appCtx: AppContext) {
                 Icon(
                     painter = painterResource("xml/filters_svgrepo_com.xml"),
                     contentDescription = null,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(25.dp)
                 )
             }
             IconButton(
@@ -76,7 +105,7 @@ fun BottomBar(appCtx: AppContext) {
                     }
 
                 },
-                enabled = isEnabled ,
+                enabled = appCtx.imageIsLoaded(),
                 modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                     appCtx.openedRightPane == RightPaneOpened.ImageFilters
                 }
@@ -84,7 +113,7 @@ fun BottomBar(appCtx: AppContext) {
                 Icon(
                     painter = painterResource("xml/colorfilter_svgrepo_com.xml"),
                     contentDescription = null,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(25.dp)
                 )
             }
         }
