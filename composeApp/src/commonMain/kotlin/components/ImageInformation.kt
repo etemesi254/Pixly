@@ -18,19 +18,13 @@ fun ImageInformationComponent(appCtx: AppContext) {
     val innerImage = appCtx.currentImageContext()?.imageToDisplay()?.innerInterface();
 
     if (innerImage != null) {
-
-
         Column(modifier = Modifier.padding(vertical = 10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    "Width", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-                )
-                Text(
-                    innerImage.width().toString() + " px", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp))
-                );
+                Text("Width", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)))
+                Text(innerImage.width().toString() + " px", style = TextStyle(fontSize = TextUnit(14F, TextUnitType.Sp)));
             }
             Divider()
             Row(
