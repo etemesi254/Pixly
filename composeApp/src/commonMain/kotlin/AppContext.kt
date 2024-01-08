@@ -85,6 +85,7 @@ class ImageContext(image: ZilBitmapInterface) {
     var imageIsLoaded = MutableStateFlow(false)
     var zoomState by mutableStateOf(ScalableState())
     var imageModified by mutableStateOf(false)
+    var file by mutableStateOf(File("/"))
 
     // Use multiple bitmaps in order to reduce contention, e.g do not fight
     // for the same bitmap in the two two paned stage
@@ -116,6 +117,9 @@ class ImageContext(image: ZilBitmapInterface) {
             val lastImage = images.last().clone()
             images.add(lastImage)
         }
+//        if (history.getHistory().size > 1 && !history.getHistory().last().trivialUndo()) {
+//            return images.last().clone()
+//        }
 
         return images.last()
     }
@@ -134,7 +138,7 @@ class ImageContext(image: ZilBitmapInterface) {
         images = mutableListOf(newImage)
         images[0].writeToCanvas(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
         imageModified = !imageModified
-       // imageIsLoaded = true
+        // imageIsLoaded = true
     }
 }
 
@@ -185,7 +189,7 @@ class AppContext {
      * Contains each image specific states, each image can be seen as a file+ info about it
      * and the information includes the image filter states, image history, image details etc
      * */
-    private var imageSpecificStates: LinkedHashMap<File, ImageContext> = LinkedHashMap()
+    var imageSpecificStates: LinkedHashMap<File, ImageContext> = LinkedHashMap()
 
     /**
      * Contains information on which tab the user is currently on
@@ -228,6 +232,12 @@ class AppContext {
      *
      * */
     var sharedBuffer: SharedBuffer = SharedBuffer()
+
+    /**
+     * Callers can subscribe to this to be informed of
+     * a tab being closed and act appropriately
+     * */
+    var changeOnCloseTab by mutableStateOf(false)
 
 
     /**
@@ -332,6 +342,7 @@ class AppContext {
                 }
             }
 
+        changeOnCloseTab = !changeOnCloseTab
         broadcastImageChange()
 
     }
