@@ -14,13 +14,13 @@ import kotlin.system.measureTimeMillis
 actual fun loadImage(appCtx: AppContext, forceReload: Boolean) {
 
     val time = measureTimeMillis {
-        val c = ZilJvmImage(appCtx.imFile.path);
+        val c = ZilImageJni(appCtx.imFile.path);
         val image = ZilAndroidBitmap(c, appCtx.sharedBuffer);
         appCtx.initializeImageSpecificStates(image)
         // generate c
         val ctx = appCtx.currentImageContext();
         ctx?.initCurrentCanvas(AndroidProtectedBitmap())
+        ctx?.file = appCtx.imFile;
         appCtx.setImageIsLoaded(true)
-
     }
 }
