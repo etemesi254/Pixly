@@ -479,7 +479,7 @@ fun App(appCtx: AppContext) {
                                             ImageSpaceLayout.PanedLayout -> ImageSpaceLayout.SingleLayout
                                         }
                                     }
-                                }, enabled = imageIsLoaded) {
+                                }, enabled = appCtx.imageIsLoaded()) {
                                     Icon(
                                         painter = painterResource("half-v-svgrepo-com.svg"),
                                         contentDescription = null,
@@ -488,11 +488,9 @@ fun App(appCtx: AppContext) {
                                 }
 
                             }
-
                         }
                     }
                 }
-
             }
         }
     }

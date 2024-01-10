@@ -15,18 +15,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.withSave
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.pow
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skiko.toImage
 
 
 fun Modifier.onPointerEvent(
@@ -66,9 +72,9 @@ fun ScalableImage(
     imageContextBitmaps: ImageContextBitmaps = ImageContextBitmaps.CurrentCanvasImage
 ) {
 
-    BoxWithConstraints(modifier) {
-        var areaSize = areaSize
 
+    BoxWithConstraints(modifier) {
+        val areaSize = areaSize
 
         val interactionSource = remember { MutableInteractionSource() };
 
@@ -85,7 +91,6 @@ fun ScalableImage(
                 modifier = Modifier.contextMenuOpenDetector(menu).fillMaxSize(),
 
                 ) {
-
                 Box(
                     modifier
                         .fillMaxSize()

@@ -32,42 +32,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
         // first convert it to RGBA
         inner.convertColorspace(ZilColorspace.RGBA)
-        /*
-        * BUGS BUGS BUGS
-        *
-        * Okay so you see how we have big endian and little endian systems
-        *
-        * Skia works with little endian,
-        * it tells you to give it bytes, and then it renders them on screen
-        * this kinda matters, because skia uses ARGB8888, which now  says
-        * components are laid out in A, R, G finally B.
-        *
-        * BUT skia stores colors in 32-bit integer, which makes sense, so you'd assume that
-        * A -> 24-32
-        * R -> 24-16
-        * G -> 16-08
-        * B -> 08-00
-        *
-        * Since that's how you'd lay them in memory.
-        *
-        * But it's actually
-        *
-        * A -> 00-08
-        * R -> 08-16
-        * G -> 16-24
-        * B -> 24-32
-        *
-        * Since the 32 bit int is laid out in little endian, LSB is first
-        *
-        * zune doesn't know this because it handles individual bytes, so we have
-        * to handle it here.
-        *
-        * The solution is easy, once you see it, BGRA(Little Endian) == ARGB , because you literally
-        * read the letters in the opposite way, so we have to do another conversion to BGRA so that
-        * skia can see it in ARGB
-        *
-        * computers :)
-        * */
+       
         inner.convertColorspace(ZilColorspace.BGRA)
         // set up canvas
         runBlocking {
@@ -78,7 +43,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
                 }
             }
         }
-
     }
 
 

@@ -1,3 +1,19 @@
+## Demo
+![Video demo](./video/desktop.mp4)
+## Features.
+ - Load images in various formats - png, jpeg, ppm, jxl, bmp, qoi, pfm.
+ - Save images in various formats- jpeg, png, webp, bmp, ico, gif.
+ - Choose quality of saved output.
+ - Multiple image editing options,  rotate, transpose, change brightness, blur add sepia to image, level adjustment etc
+ - Undo history.
+ - Responsive layout - Choose what widgets you want to use, rearrange them at will
+ - Infinite zoom in and zoom out.
+ - Double paned editing that shows you original vs edited picture side by side
+ - Thumbnail generation.
+ - Directory navigator (Desktop)
+ - Light and dark theme options
+ - Retrieves image information including exif data and shows image histogram 
+ - Pre-configured filters such as `sepia` and `vivid`
 
 ## Building
 

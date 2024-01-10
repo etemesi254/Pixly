@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -23,7 +24,13 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import extensions.launchOnIoThread
 import hasEncoder
+import kotlinx.coroutines.sync.withLock
+import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skiko.toImage
+import java.io.File
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -31,9 +38,10 @@ fun SaveAsDialog(ctx: AppContext) {
     var expanded by remember { mutableStateOf(false) }
 
     // drop ImageFormat.UnknownFormat
-    val items = ZilImageFormat.entries.filter { it.hasEncoder() }
+    val items = EncodedImageFormat.entries
+
     var selectedIndex by remember { mutableStateOf(0) }
-    var selectedFormat by remember { mutableStateOf(ZilImageFormat.JPEG) }
+    var selectedFormat by remember { mutableStateOf(EncodedImageFormat.JPEG) }
     val icon = if (expanded)
         Icons.Filled.KeyboardArrowUp //it requires androidx.compose.material:material-icons-extended
     else
@@ -41,6 +49,7 @@ fun SaveAsDialog(ctx: AppContext) {
 
     var textFieldSize by remember { mutableStateOf(IntSize.Zero) }
     var filePath by remember { mutableStateOf(ctx.imFile.path) }
+    var qualityValue by remember { mutableStateOf(100F) }
 
 
     Dialog(onDismissRequest = { ctx.showStates.showSaveDialog = false }) {
@@ -97,6 +106,10 @@ fun SaveAsDialog(ctx: AppContext) {
 
                 Spacer(modifier = Modifier.padding(15.dp))
 
+                SliderTextComponent("Quality", qualityValue, 0F..100F) {
+                    qualityValue = it.roundToInt().toFloat()
+                }
+
                 Box {
                     OutlinedTextField(
                         value = filePath,
@@ -113,9 +126,29 @@ fun SaveAsDialog(ctx: AppContext) {
                     val scope = rememberCoroutineScope();
                     Button(onClick = {
 
-                        ctx.currentImageContext()?.imageToDisplay()?.save(filePath, selectedFormat)
+                        ctx.showStates.showSaveDialog = false;
+                        val c = ctx.currentImageContext()?.canvasBitmaps?.get(ImageContextBitmaps.CurrentCanvasImage)!!;
+                        scope.launchOnIoThread {
+                            ctx.initializeImageChange()
+                            // acquire mutex to make a copy
+                            // after this, we can manipulate with no fear
+                            val img = c.mutex().withLock {
+                                c.asImageBitmap().toAwtImage()
+                            }
+                            val encodedBitmap =
+                                img.toImage().encodeToData(selectedFormat, qualityValue.toInt());
+                            if (encodedBitmap != null) {
+                                val bytes = encodedBitmap.bytes;
+                                val fd = File(filePath);
+                                val outputStream = fd.outputStream();
+                                outputStream.write(bytes)
+                                outputStream.flush();
 
+                                ctx.bottomStatus = "Saved file ${fd.name} to ${fd.parent}"
+                            }
+                            ctx.broadcastImageChange()
 
+                        }
                     }, modifier = Modifier.fillMaxWidth()) {
                         Text("Save")
                     }
