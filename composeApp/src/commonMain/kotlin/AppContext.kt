@@ -142,9 +142,15 @@ class ImageContext(image: ZilBitmapInterface) {
                     if (historyOperations[idx] != lastOp) {
                         // found the index
                         // clone that
-                        val newImg = images[idx].clone();
-                        images.add(newImg);
-                        return images.last();
+                        //
+                        // why +1?, well the history was added, but the clone wasn't
+                        // so that's why we go +1
+                        // todo: Please explain this better
+                        val newImg = images.getOrNull(idx + 1);
+                        if (newImg!=null) {
+                            images.add(newImg);
+                            return images.last();
+                        }
                     }
                 }
                 // it's the first operation , eg. you modified brightness and then modified brightness again
