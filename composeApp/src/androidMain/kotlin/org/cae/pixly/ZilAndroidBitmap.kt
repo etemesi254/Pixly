@@ -33,14 +33,12 @@ class AndroidProtectedBitmap() : ProtectedBitmapInterface {
 
 class ZilAndroidBitmap(private val image: ZilImageInterface, private val androidSharedBuffer: SharedBuffer) :
     ZilBitmapInterface {
-
-
     override fun writeToCanvas(bitmap: ProtectedBitmapInterface) {
         image.convertColorspace(ZilColorspace.RGBA)
         postProcessAlloc(bitmap)
     }
 
-    private fun postProcessAlloc(bitmap: ProtectedBitmapInterface) {
+    override fun postProcessAlloc(bitmap: ProtectedBitmapInterface) {
         runBlocking {
             if (bitmap is AndroidProtectedBitmap) {
                 bitmap.mutex().withLock {
@@ -52,7 +50,7 @@ class ZilAndroidBitmap(private val image: ZilImageInterface, private val android
     }
 
 
-    private fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
+    override fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
         runBlocking {
             bitmap.mutex().withLock {
                 if (bitmap is AndroidProtectedBitmap) {
@@ -120,108 +118,9 @@ class ZilAndroidBitmap(private val image: ZilImageInterface, private val android
         return ZilAndroidBitmap(image.clone(), androidSharedBuffer)
     }
 
-    override fun hslAdjust(hue: Float, saturation: Float, lightness: Float, bitmap: ProtectedBitmapInterface) {
-        image.hslAdjust(hue, saturation, lightness)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun contrast(value: Float, bitmap: ProtectedBitmapInterface) {
-        image.contrast(value)
-        postProcessPixelsManipulated(bitmap)
-
-    }
-
-    override fun exposure(value: Float, blackPoint: Float, bitmap: ProtectedBitmapInterface) {
-        image.exposure(value, blackPoint)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun brighten(value: Float, bitmap: ProtectedBitmapInterface) {
-        // clamp here
-        image.brightness(value.coerceIn(-1F..1F))
-        postProcessPixelsManipulated(bitmap)
-    }
-
-
-    override fun stretchContrast(
-        value: ClosedFloatingPointRange<Float>, bitmap: ProtectedBitmapInterface
-    ) {
-        image.stretchContrast(value.start, value.endInclusive)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun gaussianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        image.gaussianBlur(radius)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun medianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        image.medianBlur(radius)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun bilateralBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        image.bilateralFilter(radius.toInt(), radius.toFloat(), radius.toFloat())
-        postProcessPixelsManipulated(bitmap)
-
-    }
-
-    override fun boxBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        image.boxBlur(radius)
-        postProcessPixelsManipulated(bitmap)
-
-    }
-
-    override fun flip(bitmap: ProtectedBitmapInterface) {
-        image.flip()
-        postProcessAlloc(bitmap)
-    }
-
-    override fun verticalFlip(bitmap: ProtectedBitmapInterface) {
-        image.verticalFlip()
-        postProcessAlloc(bitmap)
-
-    }
-
-    override fun horizontalFlip(bitmap: ProtectedBitmapInterface) {
-        image.flop()
-        postProcessAlloc(bitmap)
-    }
-
-    override fun transpose(bitmap: ProtectedBitmapInterface) {
-        image.transpose()
-        postProcessAlloc(bitmap)
-    }
-
-    override fun colorMatrix(matrix: FloatArray, bitmap: ProtectedBitmapInterface) {
-        image.colorMatrix(matrix)
-        postProcessAlloc(bitmap)
-    }
-
-    override fun width(): UInt {
-        return image.width()
-    }
-
-    override fun height(): UInt {
-        return image.height()
-    }
-
     override fun innerInterface(): ZilImageInterface {
         return image;
     }
 
-    override fun save(name: String, format: ZilImageFormat) {
-        image.save(name, format)
-    }
-
-    override fun rotate(angle: Float, bitmap: ProtectedBitmapInterface) {
-        image.rotate(angle);
-        postProcessAlloc(bitmap);
-    }
-
-    override fun sobel(bitmap: ProtectedBitmapInterface) {
-        image.sobel()
-        postProcessPixelsManipulated(bitmap)
-    }
 
 }

@@ -95,122 +95,11 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
         }
     }
 
-
-//    fun canvas(): ImageBitmap {
-//        return canvasBitmap.asComposeImageBitmap()
-//    }
-
-    override fun contrast(value: Float, bitmap: ProtectedBitmapInterface) {
-
-        inner.contrast(value)
-        postProcessPixelsManipulated(bitmap)
-
-    }
-
-    override fun exposure(value: Float, blackPoint: Float, bitmap: ProtectedBitmapInterface) {
-        inner.exposure(value, blackPoint)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    /**
-     * Brighten an image
-     *
-     * @param value: New value for image, between -1 and 1
-     * */
-    override fun brighten(value: Float, bitmap: ProtectedBitmapInterface) {
-        // clamp here
-        inner.brightness(value.coerceIn(-1F..1F))
-        postProcessPixelsManipulated(bitmap)
-    }
-
-
-    override fun stretchContrast(
-        value: ClosedFloatingPointRange<Float>, bitmap: ProtectedBitmapInterface
-    ) {
-        inner.stretchContrast(value.start, value.endInclusive)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun gaussianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        inner.gaussianBlur(radius)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun medianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        // median filter is god slow
-        inner.medianBlur(radius)
-        postProcessPixelsManipulated(bitmap)
-    }
-
-    override fun bilateralBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        inner.bilateralFilter(radius.toInt(), radius.toFloat(), radius.toFloat())
-        postProcessPixelsManipulated(bitmap)
-
-    }
-
-    override fun boxBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
-        inner.boxBlur(radius)
-        postProcessPixelsManipulated(bitmap)
-
-    }
-
-    override fun flip(bitmap: ProtectedBitmapInterface) {
-        inner.flip()
-        postProcessAlloc(bitmap)
-    }
-
-    override fun verticalFlip(bitmap: ProtectedBitmapInterface) {
-        inner.verticalFlip()
-        postProcessAlloc(bitmap)
-
-    }
-
-    override fun horizontalFlip(bitmap: ProtectedBitmapInterface) {
-        inner.flop()
-        postProcessAlloc(bitmap)
-    }
-
-    override fun transpose(bitmap: ProtectedBitmapInterface) {
-        inner.transpose()
-        postProcessAlloc(bitmap)
-    }
-
-    override fun colorMatrix(matrix: FloatArray, bitmap: ProtectedBitmapInterface) {
-        inner.colorMatrix(matrix)
-        postProcessAlloc(bitmap)
-    }
-
-    override fun width(): UInt {
-        return inner.width()
-    }
-
-    override fun height(): UInt {
-        return inner.height()
-    }
-
     override fun innerInterface(): ZilImageInterface {
         return inner;
     }
 
-    override fun save(
-        name: String,
-        format: ZilImageFormat,
-    ) {
-        inner.save(name, format)
-    }
-
-    override fun rotate(angle: Float, bitmap: ProtectedBitmapInterface) {
-        inner.rotate(angle)
-        postProcessAlloc(bitmap)
-    }
-
-    override fun sobel(bitmap: ProtectedBitmapInterface) {
-        inner.sobel()
-        postProcessPixelsManipulated(bitmap)
-    }
-
-
-    private fun postProcessAlloc(bitmap: ProtectedBitmapInterface) {
+    override fun postProcessAlloc(bitmap: ProtectedBitmapInterface) {
         runBlocking {
             if (bitmap is DesktopProtectedBitmap) {
                 bitmap.mutex.withLock {
@@ -222,7 +111,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     }
 
 
-    private fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
+    override fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
         runBlocking {
             bitmap.mutex().withLock {
                 if (bitmap is DesktopProtectedBitmap) {
@@ -231,18 +120,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
             }
         }
     }
-
-    override fun hslAdjust(
-        hue: Float,
-        saturation: Float,
-        lightness: Float,
-        bitmap: ProtectedBitmapInterface
-    ) {
-        inner.hslAdjust(hue, saturation, lightness)
-        postProcessPixelsManipulated(bitmap)
-
-    }
-
     override fun writeToCanvas(bitmap: ProtectedBitmapInterface) {
         inner.convertColorspace(ZilColorspace.BGRA)
         postProcessAlloc(bitmap)
