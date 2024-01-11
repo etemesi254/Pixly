@@ -9,6 +9,12 @@ enum class HistoryResponse {
     SameAsLastOperation,
 
     /**
+     * IT's the same as before, but the time it executed
+     * take it as pressing a continuous slider
+     * */
+    SameAsLastOperationButExecutedTooQuickly,
+
+    /**
      * A new operation different from the last type
      * */
     NewOperation,
@@ -113,6 +119,10 @@ enum class HistoryOperationsEnum(historyType: HistoryType) : HistoryOperationsIn
         override fun requiresValue(): Boolean = true
         override fun trivialUndo(): Boolean = false
     },
+    ColorMatrix(HistoryType.ImageFilter) {
+        override fun requiresValue(): Boolean = true
+        override fun trivialUndo(): Boolean = false
+    }
 
 
 }
@@ -143,13 +153,18 @@ class HistoryOperations {
             val currTime = System.currentTimeMillis()
             val diff = currTime - lastTimeAdded
 
-            if (diff < TIME_THRESHOLD) {
-                // just update previous with new value, don't update new value
-                values[values.lastIndex] = newValue
-                lastTimeAdded = currTime
+//            if (diff < TIME_THRESHOLD) {
+//                // just update previous with new value, don't update new value
+//                // values[values.lastIndex] = newValue
+//                lastTimeAdded = currTime
+//                return HistoryResponse.SameAsLastOperationButExecutedTooQuickly;
+//            }
 
-                return HistoryResponse.SameAsLastOperation
-            }
+            values.add(newValue)
+            history.add(historyEnum)
+            lastTimeAdded = System.currentTimeMillis()
+
+            return HistoryResponse.SameAsLastOperation
         }
         values.add(newValue)
         history.add(historyEnum)
