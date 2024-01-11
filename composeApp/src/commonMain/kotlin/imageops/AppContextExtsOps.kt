@@ -246,7 +246,22 @@ suspend fun AppContext.imageColorMatrix(matrix: FloatArray, addToHistory: Boolea
             HistoryResponse.DummyOperation
         }
         val image = ctx.currentImage(resp)
-        image.colorMatrix(matrix,ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        image.colorMatrix(matrix, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        broadcastImageChange()
+    }
+}
+
+suspend fun AppContext.imageSobel(addToHistory: Boolean=true) {
+    val ctx = currentImageContext()
+    ctx?.operationsMutex?.withLock {
+        initializeImageChange()
+        val resp = if (addToHistory) {
+            appendToHistory(HistoryOperationsEnum.Sobel)
+        } else {
+            HistoryResponse.DummyOperation
+        }
+        val image = ctx.currentImage(resp)
+        image.sobel(ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
         broadcastImageChange()
     }
 }
