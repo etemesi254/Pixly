@@ -1,11 +1,11 @@
+@file:Suppress("FunctionName")
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,6 +14,9 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import desktopComponents.ScalableImage
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
@@ -25,15 +28,25 @@ private fun Modifier.cursorForHorizontalResize(isHorizontal: Boolean): Modifier 
 @Composable
 fun ImageSpace(context: AppContext) {
 
+    var toModify by remember { mutableStateOf(false) }
+    rememberCoroutineScope().launch {
+        if (context.currentImageContext() != null) {
+            context.currentImageContext()!!.imageModified.collect {
+                toModify = it
+            }
+        }
+    }
+
     when (context.imageSpaceLayout) {
         ImageSpaceLayout.SingleLayout -> {
+
             // showing only one image
             Box(modifier = Modifier.fillMaxSize()) {
                 val imageContext = context.currentImageContext();
 
-                key(imageContext!!.imageModified) {
+                key(toModify) {
                     ScalableImage(
-                        imageContext,
+                        imageContext!!,
                     )
                 }
             }
@@ -50,6 +63,15 @@ fun ImageSpace(context: AppContext) {
 @Composable
 fun TwoPanedImageSpace(context: AppContext) {
     val pane = rememberSplitPaneState(0.5f)
+
+    var toModify by remember { mutableStateOf(false) }
+    rememberCoroutineScope().launch {
+        if (context.currentImageContext() != null) {
+            context.currentImageContext()!!.imageModified.collect {
+                toModify = it
+            }
+        }
+    }
 
     // ensure we have a bitmap for first canvas
     context.currentImageContext()?.canvasBitmaps?.putIfAbsent(
@@ -76,10 +98,15 @@ fun TwoPanedImageSpace(context: AppContext) {
                         };
                     }
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Text("Original", modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp), style = MaterialTheme.typography.h6, textAlign = TextAlign.End)
-                        key(imageContext?.imageModified) {
-                            ScalableImage(imageContext!!, imageContextBitmaps = ImageContextBitmaps.FirstCanvasImage)
-                        }
+                        Text(
+                            "Original",
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                            style = MaterialTheme.typography.h6,
+                            textAlign = TextAlign.End
+                        )
+
+                        ScalableImage(imageContext!!, imageContextBitmaps = ImageContextBitmaps.FirstCanvasImage)
+
                     }
                 }
             }
@@ -96,10 +123,15 @@ fun TwoPanedImageSpace(context: AppContext) {
                     val imageContext = context.currentImageContext();
 
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Text("Edited", modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp), style = MaterialTheme.typography.h6, textAlign = TextAlign.Start)
+                        Text(
+                            "Edited",
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                            style = MaterialTheme.typography.h6,
+                            textAlign = TextAlign.Start
+                        )
 
-                        key(imageContext!!.imageModified) {
-                            ScalableImage(imageContext)
+                        key(toModify) {
+                            ScalableImage(imageContext!!)
                         }
 
                     }
