@@ -4,6 +4,7 @@ import AppContext
 import FilterMatrixComponent
 import ZilBitmapInterface
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,13 +18,15 @@ import androidx.compose.ui.unit.dp
 import calcResize
 import colorMatricesPane
 import extensions.launchOnIoThread
+import imageops.imageColorMatrix
 
 
 @Composable
-fun SingleFilterPanel(image: ZilBitmapInterface, component: FilterMatrixComponent) {
+fun SingleFilterPanel(appCtx: AppContext, image: ZilBitmapInterface, component: FilterMatrixComponent) {
 
     val bitmap = remember { AndroidProtectedBitmap() }
     var isDone by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
 
@@ -36,8 +39,15 @@ fun SingleFilterPanel(image: ZilBitmapInterface, component: FilterMatrixComponen
         }
     }
     Column(
-        modifier = Modifier.fillMaxWidth().height(200.dp).padding(horizontal = 10.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxWidth().height(200.dp).padding(horizontal = 10.dp, vertical = 10.dp)
+            .clickable {
+                scope.launchOnIoThread {
+                    if (isDone) {
+                        appCtx.imageColorMatrix(component.colorMatrix)
+                    }
+                }
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
 
         if (isDone) {
@@ -74,7 +84,7 @@ fun ColorFilterPanel(appCtx: AppContext) {
                 // when scrolling up
                 Row(modifier = Modifier.fillMaxHeight().horizontalScroll(scrollState).padding(horizontal = 15.dp)) {
                     filters.forEach {
-                        SingleFilterPanel(image, it)
+                        SingleFilterPanel(appCtx, image, it)
                     }
                 }
             }
