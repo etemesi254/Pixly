@@ -10,7 +10,7 @@ suspend fun AppContext.undoSingleHistory() {
     val ctx = currentImageContext();
     if (ctx != null) {
 
-        var history = ctx.history.getHistory()
+        val history = ctx.history.getHistory()
         if (history.isNotEmpty()) {
             // we confirmed we have something
             val lastOperation = history.last()
@@ -31,7 +31,7 @@ suspend fun AppContext.undoSingleHistory() {
                 }
                 ctx.imageToDisplay().writeToCanvas(ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
 
-                ctx.imageModified = !ctx.imageModified
+                ctx.imageModified.value = !ctx.imageModified.value
                 broadcastImageChange()
 
                 // now write that to canvas
