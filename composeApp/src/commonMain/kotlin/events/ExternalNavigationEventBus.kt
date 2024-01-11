@@ -67,7 +67,7 @@ suspend fun handleKeyEvents(appCtx: AppContext) {
                 if (fileValue != null && isImage(fileValue)) {
                     appCtx.imFile = fileValue
 
-                    appCtx.showStates.showTopLinearIndicator = true;
+                    appCtx.showStates.showTopLinearIndicator.value = true;
 
                     loadImage(appCtx, false)
 
