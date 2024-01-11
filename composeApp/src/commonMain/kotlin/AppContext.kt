@@ -121,16 +121,24 @@ class ImageContext(image: ZilBitmapInterface) {
         }
         if (history.getHistory().size > 1 && (response == HistoryResponse.SameAsLastOperation || response == HistoryResponse.SameAsLastOperationButExecutedTooQuickly)) {
 
-            if (true || response == HistoryResponse.SameAsLastOperation)
-            {
+            if (true || response == HistoryResponse.SameAsLastOperation) {
                 // we repeated operations, iterate until the operations do not match, copy that
                 // and then return that clone to the user
                 val historyOperations = history.getHistory();
 
                 val lastOp = historyOperations.last();
 
+                // some operations didn't create a copy o the image hence they don't
+                // exist in the image buffer, those that are easy to undo
+                // so ensure we take that into account when we find an index
+                var itemsNotAddedToHistory = 0;
+
                 for (i in 0 until historyOperations.size) {
-                    val idx = historyOperations.size - i - 1;
+                    val idx = historyOperations.size - i - 1 - itemsNotAddedToHistory;
+                    if (historyOperations[idx].trivialUndo()) {
+                        itemsNotAddedToHistory += 1;
+                        continue
+                    }
                     if (historyOperations[idx] != lastOp) {
                         // found the index
                         // clone that
@@ -327,7 +335,7 @@ class AppContext {
 
 
     fun initializeImageChange() {
-        showStates.showTopLinearIndicator = true
+        showStates.showTopLinearIndicator.value = true
 
     }
 
@@ -335,7 +343,7 @@ class AppContext {
         // tell whoever is listening to this to rebuild
         recomposeWidgets.rerunHistogram = !recomposeWidgets.rerunHistogram
         recomposeWidgets.rerunImageSpecificStates = !recomposeWidgets.rerunImageSpecificStates
-        showStates.showTopLinearIndicator = false
+        showStates.showTopLinearIndicator.value = false
 
     }
 
@@ -384,7 +392,7 @@ class AppContext {
     }
 
     fun operationIsOngoing(): Boolean {
-        return showStates.showTopLinearIndicator
+        return showStates.showTopLinearIndicator.value
     }
 
     fun removeFile(file: File) {
