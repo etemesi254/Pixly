@@ -5,14 +5,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.godaddy.android.colorpicker.ClassicColorPicker
+import com.godaddy.android.colorpicker.HsvColor
+import com.godaddy.android.colorpicker.harmony.ColorHarmonyMode
+import com.godaddy.android.colorpicker.harmony.HarmonyColorPicker
 import components.CollapsibleBox
 import components.HistogramChart
 import extensions.launchOnIoThread
@@ -95,7 +99,6 @@ fun LightFiltersComponent(appContext: AppContext) {
 
 @Composable
 fun OrientationFiltersComponent(appContext: AppContext) {
-
     Box(modifier = Modifier.padding(vertical = 10.dp)) {
         CollapsibleBox("Orientation", appContext.showStates.showOrientationFilters, {
             appContext.showStates.showOrientationFilters = appContext.showStates.showOrientationFilters.xor(true)
@@ -358,6 +361,30 @@ fun HslFiltersComponent(appContext: AppContext) {
         }) {
             val scope = rememberCoroutineScope()
             Column {
+
+                var updatedHsvColor by remember() {
+                    mutableStateOf(HsvColor.from(Color.Red))
+                }
+                Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+
+                    HarmonyColorPicker(
+                        modifier = Modifier,
+                        harmonyMode = ColorHarmonyMode.NONE,
+                        color = updatedHsvColor,
+                        onColorChanged = { hsvColor: HsvColor ->
+                            updatedHsvColor = hsvColor
+                            if (appContext.currentImageContext() != null) {
+                                val ctx = appContext.currentImageContext()!!;
+                                ctx.filterValues.hue = hsvColor.hue;
+                                ctx.filterValues.saturation = hsvColor.saturation;
+                                ctx.filterValues.lightness = hsvColor.value;
+                            }
+                            // hsvColor.hue;
+                            //onColorChanged(hsvColor)
+                        },
+                    )
+                }
+
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(10.dp).scale(1F)
                 ) {
@@ -371,6 +398,7 @@ fun HslFiltersComponent(appContext: AppContext) {
 
                         ) {
                             scope.launchOnIoThread {
+                                updatedHsvColor = updatedHsvColor.copy(hue = it);
                                 appContext.imageHslAdjust(
                                     hue = it
                                 )
@@ -392,6 +420,8 @@ fun HslFiltersComponent(appContext: AppContext) {
 
                         ) {
                             scope.launchOnIoThread {
+                                updatedHsvColor = updatedHsvColor.copy(saturation = it.coerceIn(0F..1F));
+
                                 appContext.imageHslAdjust(
                                     saturation = it
                                 )
@@ -413,6 +443,8 @@ fun HslFiltersComponent(appContext: AppContext) {
 
                         ) {
                             scope.launchOnIoThread {
+                                updatedHsvColor = updatedHsvColor.copy(value = it.coerceIn(0F..1F));
+
                                 appContext.imageHslAdjust(
                                     lightness = it
                                 )
