@@ -124,10 +124,6 @@ fun AndroidScalableImage(
                 SideEffect {
                     ctx.zoomState.limitTargetInsideArea(areaSize, imageSize)
                 }
-
-                //Image(canvasBitmap.asImageBitmap(), contentDescription = null)
-
-                //Image()
             }
         }
     }
