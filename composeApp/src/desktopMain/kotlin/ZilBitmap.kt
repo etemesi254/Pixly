@@ -32,7 +32,7 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
 
         // first convert it to RGBA
         inner.convertColorspace(ZilColorspace.RGBA)
-       
+
         inner.convertColorspace(ZilColorspace.BGRA)
         // set up canvas
         runBlocking {
@@ -202,6 +202,11 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     override fun rotate(angle: Float, bitmap: ProtectedBitmapInterface) {
         inner.rotate(angle)
         postProcessAlloc(bitmap)
+    }
+
+    override fun sobel(bitmap: ProtectedBitmapInterface) {
+        inner.sobel()
+        postProcessPixelsManipulated(bitmap)
     }
 
 
