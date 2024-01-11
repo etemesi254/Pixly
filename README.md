@@ -1,5 +1,8 @@
 ## Demo
-![Video demo](./video/desktop.mp4)
+Watch the video of demo (Youtube)
+[![Watch the video](https://img.youtube.com/vi/bYdezBoQBOo/hqdefault.jpg)](https://youtu.be/bYdezBoQBOo)
+
+
 ## Features.
  - Load images in various formats - png, jpeg, ppm, jxl, bmp, qoi, pfm.
  - Save images in various formats- jpeg, png, webp, bmp, ico, gif.
