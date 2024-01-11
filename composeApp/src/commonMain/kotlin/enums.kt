@@ -40,7 +40,13 @@ enum class RightPaneOpened {
      * History panel ,contains previous commands performed
      * by operations that can be undone
      * */
-    HistoryPanel
+    HistoryPanel,
+
+    /**
+     * Just shows the histogram as a standalone widget.
+     * Used by Android endpoint
+     * */
+    HistogramPanel,
 
 }
 
