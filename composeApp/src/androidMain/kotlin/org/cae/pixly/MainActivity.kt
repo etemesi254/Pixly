@@ -2,6 +2,7 @@ package org.cae.pixly
 
 import AppContext
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import components.TopTabBar
+import kotlinx.coroutines.launch
 import modifiers.modifyOnChange
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -37,6 +39,23 @@ fun App() {
     val context by remember { mutableStateOf(AppContext()) }
     var isFirstDraw by remember { mutableStateOf(false) }
     val imBackgroundColor = if (context.imageIsLoaded()) Color.Transparent else Color(0x0F_00_00_00)
+    var showLinearIndicator by remember { mutableStateOf(false) }
+
+    var imageIsModified by remember { mutableStateOf(false) }
+    rememberCoroutineScope().launch {
+        context.showStates.showTopLinearIndicator.collect {
+            showLinearIndicator = it
+        }
+    }
+    rememberCoroutineScope().launch {
+        if (context.currentImageContext() != null) {
+            context.currentImageContext()!!.imageModified.collect {
+                imageIsModified = it
+            }
+        }
+    }
+
+
 
 
     if (isFirstDraw) {
@@ -56,19 +75,21 @@ fun App() {
             BottomBar(context)
         }) {
             Column(modifier = Modifier.fillMaxSize().padding(it), horizontalAlignment = Alignment.CenterHorizontally) {
+
                 Box(
                     Modifier.background(imBackgroundColor)
                         .fillMaxSize()
-                        .modifyOnChange(context.changeOnCloseTab)
-                        .clickable(enabled = !context.imageIsLoaded() && !context.showStates.showTopLinearIndicator) {
+                        .modifyOnChange(context.changeOnCloseTab || showLinearIndicator)
+                        .clickable(enabled = !context.imageIsLoaded() && !showLinearIndicator) {
                             context.showStates.showPopups = !context.showStates.showPopups;
                             if (!context.imageIsLoaded()) {
                                 context.showStates.showFilePicker = true;
                             }
                         }) {
-                    if (context.showStates.showTopLinearIndicator){
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    }
+                    Log.e("Pixly-inside", "Rerendering :${showLinearIndicator}")
+
+
+
                     if (!context.imageIsLoaded()) {
                         Column(
                             verticalArrangement = Arrangement.Center,
@@ -76,7 +97,7 @@ fun App() {
                             modifier = Modifier.fillMaxSize()
                         ) {
 
-                            if (context.showStates.showTopLinearIndicator) {
+                            if (showLinearIndicator) {
 
                                 // An image is loading or something
                                 CircularProgressIndicator()
@@ -122,7 +143,9 @@ fun App() {
                                                 245
                                             ) else Color(25, 25, 25)
                                     ) {
-                                        AndroidScalableImage(context);
+                                        key(imageIsModified) {
+                                            AndroidScalableImage(context);
+                                        }
                                     }
                                 }
                             }
