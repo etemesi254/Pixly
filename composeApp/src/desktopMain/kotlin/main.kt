@@ -84,7 +84,6 @@ actual fun loadImage(appCtx: AppContext, forceReload: Boolean) {
 @Preview
 fun App(appCtx: AppContext) {
 
-
     val imBackgroundColor = if (appCtx.imageIsLoaded()) Color.Transparent else Color(0x0F_00_00_00)
 
     val topHorizontalSplitterState = rememberSplitPaneState(0F)
@@ -111,6 +110,14 @@ fun App(appCtx: AppContext) {
         imageIsLoaded = true
     }
 
+
+    var showLinearIndicator by remember { mutableStateOf(false) }
+    rememberCoroutineScope().launch {
+        appCtx.showStates.showTopLinearIndicator.collect {
+            showLinearIndicator = it
+        }
+
+    }
     // TODO: See if we can get smoother for themes transitions
     //  https://stackoverflow.com/questions/70942573/android-jetpack-composecomposable-change-theme-color-smoothly
     MaterialTheme(
@@ -340,7 +347,7 @@ fun App(appCtx: AppContext) {
                                                 Modifier.background(imBackgroundColor).fillMaxSize()
                                                     .modifyOnChange(appCtx.changeOnCloseTab)
                                                     .padding(horizontal = 0.dp)
-                                                    .clickable(enabled = !appCtx.imageIsLoaded() && !appCtx.showStates.showTopLinearIndicator) {
+                                                    .clickable(enabled = !appCtx.imageIsLoaded() && showLinearIndicator) {
                                                         appCtx.showStates.showPopups = !appCtx.showStates.showPopups;
                                                         if (!appCtx.imageIsLoaded()) {
                                                             appCtx.showStates.showFilePicker = true;
@@ -360,7 +367,7 @@ fun App(appCtx: AppContext) {
                                                         modifier = Modifier.fillMaxSize()
                                                     ) {
 
-                                                        if (appCtx.showStates.showTopLinearIndicator) {
+                                                        if (showLinearIndicator) {
 
                                                             // An image is loading or something
                                                             CircularProgressIndicator()
@@ -441,7 +448,7 @@ fun App(appCtx: AppContext) {
                     ) {
                         if (appCtx.imageIsLoaded()) {
                             Text(
-                          "",
+                                "",
                                 //"${formatter.format(appCtx.currentImageContext()!!.zoomState.zoom * 100F)} %",
                                 style = TextStyle(fontSize = TextUnit(12F, TextUnitType.Sp)),
                                 overflow = TextOverflow.Ellipsis,
@@ -468,7 +475,7 @@ fun App(appCtx: AppContext) {
                         modifier = Modifier.fillMaxWidth().padding(end = 40.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (appCtx.showStates.showTopLinearIndicator) {
+                            if (showLinearIndicator) {
                                 LinearProgressIndicator()
                             }
                             Box(modifier = Modifier) {

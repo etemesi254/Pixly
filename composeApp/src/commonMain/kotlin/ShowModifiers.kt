@@ -1,9 +1,10 @@
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class ShowModifiers {
-    var showTopLinearIndicator by mutableStateOf(false)
+    var showTopLinearIndicator = MutableStateFlow(false)
     var showFilePicker by mutableStateOf(false)
     var showDirectoryPicker by mutableStateOf(false)
     var showPopups by mutableStateOf(false)

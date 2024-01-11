@@ -21,6 +21,8 @@ import desktopComponents.*
 import extensions.launchOnIoThread
 import history.HistoryWidget
 import imageops.imageColorMatrix
+import imageops.imageContrast
+import imageops.imageSobel
 import modifiers.backgroundColorIfCondition
 import modifiers.modifyOnChange
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -44,7 +46,7 @@ fun histogramPane(appCtx: AppContext) {
 @Composable
 fun RightPanel(appCtx: AppContext) {
 
-    var isEnabled by remember {  mutableStateOf(false)}
+    var isEnabled by remember { mutableStateOf(false) }
 
     SideEffect {
         if (appCtx.imageIsLoaded()) {
@@ -65,7 +67,7 @@ fun RightPanel(appCtx: AppContext) {
                     RightPaneOpened.FineTunePanel -> ImageFineTunePane(appCtx)
                     RightPaneOpened.HistoryPanel -> HistoryWidget(appCtx)
                     RightPaneOpened.ImageFilters -> FiltersPanel(appCtx)
-                   else -> Box {}
+                    else -> Box {}
                 }
             }
         }
@@ -90,7 +92,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                       enabled = isEnabled ,
+                        enabled = isEnabled,
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.InformationPanel
                         }) {
@@ -112,7 +114,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled = isEnabled ,
+                        enabled = isEnabled,
 
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.FineTunePanel
@@ -135,7 +137,7 @@ fun RightPanel(appCtx: AppContext) {
                             }
 
                         },
-                        enabled = isEnabled ,
+                        enabled = isEnabled,
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.ImageFilters
                         }
@@ -157,7 +159,7 @@ fun RightPanel(appCtx: AppContext) {
                                 appCtx.openedRightPane = RightPaneOpened.HistoryPanel
                             }
                         },
-                        enabled = isEnabled ,
+                        enabled = isEnabled,
 
                         modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
                             appCtx.openedRightPane == RightPaneOpened.HistoryPanel
@@ -345,9 +347,8 @@ fun ImageFineTunePane(appCtx: AppContext) {
 }
 
 
-
 @Composable
-fun SingleFilterPanel(appCtx: AppContext,image: ZilBitmapInterface, component: FilterMatrixComponent) {
+fun SingleFilterPanel(appCtx: AppContext, image: ZilBitmapInterface, component: FilterMatrixComponent) {
 
     val bitmap = remember { DesktopProtectedBitmap() }
     var isDone by remember { mutableStateOf(false) }
@@ -381,6 +382,46 @@ fun SingleFilterPanel(appCtx: AppContext,image: ZilBitmapInterface, component: F
     }
 }
 
+@Composable
+fun NormalFilterComponent(
+    appCtx: AppContext,
+    image: ZilBitmapInterface,
+    name: String,
+    operationOnSmallImage: (ZilBitmapInterface) -> Unit,
+    operationOnLargeImage: (AppContext) -> Unit
+) {
+    val bitmap = remember { DesktopProtectedBitmap() }
+    var isDone by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+
+        this.launchOnIoThread {
+            if (!isDone) {
+                val image = image.clone()
+                (operationOnSmallImage)(image)
+                image.writeToCanvas(bitmap)
+                isDone = true
+            }
+        }
+    }
+    Column(modifier = Modifier.fillMaxWidth().height(300.dp).clickable {
+        scope.launchOnIoThread {
+            if (isDone) {
+                (operationOnLargeImage)(appCtx)
+            }
+        }
+    }, horizontalAlignment = Alignment.CenterHorizontally) {
+
+        if (isDone) {
+            Image(bitmap.asImageBitmap(), null, modifier = Modifier.fillMaxWidth().height(250.dp))
+        } else {
+            CircularProgressIndicator()
+        }
+
+        Text(name)
+    }
+}
 
 @Composable
 fun FiltersPanel(appCtx: AppContext) {
@@ -390,6 +431,7 @@ fun FiltersPanel(appCtx: AppContext) {
     val filters = colorMatricesPane()
 
     val ctx = appCtx.currentImageContext();
+    val scope = rememberCoroutineScope();
     if (ctx != null) {
         val image = remember(ctx.images.size) {
             val c = ctx.imageToDisplay().clone()
@@ -405,8 +447,21 @@ fun FiltersPanel(appCtx: AppContext) {
             // when scrolling up
             Column(modifier = Modifier.fillMaxHeight().verticalScroll(scrollState).padding(horizontal = 15.dp)) {
                 filters.forEach {
-                    SingleFilterPanel(appCtx,image, it)
+                    SingleFilterPanel(appCtx, image, it)
                 }
+
+                NormalFilterComponent(appCtx, image, "Edges", { it -> it.innerInterface().sobel() }) {
+                    scope.launchOnIoThread {
+                        it.imageSobel()
+                    }
+                }
+                NormalFilterComponent(appCtx, image, "+50 contrast",
+                    { it -> it.innerInterface().contrast(50F) }) {
+                    scope.launchOnIoThread {
+                        it.imageContrast(50F)
+                    }
+                }
+
             }
 
             VerticalScrollbar(
