@@ -3,47 +3,46 @@ interface ZilBitmapInterface {
     fun prepareNewFile(bitmap: ProtectedBitmapInterface)
     fun clone(): ZilBitmapInterface
     fun postProcessAlloc(bitmap: ProtectedBitmapInterface)
-    fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface)
 
 
     fun hslAdjust(hue: Float, saturation: Float, lightness: Float, bitmap: ProtectedBitmapInterface){
         innerInterface().hslAdjust(hue,saturation,lightness)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun contrast(delta: Float, bitmap: ProtectedBitmapInterface) {
         innerInterface().contrast(delta);
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun exposure(value: Float, blackPoint: Float, bitmap: ProtectedBitmapInterface) {
         innerInterface().exposure(value, blackPoint)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun stretchContrast(value: ClosedFloatingPointRange<Float>, bitmap: ProtectedBitmapInterface) {
         innerInterface().stretchContrast(value.start, value.endInclusive)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun gaussianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         innerInterface().gaussianBlur(radius)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun medianBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         innerInterface().medianBlur(radius)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun bilateralBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         innerInterface().bilateralFilter(radius.toInt(), radius.toFloat(), radius.toFloat())
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun boxBlur(radius: Long, bitmap: ProtectedBitmapInterface) {
         innerInterface().boxBlur(radius)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun flip(bitmap: ProtectedBitmapInterface) {
@@ -68,12 +67,12 @@ interface ZilBitmapInterface {
 
     fun brighten(delta: Float, bitmap: ProtectedBitmapInterface) {
         innerInterface().brightness(delta)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun colorMatrix(matrix: FloatArray, bitmap: ProtectedBitmapInterface) {
         innerInterface().colorMatrix(matrix)
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
     fun width(): UInt {
@@ -97,7 +96,7 @@ interface ZilBitmapInterface {
 
     fun sobel(bitmap: ProtectedBitmapInterface) {
         innerInterface().sobel()
-        postProcessPixelsManipulated(bitmap)
+        postProcessAlloc(bitmap)
     }
 
 }

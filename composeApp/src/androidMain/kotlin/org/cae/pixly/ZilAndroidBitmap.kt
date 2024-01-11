@@ -50,15 +50,6 @@ class ZilAndroidBitmap(private val image: ZilImageInterface, private val android
     }
 
 
-    override fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
-        runBlocking {
-            bitmap.mutex().withLock {
-                if (bitmap is AndroidProtectedBitmap) {
-                    installPixels(bitmap)
-                }
-            }
-        }
-    }
 
     private fun allocBuffer(bitmap: AndroidProtectedBitmap) {
         val imWidth = image.width().toInt();

@@ -111,15 +111,6 @@ class ZilBitmap(private val tempSharedBuffer: SharedBuffer, image: ZilImageInter
     }
 
 
-    override fun postProcessPixelsManipulated(bitmap: ProtectedBitmapInterface) {
-        runBlocking {
-            bitmap.mutex().withLock {
-                if (bitmap is DesktopProtectedBitmap) {
-                    installPixels(bitmap.image)
-                }
-            }
-        }
-    }
     override fun writeToCanvas(bitmap: ProtectedBitmapInterface) {
         inner.convertColorspace(ZilColorspace.BGRA)
         postProcessAlloc(bitmap)
