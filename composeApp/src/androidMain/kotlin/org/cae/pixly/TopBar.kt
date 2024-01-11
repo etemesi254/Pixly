@@ -5,17 +5,26 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import extensions.launchOnIoThread
 import history.undoSingleHistory
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun TopBar(context: AppContext) {
+    var showLinearIndicator by remember { mutableStateOf(false) }
+    rememberCoroutineScope().launch {
+        context.showStates.showTopLinearIndicator.collect {
+            showLinearIndicator = it
+        }
+    }
     Column(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             IconButton(onClick = {
@@ -27,9 +36,7 @@ fun TopBar(context: AppContext) {
                     modifier = Modifier.size(22.dp)
                 )
             }
-
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-
                 Box(modifier = Modifier.padding(horizontal = 5.dp)) {
                     val scope = rememberCoroutineScope()
                     IconButton(
@@ -80,6 +87,18 @@ fun TopBar(context: AppContext) {
             }
         }
 
-        Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+        Box(modifier = Modifier.height(2.dp)) {
+            if (showLinearIndicator) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = Color.Transparent
+                )
+            }
+        }
+        Box(modifier = Modifier.requiredHeight(1.dp)) {
+            Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+        }
+
+
     }
 }
