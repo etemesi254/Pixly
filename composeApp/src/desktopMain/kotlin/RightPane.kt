@@ -20,6 +20,7 @@ import components.*
 import desktopComponents.*
 import extensions.launchOnIoThread
 import history.HistoryWidget
+import imageops.imageColorMatrix
 import modifiers.backgroundColorIfCondition
 import modifiers.modifyOnChange
 import org.burnoutcrew.reorderable.ReorderableItem
@@ -60,11 +61,11 @@ fun RightPanel(appCtx: AppContext) {
                 modifier = Modifier.fillMaxWidth().padding(end = 40.dp)
             ) {
                 when (appCtx.openedRightPane) {
-                    RightPaneOpened.None -> Box {}
                     RightPaneOpened.InformationPanel -> InformationPanel(appCtx)
                     RightPaneOpened.FineTunePanel -> ImageFineTunePane(appCtx)
                     RightPaneOpened.HistoryPanel -> HistoryWidget(appCtx)
                     RightPaneOpened.ImageFilters -> FiltersPanel(appCtx)
+                   else -> Box {}
                 }
             }
         }
@@ -346,10 +347,11 @@ fun ImageFineTunePane(appCtx: AppContext) {
 
 
 @Composable
-fun SingleFilterPanel(image: ZilBitmapInterface, component: FilterMatrixComponent) {
+fun SingleFilterPanel(appCtx: AppContext,image: ZilBitmapInterface, component: FilterMatrixComponent) {
 
     val bitmap = remember { DesktopProtectedBitmap() }
     var isDone by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
 
@@ -361,7 +363,13 @@ fun SingleFilterPanel(image: ZilBitmapInterface, component: FilterMatrixComponen
             }
         }
     }
-    Column(modifier = Modifier.fillMaxWidth().height(300.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier = Modifier.fillMaxWidth().height(300.dp).clickable {
+        scope.launchOnIoThread {
+            if (isDone) {
+                appCtx.imageColorMatrix(component.colorMatrix)
+            }
+        }
+    }, horizontalAlignment = Alignment.CenterHorizontally) {
 
         if (isDone) {
             Image(bitmap.asImageBitmap(), null, modifier = Modifier.fillMaxWidth().height(250.dp))
@@ -397,7 +405,7 @@ fun FiltersPanel(appCtx: AppContext) {
             // when scrolling up
             Column(modifier = Modifier.fillMaxHeight().verticalScroll(scrollState).padding(horizontal = 15.dp)) {
                 filters.forEach {
-                    SingleFilterPanel(image, it)
+                    SingleFilterPanel(appCtx,image, it)
                 }
             }
 
