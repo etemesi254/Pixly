@@ -12,34 +12,47 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @Composable
 fun HistoryWidget(ctx: AppContext) {
-    val state = rememberLazyListState()
+    val state = rememberScrollState()
     val regexSplit = remember { Regex("(?=\\p{Upper})") }
+
     if (ctx.currentImageContext() != null) {
-        key(ctx.currentImageContext()!!.imageModified) {
-            Box(modifier = Modifier.fillMaxSize()) {
+
+        var toModify by remember { mutableStateOf(false) }
+        rememberCoroutineScope().launch {
+            ctx.currentImageContext()!!.imageModified.collect {
+                toModify = it
+            }
+        }
+
+        key(toModify) {
+            Box(modifier = Modifier.fillMaxSize().padding(end=10.dp)) {
                 Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
-                Column(modifier = Modifier.fillMaxSize().padding(start = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(start = 2.dp).verticalScroll(state = state ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
 
                     Text("History", style = MaterialTheme.typography.h5, modifier = Modifier.padding(vertical = 10.dp))
-                    Divider()
+                    Divider(modifier = Modifier.padding(end=10.dp))
 
                     ctx.getHistory()?.getHistory()?.forEachIndexed { index, history ->
 
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(end=10.dp)) {
                             val historyValue = ctx.getHistory()!!.getValue()[index];
 
                             Row(
@@ -53,9 +66,7 @@ fun HistoryWidget(ctx: AppContext) {
                                     history.toString().split(regexSplit).joinToString(" ") { string -> string }
 
                                 Text(historyFormatted)
-                                if (history.requiresValue()) {
-                                    Text(historyValue.toString())
-                                }
+
                             }
 
                             Divider()
