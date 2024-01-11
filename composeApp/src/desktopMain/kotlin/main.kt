@@ -441,7 +441,8 @@ fun App(appCtx: AppContext) {
                     ) {
                         if (appCtx.imageIsLoaded()) {
                             Text(
-                                "${formatter.format(appCtx.currentImageContext()!!.zoomState.zoom * 100F)} %",
+                          "",
+                                //"${formatter.format(appCtx.currentImageContext()!!.zoomState.zoom * 100F)} %",
                                 style = TextStyle(fontSize = TextUnit(12F, TextUnitType.Sp)),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1
@@ -526,15 +527,26 @@ fun main() = application {
             }
 
             when (it.key) {
-                Key.DirectionLeft -> appContext.externalNavigationEventBus.produceEvent(
-                    ExternalImageViewerEvent.Previous
-                )
+                Key.DirectionLeft -> {
+                    if (it.isCtrlPressed) {
+                        appContext.externalNavigationEventBus.produceEvent(
+                            ExternalImageViewerEvent.Previous
+                        )
+                    }
+                }
 
-                Key.DirectionRight -> appContext.externalNavigationEventBus.produceEvent(
-                    ExternalImageViewerEvent.Next
-                )
 
-                Key.R -> appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.ReloadImage)
+                Key.DirectionRight -> {
+                    if (it.isCtrlPressed) {
+                        appContext.externalNavigationEventBus.produceEvent(
+                            ExternalImageViewerEvent.Next
+                        )
+                    }
+                }
+
+                Key.R -> if (it.isCtrlPressed) {
+                    appContext.externalNavigationEventBus.produceEvent(ExternalImageViewerEvent.ReloadImage)
+                }
 
 
             }
