@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import components.HistogramChart
 import components.ImageInformationComponent
 import modifiers.backgroundColorIfCondition
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -34,20 +37,26 @@ fun InformationPanel(appCtx: AppContext) {
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalResourceApi::class, ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun BottomBar(appCtx: AppContext) {
+    val scope = rememberCoroutineScope()
+
     Column(
         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (appCtx.openedRightPane != RightPaneOpened.None) {
-            Box(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), contentAlignment = Alignment.BottomCenter) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                contentAlignment = Alignment.BottomCenter
+            ) {
                 when (appCtx.openedRightPane) {
                     RightPaneOpened.None -> Box {}
                     RightPaneOpened.InformationPanel -> InformationPanel(appCtx)
                     RightPaneOpened.ImageFilters -> ColorFilterPanel(appCtx)
-                    RightPaneOpened.FineTunePanel-> ImageFilters(appCtx)
+                    RightPaneOpened.FineTunePanel -> ImageFilters(appCtx)
+                    RightPaneOpened.HistogramPanel -> Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(10.dp)){HistogramChart(appCtx, showIndicators = true)}
                     else -> Box {}
                 }
             }
@@ -56,6 +65,25 @@ fun BottomBar(appCtx: AppContext) {
 
         Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.Center) {
 
+            IconButton(
+                {
+                    if (appCtx.openedRightPane == RightPaneOpened.HistogramPanel) {
+                        appCtx.openedRightPane = RightPaneOpened.None
+                    } else {
+                        appCtx.openedRightPane = RightPaneOpened.HistogramPanel
+                    }
+
+                },
+                enabled = appCtx.imageIsLoaded(),
+                modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                    appCtx.openedRightPane == RightPaneOpened.HistogramPanel
+                }) {
+                Icon(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.histogram_linear_svgrepo_com),
+                    contentDescription = null,
+                    modifier = Modifier.size(25.dp)
+                )
+            }
             IconButton(
                 {
                     if (appCtx.openedRightPane == RightPaneOpened.InformationPanel) {
