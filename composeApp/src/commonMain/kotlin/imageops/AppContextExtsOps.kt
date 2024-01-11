@@ -235,3 +235,18 @@ suspend fun AppContext.imageHslAdjust(hue: Float? = null, saturation: Float? = n
 
     }
 }
+
+suspend fun AppContext.imageColorMatrix(matrix: FloatArray, addToHistory: Boolean = true) {
+    val ctx = currentImageContext()
+    ctx?.operationsMutex?.withLock {
+        initializeImageChange()
+        val resp = if (addToHistory) {
+            appendToHistory(HistoryOperationsEnum.ColorMatrix, value = matrix)
+        } else {
+            HistoryResponse.DummyOperation
+        }
+        val image = ctx.currentImage(resp)
+        image.colorMatrix(matrix,ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        broadcastImageChange()
+    }
+}

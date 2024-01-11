@@ -84,7 +84,7 @@ class ImageContext(image: ZilBitmapInterface) {
     var operationsMutex: Mutex = Mutex()
     var imageIsLoaded = MutableStateFlow(false)
     var zoomState by mutableStateOf(ScalableState())
-    var imageModified by mutableStateOf(false)
+    var imageModified = MutableStateFlow(false)
     var file by mutableStateOf(File("/"))
 
     // Use multiple bitmaps in order to reduce contention, e.g do not fight
@@ -106,6 +106,69 @@ class ImageContext(image: ZilBitmapInterface) {
      * operations mutex, otherwise bad things will happen (race conditions + native code)
      * */
     fun currentImage(response: HistoryResponse): ZilBitmapInterface {
+        if (images.size == 1) {
+            // we only have the initial image, clone it
+            val image = images.first().clone();
+            images.add(image);
+            return image;
+        }
+
+        if (history.getHistory().isNotEmpty() && history.getHistory().last()
+                .trivialUndo()
+        ) {
+            // trivial undo, just return the last copy
+            return images.last();
+        }
+        if (history.getHistory().size > 1 && (response == HistoryResponse.SameAsLastOperation || response == HistoryResponse.SameAsLastOperationButExecutedTooQuickly)) {
+
+            if (true || response == HistoryResponse.SameAsLastOperation)
+            {
+                // we repeated operations, iterate until the operations do not match, copy that
+                // and then return that clone to the user
+                val historyOperations = history.getHistory();
+
+                val lastOp = historyOperations.last();
+
+                for (i in 0 until historyOperations.size) {
+                    val idx = historyOperations.size - i - 1;
+                    if (historyOperations[idx] != lastOp) {
+                        // found the index
+                        // clone that
+                        val newImg = images[idx].clone();
+                        images.add(newImg);
+                        return images.last();
+                    }
+                }
+                // it's the first operation , eg. you modified brightness and then modified brightness again
+                // so return the clone of the first
+                val newImg = images.first().clone();
+                images.add(newImg);
+                return images.last();
+            } else if (response == HistoryResponse.SameAsLastOperationButExecutedTooQuickly) {
+                // this operation wasn't added to the history stack
+                // so we have to treat it differently
+
+                val historyOperations = history.getHistory();
+
+                // since it's the same as the last one, we know the history is this
+                val lastOp = historyOperations.last();
+
+                for (i in 0 until historyOperations.size) {
+                    val idx = historyOperations.size - i - 1;
+                    if (historyOperations[idx] != lastOp) {
+                        // found the index
+                        // clone that
+                        val newImg = images[idx].clone();
+                        //   images.add(newImg);
+                        return newImg;
+                    }
+                }
+                val newImg = images.first().clone();
+
+                return newImg;
+            }
+        }
+
         // peek into history to see if we need to create a new image, add it to the stack and return it or
         // if the operation has a trivial undo, just let it be
         // we are assured that history just pushed this operation since we require HistoryResponse
@@ -137,7 +200,7 @@ class ImageContext(image: ZilBitmapInterface) {
         history = HistoryOperations()
         images = mutableListOf(newImage)
         images[0].writeToCanvas(canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
-        imageModified = !imageModified
+        imageModified.value = !imageModified.value
         // imageIsLoaded = true
     }
 }
