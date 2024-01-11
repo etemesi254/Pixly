@@ -4,7 +4,6 @@ import AppContext
 import history.HistoryOperationsEnum
 import history.HistoryResponse
 import kotlinx.coroutines.sync.withLock
-import java.text.DecimalFormat
 import kotlin.math.absoluteValue
 
 /**
@@ -256,7 +255,7 @@ suspend fun AppContext.imageSobel(addToHistory: Boolean=true) {
     ctx?.operationsMutex?.withLock {
         initializeImageChange()
         val resp = if (addToHistory) {
-            appendToHistory(HistoryOperationsEnum.Sobel)
+            appendToHistory(HistoryOperationsEnum.Edges)
         } else {
             HistoryResponse.DummyOperation
         }
