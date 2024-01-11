@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.DropdownMenuState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +48,6 @@ fun ImageCroper(
         if (canvasBitmap != null) {
             val image = canvasBitmap.asImageBitmap()
             val imageSize = image.size
-            val menu = remember { DropdownMenuState(initialStatus = DropdownMenuState.Status.Closed) }
 
             val imageCenter = Offset(image.width / 2f, image.height / 2f)
             val areaCenter = Offset(areaSize.width / 2f, areaSize.height / 2f)
