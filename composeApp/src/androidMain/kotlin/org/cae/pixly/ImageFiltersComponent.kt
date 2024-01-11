@@ -105,7 +105,7 @@ fun ImageFilters(appContext: AppContext) {
             ImageFiltersComponentClicked.None -> Box {}
             ImageFiltersComponentClicked.Light -> LightFilters(appContext)
             ImageFiltersComponentClicked.HSL -> LightFilters(appContext)
-            ImageFiltersComponentClicked.Blur -> LightFilters(appContext)
+            ImageFiltersComponentClicked.Blur -> BlurFiltersComponent(appContext)
             ImageFiltersComponentClicked.Orientation -> AndroidOrientationFilters(appContext)
         }
         Divider(modifier = Modifier.fillMaxWidth())
