@@ -122,6 +122,10 @@ enum class HistoryOperationsEnum(historyType: HistoryType) : HistoryOperationsIn
     ColorMatrix(HistoryType.ImageFilter) {
         override fun requiresValue(): Boolean = true
         override fun trivialUndo(): Boolean = false
+    },
+    Edges(HistoryType.ImageFilter) {
+        override fun requiresValue(): Boolean = false
+        override fun trivialUndo(): Boolean = false
     }
 
 
