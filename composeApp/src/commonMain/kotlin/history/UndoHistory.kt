@@ -35,10 +35,11 @@ suspend fun AppContext.undoSingleHistory() {
                 broadcastImageChange()
 
                 // now write that to canvas
-
-
             }
-            // remove it from
+            // We just popped of what may be a whole image from memory
+            //
+            // So let's try to tell the gc that maybe try collecting stuff here
+            System.gc()
         }
     }
 }
