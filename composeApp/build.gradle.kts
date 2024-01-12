@@ -98,6 +98,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
     dependencies {
+        implementation(libs.compose.color.picker.jvm)
         debugImplementation(libs.compose.ui.tooling)
     }
 }

@@ -69,6 +69,9 @@ fun TopBar(context: AppContext) {
                             contentDescription = null,
                             modifier = Modifier.size(22.dp),
                         )
+                        if (context.showStates.showSaveDialog) {
+                            SaveAsDialog(context)
+                        }
                     }
                 }
                 IconButton(onClick = {

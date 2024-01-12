@@ -104,7 +104,7 @@ fun ImageFilters(appContext: AppContext) {
         when (imageFiltersComponentClicked) {
             ImageFiltersComponentClicked.None -> Box {}
             ImageFiltersComponentClicked.Light -> LightFilters(appContext)
-            ImageFiltersComponentClicked.HSL -> LightFilters(appContext)
+            ImageFiltersComponentClicked.HSL -> HslFiltersComponent(appContext)
             ImageFiltersComponentClicked.Blur -> BlurFiltersComponent(appContext)
             ImageFiltersComponentClicked.Orientation -> AndroidOrientationFilters(appContext)
         }
@@ -148,7 +148,22 @@ fun ImageFilters(appContext: AppContext) {
                         fontSize = TextUnit(12F, TextUnitType.Sp)
                     )
                 }
+            }
+            IconButton(onClick = {
+                imageFiltersComponentClicked = ImageFiltersComponentClicked.HSL
+            }, modifier = Modifier.backgroundColorIfCondition(MaterialTheme.colors.primary) {
+                imageFiltersComponentClicked == ImageFiltersComponentClicked.HSL
+            }) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        painterResource(R.drawable.colours_svgrepo_com),
+                        contentDescription = "Color Icon",
+                        modifier = Modifier.size(25.dp)
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
 
+                    Text("Color", fontSize = TextUnit(12F, TextUnitType.Sp))
+                }
             }
 
             IconButton(onClick = {
@@ -167,6 +182,7 @@ fun ImageFilters(appContext: AppContext) {
                     Text("Blur", fontSize = TextUnit(12F, TextUnitType.Sp))
                 }
             }
+
         }
     }
 }

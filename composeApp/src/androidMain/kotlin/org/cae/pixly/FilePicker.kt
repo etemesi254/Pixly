@@ -3,10 +3,13 @@ package org.cae.pixly
 import AppContext
 import SUPPORTED_EXTENSIONS
 import android.Manifest
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalContext
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
