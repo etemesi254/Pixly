@@ -509,7 +509,8 @@ fun main() = application {
     val appContext by remember { mutableStateOf(AppContext()) }
     var time by mutableStateOf(System.currentTimeMillis())
 
-    Window(onCloseRequest = ::exitApplication, title = APP_TITLE, undecorated = false, onKeyEvent = {
+    Window(onCloseRequest = ::exitApplication, title = APP_TITLE, undecorated = false, 
+        icon = painterResource("icon.png"), onKeyEvent = {
         val currTime = System.currentTimeMillis();
         val diff = currTime - time;
         time = currTime;
