@@ -53,7 +53,6 @@ fun HistoryWidget(ctx: AppContext) {
                     ctx.getHistory()?.getHistory()?.forEachIndexed { index, history ->
 
                         Column(modifier = Modifier.fillMaxWidth().padding(end=10.dp)) {
-                            val historyValue = ctx.getHistory()!!.getValue()[index];
 
                             Row(
                                 modifier = Modifier.padding(10.dp).fillMaxWidth(),
