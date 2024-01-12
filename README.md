@@ -31,8 +31,7 @@ https://github.com/etemesi254/Pixly/assets/24320659/386746bd-a2ee-4b0b-b63f-a6a6
 #![Desktop In full view](./screenshots/desktop_full.png)
 
 ### Android
-
-#![Android In Full View](./screenshots/android_view.png)
+<img src="./screenshots/android_view.png"  width="200px" height="400px" />
 
 ## Features.
 
