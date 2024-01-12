@@ -8,7 +8,7 @@ Pixly is an image editor built in Compose Multiplatform and Rust that works on W
 - Rust via [zune-image] deals with image manipulation operations.
 
 ## Architecture
-I've written on how the two apps work in my blog
+I've written on how the two apps work in my blog{{TODO ATTACH LINK}}
 
 ## Motivation
 I wanted a simple lightroom alternative that works on Linux.
