@@ -115,7 +115,7 @@ class ImageContext(image: ZilBitmapInterface) {
         // So let's try to tell the gc that maybe try collecting stuff here is really good
         System.gc()
 
-        if (lastHistoryResponse!= HistoryResponse.SameAsLastOperationButExecutedTooQuickly){
+        if (lastHistoryResponse != HistoryResponse.SameAsLastOperationButExecutedTooQuickly) {
             // null the image, to prevent storing something we won't use
             lastTempLocation = null
         }
@@ -140,7 +140,8 @@ class ImageContext(image: ZilBitmapInterface) {
 
         if (lastHistoryResponse == HistoryResponse.SameAsLastOperationButExecutedTooQuickly
             && lastTempLocation != null
-            && response != HistoryResponse.SameAsLastOperationButExecutedTooQuickly) {
+            && response != HistoryResponse.SameAsLastOperationButExecutedTooQuickly
+        ) {
             images.add(lastTempLocation!!)
             lastHistoryResponse = response
             return images.last().clone();
@@ -166,6 +167,9 @@ class ImageContext(image: ZilBitmapInterface) {
 
                 for (i in 0 until historyOperations.size) {
                     val idx = historyOperations.size - i - 1 - itemsNotAddedToHistory;
+                    if (idx < 0) {
+                        break;
+                    }
                     if (historyOperations[idx].trivialUndo()) {
                         itemsNotAddedToHistory += 1;
                         continue
@@ -203,6 +207,9 @@ class ImageContext(image: ZilBitmapInterface) {
 
                 for (i in 0 until historyOperations.size) {
                     val idx = historyOperations.size - i - 1 - itemsNotAddedToHistory;
+                    if (idx < 0) {
+                        break;
+                    }
                     if (historyOperations[idx].trivialUndo()) {
                         itemsNotAddedToHistory += 1;
                         continue
