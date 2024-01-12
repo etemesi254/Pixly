@@ -1,6 +1,9 @@
 ## Demo
 Watch the video of demo (Youtube)
-[![Watch the video](https://img.youtube.com/vi/bYdezBoQBOo/hqdefault.jpg)](https://youtu.be/bYdezBoQBOo)
+## Desktop (Linux)
+https://github.com/etemesi254/Pixly/assets/24320659/780868d5-78b4-4ba9-91ee-6fc16980f58b
+
+
 
 
 ### Android
