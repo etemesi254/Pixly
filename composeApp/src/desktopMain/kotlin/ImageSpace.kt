@@ -17,6 +17,7 @@ import desktopComponents.ScalableImage
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import modifiers.modifyOnChange
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
@@ -41,9 +42,10 @@ fun ImageSpace(context: AppContext) {
         ImageSpaceLayout.SingleLayout -> {
 
             // showing only one image
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize().modifyOnChange(toModify)) {
                 val imageContext = context.currentImageContext();
 
+                //println("Hello")
                 key(toModify) {
                     ScalableImage(
                         imageContext!!,
@@ -122,7 +124,7 @@ fun TwoPanedImageSpace(context: AppContext) {
                 Surface(modifier = Modifier.backgroundForScalable(context)) {
                     val imageContext = context.currentImageContext();
 
-                    Column(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize().modifyOnChange(toModify)) {
                         Text(
                             "Edited",
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
