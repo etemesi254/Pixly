@@ -1,5 +1,7 @@
 # Pixly - An image editor
-![](./screenshots/ic_launcher-playstore.png)
+<img src='./screenshots/ic_launcher-playstore.png' width="128px" height="128px" style="display:block; margin-left:auto;margin-right:auto" >
+
+
 Pixly is an image editor built in Compose Multiplatform and Rust that works on Windows, Linux and Android devices
 
 - Compose makes the GUI 
