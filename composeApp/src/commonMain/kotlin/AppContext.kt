@@ -86,6 +86,8 @@ class ImageContext(image: ZilBitmapInterface) {
     var zoomState by mutableStateOf(ScalableState())
     var imageModified = MutableStateFlow(false)
     var file by mutableStateOf(File("/"))
+    private var lastTempLocation: ZilBitmapInterface? = null;
+    private var lastHistoryResponse: HistoryResponse = HistoryResponse.DummyOperation;
 
     // Use multiple bitmaps in order to reduce contention, e.g do not fight
     // for the same bitmap in the two two paned stage
@@ -106,22 +108,51 @@ class ImageContext(image: ZilBitmapInterface) {
      * operations mutex, otherwise bad things will happen (race conditions + native code)
      * */
     fun currentImage(response: HistoryResponse): ZilBitmapInterface {
+
+        // this function may allocate big data, and leave references lying around
+        // which causes OOM on android.
+        //
+        // So let's try to tell the gc that maybe try collecting stuff here is really good
+        System.gc()
+
+        if (lastHistoryResponse!= HistoryResponse.SameAsLastOperationButExecutedTooQuickly){
+            // null the image, to prevent storing something we won't use
+            lastTempLocation = null
+        }
         if (images.size == 1) {
             // we only have the initial image, clone it
             val image = images.first().clone();
+
+            lastHistoryResponse = response
             images.add(image);
             return image;
         }
 
+
         if (history.getHistory().isNotEmpty() && history.getHistory().last()
                 .trivialUndo()
         ) {
+
+            lastHistoryResponse = response
             // trivial undo, just return the last copy
             return images.last();
         }
-        if (history.getHistory().size > 1 && (response == HistoryResponse.SameAsLastOperation || response == HistoryResponse.SameAsLastOperationButExecutedTooQuickly)) {
 
-            if (true || response == HistoryResponse.SameAsLastOperation) {
+        if (lastHistoryResponse == HistoryResponse.SameAsLastOperationButExecutedTooQuickly
+            && lastTempLocation != null
+            && response != HistoryResponse.SameAsLastOperationButExecutedTooQuickly) {
+            images.add(lastTempLocation!!)
+            lastHistoryResponse = response
+            return images.last().clone();
+            // add that to the image struct
+        }
+
+        lastHistoryResponse = response
+
+        if (history.getHistory().size > 0 && (response == HistoryResponse.SameAsLastOperation || response == HistoryResponse.SameAsLastOperationButExecutedTooQuickly)) {
+
+
+            if (response == HistoryResponse.SameAsLastOperation) {
                 // we repeated operations, iterate until the operations do not match, copy that
                 // and then return that clone to the user
                 val historyOperations = history.getHistory();
@@ -147,12 +178,13 @@ class ImageContext(image: ZilBitmapInterface) {
                         // so that's why we go +1
                         // todo: Please explain this better
                         val newImg = images.getOrNull(idx + 1);
-                        if (newImg!=null) {
+                        if (newImg != null) {
                             images.add(newImg);
                             return images.last();
                         }
                     }
                 }
+
                 // it's the first operation , eg. you modified brightness and then modified brightness again
                 // so return the clone of the first
                 val newImg = images.first().clone();
@@ -167,19 +199,25 @@ class ImageContext(image: ZilBitmapInterface) {
                 // since it's the same as the last one, we know the history is this
                 val lastOp = historyOperations.last();
 
+                var itemsNotAddedToHistory = 0;
+
                 for (i in 0 until historyOperations.size) {
-                    val idx = historyOperations.size - i - 1;
+                    val idx = historyOperations.size - i - 1 - itemsNotAddedToHistory;
+                    if (historyOperations[idx].trivialUndo()) {
+                        itemsNotAddedToHistory += 1;
+                        continue
+                    }
                     if (historyOperations[idx] != lastOp) {
-                        // found the index
-                        // clone that
-                        val newImg = images[idx].clone();
-                        //   images.add(newImg);
-                        return newImg;
+                        val newImg = images.getOrNull(idx + 1);
+                        if (newImg != null) {
+                            lastTempLocation = newImg.clone();
+                            return lastTempLocation!!
+                        }
                     }
                 }
                 val newImg = images.first().clone();
-
-                return newImg;
+                lastTempLocation = newImg;
+                return lastTempLocation!!;
             }
         }
 
@@ -194,10 +232,6 @@ class ImageContext(image: ZilBitmapInterface) {
             val lastImage = images.last().clone()
             images.add(lastImage)
         }
-//        if (history.getHistory().size > 1 && !history.getHistory().last().trivialUndo()) {
-//            return images.last().clone()
-//        }
-
         return images.last()
     }
 

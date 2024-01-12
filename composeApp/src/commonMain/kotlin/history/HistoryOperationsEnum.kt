@@ -157,12 +157,12 @@ class HistoryOperations {
             val currTime = System.currentTimeMillis()
             val diff = currTime - lastTimeAdded
 
-//            if (diff < TIME_THRESHOLD) {
-//                // just update previous with new value, don't update new value
-//                // values[values.lastIndex] = newValue
-//                lastTimeAdded = currTime
-//                return HistoryResponse.SameAsLastOperationButExecutedTooQuickly;
-//            }
+            if (diff < TIME_THRESHOLD) {
+                // just update previous with new value, don't update new value
+                values[values.lastIndex] = newValue
+                lastTimeAdded = currTime
+                return HistoryResponse.SameAsLastOperationButExecutedTooQuickly;
+            }
 
             values.add(newValue)
             history.add(historyEnum)
