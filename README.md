@@ -3,6 +3,10 @@ Watch the video of demo (Youtube)
 [![Watch the video](https://img.youtube.com/vi/bYdezBoQBOo/hqdefault.jpg)](https://youtu.be/bYdezBoQBOo)
 
 
+### Android
+https://github.com/etemesi254/Pixly/assets/24320659/386746bd-a2ee-4b0b-b63f-a6a60a074c0b
+
+
 ## Features.
  - Load images in various formats - png, jpeg, ppm, jxl, bmp, qoi, pfm.
  - Save images in various formats- jpeg, png, webp, bmp, ico, gif.
