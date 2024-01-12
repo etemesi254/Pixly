@@ -405,7 +405,7 @@ fun App(appCtx: AppContext) {
 
                                                 }
 
-                                                TopHoveringIcons(appCtx)
+                                                //TopHoveringIcons(appCtx)
                                             }
 
                                         }
@@ -476,7 +476,7 @@ fun App(appCtx: AppContext) {
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (showLinearIndicator) {
-                                LinearProgressIndicator()
+                                LinearProgressIndicator(backgroundColor = Color.Transparent)
                             }
                             Box(modifier = Modifier) {
 
