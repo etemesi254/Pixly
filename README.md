@@ -3,11 +3,10 @@
 Pixly is an image editor built in Compose Multiplatform and Rust that works on Windows, Linux and Android devices
 
 - Compose makes the GUI 
-- Rust via [zune-image](https://github.com/etemesi254/zune-image) deals with image manipulation operations.
+- Rust via [zune-image] deals with image manipulation operations.
 
 ## Architecture
 I've written on how the two apps work in my blog
-
 
 ## Motivation
 I wanted a simple lightroom alternative that works on Linux.
@@ -50,24 +49,53 @@ https://github.com/etemesi254/Pixly/assets/24320659/386746bd-a2ee-4b0b-b63f-a6a6
 - Retrieves image information including exif data and shows image histogram
 - Pre-configured filters such as `sepia` and `vivid`
 
-## Building
+##  Running
 
-You will need the following tools for building, the tools vary from host to host
 
-- A rust compiler for the target architecture you are running
 
 ### Android
+If you just want to install the apk in your device, there is a release containing an `.apk` in the
+[release page](https://github.com/etemesi254/Pixly/releases/tag/0.1.0) which you can install to test
 
-- You will need the Android NDK tools for building the rust library
+If you want to run on Android, you need to set up your environment,
+see [instructions on how to do that](https://github.com/JetBrains/compose-multiplatform-template#setting-up-your-development-environment).
+
+After setting up, load this project into your IDE and choose to run on a mobile device or an emulator
 
 ### Desktop
 
-#### Windows
+!!!{TODO}
 
-- A rust compiler, version `1.70` and above recommended
-- Visual Studio C/C++ Development kit
-- Rust `x86_64-pc-windows-gnu` target, the `x86_64-pc-windows-msvc` was causing linker problems during testing
 
-- #### Linux
-- A rust compiler, version `1.70` and above recommended.
-- Java/JVM toolkit for running
+## Building
+
+For compiling the Rust dynamic library, see instructions on [README](./rust/README.md) on how to do that.
+
+### Android
+
+You need to have an IDE capable of android Development, recommended and tested IDEs are Android-Studio and Intellij-Idea Ultimate.
+
+You also need to have Android-SDK configured and Android-NDK configured if you are going to build the Rust binaries(see README on Rust on what to change)
+
+### Steps.
+1. Clone this repo 
+    ```shell
+    git clone https://github.com/etemesi254/Pixly
+    ```
+   
+2. Load it in the IDE
+3. Choose the device 
+4. Run `composeApp` on Android
+5. Wait
+6. Profit
+
+### Linux.
+The main hurdle is getting the jvm/system loader to load the native library that contains the [zune-image] library bindings
+
+
+### Windows
+
+Ensure you run this on the same directory in order for the system to find the libraries (Windows searches for DLLS in the location a binary was loaded from)
+
+
+[zune-image]: https://github.com/etemesi254/zune-image
