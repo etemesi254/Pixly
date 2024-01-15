@@ -132,8 +132,18 @@ Then inside `composeApp` directory, run
 ```
 
 ### Windows
+Assuming you are in the `Pixly directory`
 
-Ensure you run this on the same directory in order for the system to find the libraries (Windows searches for DLLS in the location a binary was loaded from)
+- cd into `composeApp` directory
 
+```shell
+cd ./composeApp
+```
+
+- Run gradle desktop
+
+```shell
+../gradlew desktopRun -DmainClass=MainKt --quiet
+```
 
 [zune-image]: https://github.com/etemesi254/zune-image
