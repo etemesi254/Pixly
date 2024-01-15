@@ -1,12 +1,14 @@
 # Pixly - An image editor
-![](./screenshots/ic_launcher-playstore.png)
+<img src='./screenshots/ic_launcher-playstore.png' width="128px" height="128px" style="display:block; margin-left:auto;margin-right:auto" >
+
+
 Pixly is an image editor built in Compose Multiplatform and Rust that works on Windows, Linux and Android devices
 
 - Compose makes the GUI 
 - Rust via [zune-image] deals with image manipulation operations.
 
 ## Architecture
-I've written on how the two apps work in my blog
+I've written on how the two apps work in my blog{{TODO ATTACH LINK}}
 
 ## Motivation
 I wanted a simple lightroom alternative that works on Linux.
@@ -29,8 +31,7 @@ https://github.com/etemesi254/Pixly/assets/24320659/386746bd-a2ee-4b0b-b63f-a6a6
 #![Desktop In full view](./screenshots/desktop_full.png)
 
 ### Android
-
-#![Android In Full View](./screenshots/android_view.png)
+<img src="./screenshots/android_view.png"  width="200px" height="400px" />
 
 ## Features.
 
