@@ -92,6 +92,43 @@ You also need to have Android-SDK configured and Android-NDK configured if you a
 ### Linux.
 The main hurdle is getting the jvm/system loader to load the native library that contains the [zune-image] library bindings
 
+We provide a compiled binding in the root directory, called `libzune_jni_bindings` , here are the options
+to load it
+
+#### Move the library to a directory where the system loader looks
+
+Here we move the compiled library to one of the directory the system loader looks into
+
+- `cd` into the composeApp directory
+```shell
+cd ./composeApp
+```
+- copy the directory to a system directory
+```shell
+sudo cp ./libzune_jni_bindings.so /usr/lib/
+```
+- Then run 
+```shell
+../gradlew desktopRun -DmainClass=MainKt --quiet
+```
+#### Set LD_LIBRARY_PATH
+- We assume you are in the Pixly directory,
+
+cd into the `composeApp` directory
+
+```shell 
+cd ./composeApp
+```
+ Add the current directory into the LD_LIBRARY_PATH, the `$PWD` shell will expand to the current directory
+```shell
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD
+```
+
+Then inside `composeApp` directory, run
+
+```shell
+../gradlew desktopRun -DmainClass=MainKt --quiet
+```
 
 ### Windows
 
