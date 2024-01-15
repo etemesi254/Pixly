@@ -13,7 +13,7 @@ strip = true
 
 [dependencies]
 jni = "0.21.1"
-zune-image = { version = "0.4", path = "/home/caleb/Documents/rust/zune-image/crates/zune-image" }
-zune-core = { version = "0.4", path = "/home/caleb/Documents/rust/zune-image/crates/zune-core" }
-zune-imageprocs = { version = "0.4", path = "/home/caleb/Documents/rust/zune-image/crates/zune-imageprocs" }
+zune-image = { version = "0.4.14" }
+zune-core = { version = "0.4.12"}
+zune-imageprocs = { version = "0.4.14" }
 libc = "0.2.1"
