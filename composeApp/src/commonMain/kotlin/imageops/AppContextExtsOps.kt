@@ -218,12 +218,14 @@ suspend fun AppContext.imageHslAdjust(hue: Float? = null, saturation: Float? = n
         val hueNonNull = hue ?: ctx.filterValues.hue
         val saturationNonNull = saturation ?: ctx.filterValues.saturation
         val lightnessNonNull = lightness ?: ctx.filterValues.lightness
-        val h = hueNonNull - ctx.filterValues.hue;
-        val s = (saturationNonNull - ctx.filterValues.saturation) + 1
-        val l = (lightnessNonNull - ctx.filterValues.lightness) + 1
         val resp = appendToHistory(HistoryOperationsEnum.Hue, listOf(hueNonNull, saturationNonNull, lightnessNonNull))
         val image = ctx.currentImage(resp)
-        image.hslAdjust(h, s, l, ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!)
+        image.hslAdjust(
+            hueNonNull,
+            saturationNonNull,
+            lightnessNonNull,
+            ctx.canvasBitmaps[ImageContextBitmaps.CurrentCanvasImage]!!
+        )
 
         ctx.filterValues.hue = hueNonNull
         ctx.filterValues.saturation = saturationNonNull
